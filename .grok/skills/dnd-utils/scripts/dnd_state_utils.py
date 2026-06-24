@@ -243,10 +243,60 @@ def clear_combat_state(campaign_name: str) -> Dict[str, Any]:
     return {"status": "no_active_combat"}
 
 
+def validate_campaign(campaign_name: str) -> Dict[str, Any]:
+    """Strict structural validation before long sessions or exports."""
+    root = get_campaign_path(campaign_name)
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    if not root.exists():
+        return {"valid": False, "errors": [f"Campaign directory not found: {root}"], "warnings": []}
+
+    required_dirs = ("state", "logs", "npcs", "combat", "recaps")
+    for subdir in required_dirs:
+        if not (root / subdir).is_dir():
+            errors.append(f"Missing directory: {subdir}/")
+
+    required_files = (
+        "state/world_state.json",
+        "state/player_character.json",
+        "state/kingdom_state.json",
+        "logs/session_log.md",
+        "logs/rolls.json",
+    )
+    for rel in required_files:
+        if not (root / rel).exists():
+            errors.append(f"Missing file: {rel}")
+
+    player = get_player_character(campaign_name)
+    if not player.get("name"):
+        warnings.append("Player character has no name set")
+    if player.get("level", 1) < 1 or player.get("level", 1) > 20:
+        errors.append(f"Invalid player level: {player.get('level')}")
+
+    try:
+        from xp_tables import check_level_up
+        level_info = check_level_up(player)
+        if level_info["level_up_available"]:
+            warnings.append(
+                f"XP supports level {level_info['derived_level']} but sheet shows "
+                f"level {level_info['stored_level']} — run level-up"
+            )
+    except Exception:
+        pass
+
+    return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings, "campaign": campaign_name}
+
+
 def audit_campaign(campaign_name: str) -> Dict[str, Any]:
     root = get_campaign_path(campaign_name)
     issues: List[str] = []
     recommendations: List[str] = []
+
+    validation = validate_campaign(campaign_name)
+    issues.extend(validation.get("errors", []))
+    for warning in validation.get("warnings", []):
+        recommendations.append(warning)
 
     required = [
         root / "state" / "world_state.json",
@@ -255,7 +305,9 @@ def audit_campaign(campaign_name: str) -> Dict[str, Any]:
     ]
     for req in required:
         if not req.exists():
-            issues.append(f"Missing required file: {req.relative_to(root)}")
+            rel = str(req.relative_to(root))
+            if rel not in [e.replace("Missing file: ", "") for e in issues]:
+                issues.append(f"Missing required file: {rel}")
 
     world = get_world_state(campaign_name)
     if not world.get("current_location"):
@@ -280,6 +332,59 @@ def audit_campaign(campaign_name: str) -> Dict[str, Any]:
         "recommendations": recommendations,
         "healthy": len(issues) == 0,
     }
+
+
+def enhanced_audit_campaign(campaign_name: str) -> Dict[str, Any]:
+    """Extended audit with content inventory and sync checks."""
+    base = audit_campaign(campaign_name)
+    root = get_campaign_path(campaign_name)
+    inventory: Dict[str, Any] = {}
+
+    npc_index = root / "npcs" / "index.json"
+    if npc_index.exists():
+        npc_data = load_json(npc_index, {})
+        inventory["npc_count"] = len(npc_data.get("npcs", []))
+    else:
+        inventory["npc_count"] = 0
+
+    lore_file = root / "state" / "lore_index.json"
+    inventory["lore_entries"] = len(load_json(lore_file, {}).get("entries", [])) if lore_file.exists() else 0
+
+    rolls_path = root / "logs" / "rolls.json"
+    if rolls_path.exists():
+        try:
+            with open(rolls_path, "r", encoding="utf-8") as handle:
+                inventory["roll_count"] = len(json.load(handle))
+        except (json.JSONDecodeError, OSError):
+            inventory["roll_count"] = 0
+            base["issues"].append("rolls.json is corrupted")
+            base["healthy"] = False
+    else:
+        inventory["roll_count"] = 0
+
+    recaps = list((root / "recaps").glob("session_*.md")) if (root / "recaps").exists() else []
+    inventory["recap_count"] = len(recaps)
+
+    kingdom = get_kingdom_state(campaign_name)
+    active_projects = [p for p in kingdom.get("projects", []) if p.get("status") == "queued"]
+    inventory["active_kingdom_projects"] = len(active_projects)
+
+    player = get_player_character(campaign_name)
+    combat_file = root / "combat" / "current_combat.json"
+    if combat_file.exists():
+        combat = load_json(combat_file, {})
+        for c in combat.get("combatants", []):
+            if c.get("is_player"):
+                combat_hp = c.get("hp_current")
+                sheet_hp = player.get("hit_points", {}).get("current")
+                if combat_hp is not None and sheet_hp is not None and combat_hp != sheet_hp:
+                    base["recommendations"].append(
+                        f"HP mismatch: combat has {combat_hp}, character sheet has {sheet_hp}"
+                    )
+
+    base["inventory"] = inventory
+    base["validation"] = validation if (validation := validate_campaign(campaign_name)) else {}
+    return base
 
 
 def get_kingdom_state(campaign_name: str) -> Dict[str, Any]:
@@ -420,6 +525,12 @@ def main() -> None:
     p_audit = sub.add_parser("audit")
     p_audit.add_argument("campaign")
 
+    p_validate = sub.add_parser("validate")
+    p_validate.add_argument("campaign")
+
+    p_enhanced = sub.add_parser("enhanced-audit")
+    p_enhanced.add_argument("campaign")
+
     p_clear = sub.add_parser("clear-combat")
     p_clear.add_argument("campaign")
 
@@ -483,6 +594,10 @@ def main() -> None:
         result = update_world_state(args.campaign, updates)
     elif args.cmd == "audit":
         result = audit_campaign(args.campaign)
+    elif args.cmd == "validate":
+        result = validate_campaign(args.campaign)
+    elif args.cmd == "enhanced-audit":
+        result = enhanced_audit_campaign(args.campaign)
     elif args.cmd == "clear-combat":
         result = clear_combat_state(args.campaign)
     elif args.cmd == "load":

@@ -65,7 +65,6 @@ def save_character(campaign_name: str, character_data: Dict[str, Any]) -> None:
     with open(paths["json"], "w", encoding="utf-8") as f:
         json.dump(character_data, f, indent=2, ensure_ascii=False)
 
-    # TODO: Generate human-readable markdown version
     generate_character_markdown(campaign_name, character_data)
 
 

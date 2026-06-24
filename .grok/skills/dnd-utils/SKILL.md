@@ -1,6 +1,6 @@
 ---
 name: dnd-utils
-description: Shared Python backend for all D&D skills — campaign init, JSON state persistence, HP sync, kingdom project queue/advance, event logging, roll logs, SQLite analytics, kingdom simulation, and mobile narration helpers. v2.0.0 production. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
+description: Shared Python backend for all D&D skills — campaign init, JSON state persistence, HP sync, kingdom project queue/advance, event logging, roll logs, SQLite analytics, kingdom simulation, and mobile narration helpers. v2.1.0 production. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
 ---
 
 # D&D Utils
@@ -29,7 +29,7 @@ description: Shared Python backend for all D&D skills — campaign init, JSON st
 | Event log (JSON) | ✅ Implemented | `event_system.py` → `logs/events.json` |
 | Roll logging | ✅ Implemented | Used by dice-engine when `--campaign` set |
 | Session start summary | ✅ Implemented | `session-summary` command |
-| Campaign audit | ✅ Implemented | `audit` checks key files |
+| Campaign audit | ✅ Implemented | `audit`, `validate`, `enhanced-audit` |
 | Narration helpers | ✅ Implemented | `format_mobile_status`, `suggest_next_actions` |
 | SQLite analytics layer | ✅ Implemented | `sqlite_layer.py`; enable via `init --enable-sqlite` |
 | Combat ↔ character sync bridge | ✅ Implemented | `sync_bridge.py` — HP, healing, death saves |

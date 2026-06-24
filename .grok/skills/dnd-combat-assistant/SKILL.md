@@ -23,7 +23,7 @@ description: Combat encounter tracker for initiative, HP, healing, conditions, c
 | Capability | Status | Notes |
 |------------|--------|-------|
 | Init & add combatants | ✅ Implemented | Player, companion, monster flags |
-| Initiative & turn order | ✅ Implemented | `next-turn`, `status` |
+| Initiative & turn order | ✅ Implemented | `next-turn`, `status`, `summary` |
 | Damage & healing | ✅ Implemented | `apply_healing()` + `heal` CLI |
 | Temp HP, conditions, concentration | ✅ Implemented | Duration rounds supported |
 | Death saves | ✅ Implemented | Success/failure tracking |
@@ -43,6 +43,7 @@ python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py damage "My Ca
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py heal "My Campaign" --target "Aria" --amount 8
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py next-turn "My Campaign"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py status "My Campaign"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py summary "My Campaign"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py death-save-success "My Campaign" --target "Aria"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py death-save-failure "My Campaign" --target "Aria"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py apply-condition "My Campaign" --target "Aria" --condition "Poisoned" --duration-rounds 3

@@ -15,9 +15,16 @@ VOICE_TRIGGERS = (
 )
 
 AMBIGUOUS_PATTERNS = (
-    (re.compile(r"\b(hit|attack|strike)\b", re.I), "combat_action"),
-    (re.compile(r"\b(roll|check|save)\b", re.I), "dice_roll"),
+    (re.compile(r"\b(hit|attack|strike|swing at)\b", re.I), "combat_action"),
+    (re.compile(r"\b(roll|check|save|initiative)\b", re.I), "dice_roll"),
     (re.compile(r"\b(end session|wrap up|save session)\b", re.I), "end_session"),
+    (re.compile(r"\b(next turn|whose turn|advance turn)\b", re.I), "next_turn"),
+    (re.compile(r"\b(combat status|who('s| is) up|battle status)\b", re.I), "combat_status"),
+    (re.compile(r"\b(heal|healing word|cure wounds|lay on hands)\b", re.I), "healing"),
+    (re.compile(r"\b(apply condition|grappled|stunned|prone)\b", re.I), "apply_condition"),
+    (re.compile(r"\b(level up|level-up)\b", re.I), "level_up"),
+    (re.compile(r"\b(generate loot|treasure|what did we find)\b", re.I), "loot"),
+    (re.compile(r"\b(rumor|rumour|what('s| is) the word)\b", re.I), "rumor"),
 )
 
 
@@ -92,12 +99,23 @@ def route_voice_request(text: str) -> Dict[str, Any]:
         "needs_confirmation": needs_confirmation(intent, text),
         "primary_skill": "dnd-persistent-dm",
     }
+    skill_map = {
+        "dice_roll": "dnd-dice-engine",
+        "end_session": "dnd-session-scribe",
+        "next_turn": "dnd-combat-assistant",
+        "combat_status": "dnd-combat-assistant",
+        "healing": "dnd-combat-assistant",
+        "apply_condition": "dnd-combat-assistant",
+        "combat_action": "dnd-combat-assistant",
+        "level_up": "dnd-character-manager",
+        "loot": "dnd-loot-generator",
+        "rumor": "dnd-rumor-event-generator",
+    }
+
     if damage:
         route.update({"primary_skill": "dnd-combat-assistant", "damage": damage})
     elif healing:
         route.update({"primary_skill": "dnd-combat-assistant", "healing": healing})
-    elif intent == "dice_roll":
-        route["primary_skill"] = "dnd-dice-engine"
-    elif intent == "end_session":
-        route["primary_skill"] = "dnd-session-scribe"
+    elif intent in skill_map:
+        route["primary_skill"] = skill_map[intent]
     return route

@@ -21,7 +21,9 @@ description: Reliable Python dice roller for all D&D actions. Triggers include r
 | Capability | Status | Notes |
 |------------|--------|-------|
 | Standard notation (2d6+3) | ✅ Implemented | CLI + importable |
-| Advantage / disadvantage | ✅ Implemented | Best/worst of 2d20 |
+| Advantage / disadvantage | ✅ Implemented | Best/worst of 2d20; cancel when both apply |
+| Percentile (d100) | ✅ Implemented | Tens + ones dice |
+| d3 (homebrew) | ✅ Implemented | ceil(d6/2) |
 | Keep highest/lowest (kh/kl) | ✅ Implemented | e.g. `4d6kh3` |
 | Exploding dice | ✅ Implemented | `--exploding` flag |
 | Campaign roll logging | ✅ Implemented | `--campaign` → `logs/rolls.json` |

@@ -81,6 +81,68 @@ def weave_visual_prompt(
     }
 
 
+def weave_kingdom_prompt(
+    campaign_name: str,
+    focus: str = "domain overview",
+    *,
+    style: str = "grand strategy fantasy map illustration",
+) -> Dict[str, Any]:
+    """Build a kingdom-mode visual prompt from live domain state."""
+    from dnd_state_utils import get_kingdom_state  # noqa: E402
+
+    kingdom = get_kingdom_state(campaign_name)
+    world = get_world_state(campaign_name)
+    resources = kingdom.get("resources", {})
+    active = [p["name"] for p in kingdom.get("projects", []) if p.get("status") == "queued"]
+
+    prompt_parts = [
+        style,
+        f"Kingdom focus: {focus}",
+        f"Domain: {kingdom.get('domain_name', 'Unsettled Lands')}",
+        f"Region: {world.get('current_location', 'unknown')}",
+        f"Resources — gold {resources.get('gold', 0)}, food {resources.get('food', 0)}, "
+        f"materials {resources.get('materials', 0)}",
+        f"Weather and time: {world.get('weather', 'clear')}, {world.get('in_game_time', 'day')}",
+    ]
+    if active:
+        prompt_parts.append(f"Active construction: {', '.join(active[:3])}")
+    canon = load_visual_canon(campaign_name)
+    if canon:
+        prompt_parts.append(f"Visual canon: {canon[:400]}")
+
+    prompt = ". ".join(prompt_parts)
+    return {
+        "prompt": prompt,
+        "mode": "kingdom",
+        "domain": kingdom.get("domain_name"),
+        "focus": focus,
+        "style": style,
+        "has_canon": bool(canon),
+    }
+
+
+def update_visual_canon_after_generation(
+    campaign_name: str,
+    subject: str,
+    description: str,
+    *,
+    category: str = "generated",
+) -> Dict[str, Any]:
+    """Append a post-generation visual note to visual_canon.md."""
+    from datetime import datetime
+
+    path = get_campaign_path(campaign_name) / "state" / "visual_canon.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%d")
+    entry = f"\n\n### {subject} ({category}, {stamp})\n{description.strip()}\n"
+    if path.exists():
+        existing = path.read_text(encoding="utf-8")
+        path.write_text(existing.rstrip() + entry, encoding="utf-8")
+    else:
+        path.write_text(f"# Visual Canon{entry}", encoding="utf-8")
+    return {"updated": str(path), "subject": subject, "category": category}
+
+
 def save_visual_canon(campaign_name: str, content: str) -> Dict[str, Any]:
     path = get_campaign_path(campaign_name) / "state" / "visual_canon.md"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -98,16 +160,33 @@ def main() -> None:
     p_weave.add_argument("--style", default="cinematic fantasy illustration")
     p_weave.add_argument("--shot", default="wide establishing shot")
 
+    p_kingdom = sub.add_parser("weave-kingdom")
+    p_kingdom.add_argument("campaign")
+    p_kingdom.add_argument("--focus", default="domain overview")
+    p_kingdom.add_argument("--style", default="grand strategy fantasy map illustration")
+
     p_save = sub.add_parser("save-canon")
     p_save.add_argument("campaign")
     p_save.add_argument("content")
+
+    p_append = sub.add_parser("append-canon")
+    p_append.add_argument("campaign")
+    p_append.add_argument("subject")
+    p_append.add_argument("description")
+    p_append.add_argument("--category", default="generated")
 
     args = parser.parse_args()
 
     if args.cmd == "weave-prompt":
         result = weave_visual_prompt(args.campaign, args.scene, style=args.style, shot=args.shot)
+    elif args.cmd == "weave-kingdom":
+        result = weave_kingdom_prompt(args.campaign, args.focus, style=args.style)
     elif args.cmd == "save-canon":
         result = save_visual_canon(args.campaign, args.content)
+    elif args.cmd == "append-canon":
+        result = update_visual_canon_after_generation(
+            args.campaign, args.subject, args.description, category=args.category
+        )
     else:
         result = {"error": "Unknown command"}
 

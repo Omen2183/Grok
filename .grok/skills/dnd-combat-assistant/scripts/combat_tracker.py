@@ -631,6 +631,9 @@ def main():
     
     p_status = sub.add_parser("status")
     p_status.add_argument("campaign")
+
+    p_summary = sub.add_parser("summary", help="Human-readable combat summary for mobile/voice")
+    p_summary.add_argument("campaign")
     
     p_temp = sub.add_parser("apply-temp-hp")
     p_temp.add_argument("campaign")
@@ -693,6 +696,8 @@ def main():
         print(json.dumps(next_turn(args.campaign), indent=2))
     elif args.cmd == "status":
         print(json.dumps(get_status(args.campaign), indent=2))
+    elif args.cmd == "summary":
+        print(get_combat_summary(args.campaign))
     elif args.cmd == "apply-temp-hp":
         print(json.dumps(apply_temp_hp(args.campaign, args.target, args.amount), indent=2))
     elif args.cmd == "remove":

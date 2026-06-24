@@ -22,6 +22,7 @@ from dnd_state_utils import (  # noqa: E402
 )
 from event_system import record_event  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
+from xp_tables import check_level_up, level_from_xp, xp_to_next_level  # noqa: E402
 
 
 def _append_session_log(campaign_name: str, text: str) -> None:
@@ -37,11 +38,23 @@ def award_xp(campaign_name: str, amount: int, *, reason: str = "") -> Dict[str, 
     char["xp"] = char.get("xp", 0) + amount
     save_json(path, char)
 
+    level_info = check_level_up(char)
+    derived_level = level_from_xp(char["xp"])
+    xp_remaining = xp_to_next_level(char["xp"])
+
     stamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     note = f"\n\n### XP +{amount} ({stamp})\n"
     if reason:
         note += f"- **Reason:** {reason}\n"
     note += f"- **Total XP:** {char['xp']}\n"
+    note += f"- **Level (by XP):** {derived_level}\n"
+    if xp_remaining is not None:
+        note += f"- **XP to next level:** {xp_remaining}\n"
+    if level_info["level_up_available"]:
+        note += (
+            f"- **Level-up available:** {level_info['pending_level_ups']} "
+            f"(stored level {level_info['stored_level']} → {derived_level})\n"
+        )
     _append_session_log(campaign_name, note)
 
     record_event(
@@ -49,9 +62,16 @@ def award_xp(campaign_name: str, amount: int, *, reason: str = "") -> Dict[str, 
         f"XP awarded: {amount}" + (f" — {reason}" if reason else ""),
         importance="normal",
         tags=["xp"],
-        metadata={"amount": amount},
+        metadata={"amount": amount, "level_up_available": level_info["level_up_available"]},
     )
-    return {"xp_awarded": amount, "total_xp": char["xp"], "reason": reason}
+    return {
+        "xp_awarded": amount,
+        "total_xp": char["xp"],
+        "reason": reason,
+        "derived_level": derived_level,
+        "xp_to_next_level": xp_remaining,
+        "level_up": level_info,
+    }
 
 
 def save_recap(

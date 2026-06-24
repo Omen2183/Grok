@@ -1,6 +1,6 @@
 ---
 name: dnd-rules-reference
-description: Accurate 5e rules clarification including homebrew considerations. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Delivers clear rulings for consistent long-term play. Prompt-only — no rules database script.
+description: Accurate 5e rules clarification including homebrew considerations. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Delivers clear rulings for consistent long-term play. Optional rules_cheatsheet.py for common topics.
 ---
 
 # D&D Rules Reference
@@ -24,12 +24,14 @@ description: Accurate 5e rules clarification including homebrew considerations. 
 | Homebrew-aware rulings | ⚠️ Partial | Reads campaign notes if present |
 | Condition reference | ⚠️ Partial | Narrative; combat-assistant applies conditions |
 | Spell/feat lookup by name | ⚠️ Partial | LLM recall; verify for niche content |
-| Automated rules engine | ❌ Prompt-only | No `rules_db.py` |
+| Rules cheatsheet CLI | ✅ Implemented | `rules_cheatsheet.py lookup` for common topics |
+| Full automated rules engine | ❌ Not implemented | No complete SRD database |
 | Official source page links | ❌ Prompt-only | Summarize in chat |
 
 ## Tools & Scripts
-No dedicated script. Optional context load:
 ```bash
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py list
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py lookup concentration
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --file player_character
 ```
 

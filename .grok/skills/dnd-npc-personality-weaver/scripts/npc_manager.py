@@ -112,6 +112,18 @@ def list_npcs(campaign_name: str) -> List[Dict[str, Any]]:
     return _load_index(campaign_name).get("npcs", [])
 
 
+def append_npc_note(campaign_name: str, npc_id: str, note: str) -> Optional[Dict[str, Any]]:
+    """Append a dated note without replacing existing notes."""
+    npc = get_npc(campaign_name, npc_id)
+    if not npc:
+        return None
+    prior = npc.get("notes", "")
+    stamp = datetime.now().date()
+    entry = f"[{stamp}] {note}"
+    combined = f"{prior}\n{entry}".strip() if prior else note
+    return update_npc(campaign_name, npc_id, {"notes": combined})
+
+
 def adjust_relationship(campaign_name: str, npc_id: str, delta: int, *, note: str = "") -> Optional[Dict[str, Any]]:
     npc = get_npc(campaign_name, npc_id)
     if not npc:
@@ -168,12 +180,13 @@ def main() -> None:
             },
         )
     elif args.cmd == "update":
-        updates = {}
+        result = None
         if args.attitude:
-            updates["attitude"] = args.attitude
+            result = update_npc(args.campaign, args.npc_id, {"attitude": args.attitude})
         if args.note:
-            updates["notes"] = args.note
-        result = update_npc(args.campaign, args.npc_id, updates)
+            result = append_npc_note(args.campaign, args.npc_id, args.note)
+        if result is None:
+            result = get_npc(args.campaign, args.npc_id) or {"error": "No updates specified"}
     elif args.cmd == "get":
         result = get_npc(args.campaign, args.npc_id) or {"error": "NPC not found"}
     elif args.cmd == "list":

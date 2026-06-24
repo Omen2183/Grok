@@ -23,6 +23,7 @@ from combat_tracker import (
     record_death_save,
     remove_combatant,
     next_turn,
+    get_combat_summary,
 )
 
 
@@ -110,6 +111,14 @@ def test_death_saves(temp_campaign):
     assert cleric is not None
     assert cleric["death_saves"]["successes"] == 3
     assert cleric["is_unconscious"] is False  # Stabilized
+
+
+def test_combat_summary(temp_campaign):
+    init_combat(temp_campaign, "Summary Test")
+    add_combatant(temp_campaign, "Hero", hp=20, initiative=15, is_player=True)
+    summary = get_combat_summary(temp_campaign)
+    assert "Summary Test" in summary
+    assert "Hero" in summary
 
 
 def test_remove_combatant(temp_campaign):

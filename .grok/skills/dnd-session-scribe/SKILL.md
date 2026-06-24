@@ -20,7 +20,7 @@ description: Session recaps, XP awards, end-of-session cleanup, and log manageme
 ## Capabilities (Honest Matrix)
 | Capability | Status | Notes |
 |------------|--------|-------|
-| Award XP | ✅ Implemented | Updates `player_character.json` |
+| Award XP | ✅ Implemented | Updates `player_character.json`; reports level-up availability |
 | Save session recap | ✅ Implemented | Timestamped markdown in `recaps/` |
 | End session (full) | ✅ Implemented | Recap + XP + audit + combat clear |
 | Append session log | ✅ Implemented | `logs/session_log.md` |

@@ -129,6 +129,27 @@ def generate_monster_prompt(campaign_name: str, theme: str, cr: int = 5,
     return prompt
 
 
+def save_stat_block(
+    campaign_name: str,
+    name: str,
+    markdown: str,
+    *,
+    cr: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Persist a generated stat block to encounters/ for reuse."""
+    from paths import get_campaign_path  # type: ignore
+
+    safe = "".join(ch if ch.isalnum() or ch in "-_" else "-" for ch in name.lower()).strip("-")
+    folder = get_campaign_path(campaign_name) / "encounters"
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{safe}.md"
+    header = f"# {name}\n"
+    if cr is not None:
+        header += f"*CR {cr}*\n\n"
+    path.write_text(header + markdown.strip() + "\n", encoding="utf-8")
+    return {"saved": str(path), "name": name, "cr": cr}
+
+
 def generate_monster(campaign_name: str, theme: str, cr: int = 5,
                      difficulty: str = "Medium", extra: str = "") -> Dict[str, Any]:
     """
@@ -191,8 +212,18 @@ if __name__ == "__main__":
     parser.add_argument("--difficulty", default="Medium", choices=["Easy", "Medium", "Hard", "Deadly"])
     parser.add_argument("--extra", default="", help="Additional instructions for the generator")
     parser.add_argument("--encounter", action="store_true", help="Also output an encounter budget suggestion")
+    parser.add_argument("--save", metavar="NAME", help="Save stat block markdown from --content file")
+    parser.add_argument("--content", help="Markdown stat block body when using --save")
 
     args = parser.parse_args()
+
+    if args.save:
+        if not args.content:
+            print(json.dumps({"error": "--content required with --save"}))
+            sys.exit(1)
+        result = save_stat_block(args.campaign_name, args.save, args.content, cr=args.cr)
+        print(json.dumps(result, indent=2))
+        sys.exit(0)
 
     result = generate_monster(args.campaign_name, args.theme, args.cr, args.difficulty, args.extra)
 

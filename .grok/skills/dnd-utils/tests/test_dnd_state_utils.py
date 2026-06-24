@@ -34,3 +34,17 @@ def test_log_roll(campaign):
     state.log_roll(campaign, "1d20+5", 18, {"reason": "attack"})
     rolls_path = state.get_campaign_path(campaign) / "logs" / "rolls.json"
     assert rolls_path.exists()
+
+
+def test_validate_campaign(campaign):
+    state.init_campaign(campaign)
+    result = state.validate_campaign(campaign)
+    assert result["valid"] is True
+    assert result["errors"] == []
+
+
+def test_enhanced_audit(campaign):
+    state.init_campaign(campaign)
+    audit = state.enhanced_audit_campaign(campaign)
+    assert "inventory" in audit
+    assert audit["inventory"]["npc_count"] == 0
