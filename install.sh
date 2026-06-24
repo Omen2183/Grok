@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 # Install Grok D&D skills into Grok Build.
 # Usage: ./install.sh [target_dir]
+#        ./install.sh --global
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
 TARGET="${1:-.}"
 SOURCE_SKILLS="$REPO_ROOT/.grok/skills"
-DEST_SKILLS="$TARGET/.grok/skills"
+
+if [[ "${1:-}" == "--global" ]]; then
+  TARGET="${HOME}/.grok"
+  DEST_SKILLS="${TARGET}/skills"
+else
+  DEST_SKILLS="${TARGET}/.grok/skills"
+fi
 
 if [[ ! -d "$SOURCE_SKILLS" ]]; then
   echo "Skills directory not found: $SOURCE_SKILLS" >&2

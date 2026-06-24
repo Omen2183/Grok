@@ -23,7 +23,11 @@ if ($Global) {
     New-Item -ItemType Directory -Force -Path $Target | Out-Null
 }
 
-$DestSkills = Join-Path $Target ".grok\skills"
+if ($Global) {
+    $DestSkills = Join-Path $Target "skills"
+} else {
+    $DestSkills = Join-Path $Target ".grok\skills"
+}
 New-Item -ItemType Directory -Force -Path $DestSkills | Out-Null
 
 Write-Host "`nGrok D&D Skills Installer`n" -ForegroundColor Magenta
