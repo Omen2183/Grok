@@ -29,7 +29,7 @@ description: Player character sheet management — summary, level-up, inventory,
 | Markdown export | ✅ Implemented | `export` command |
 | Level-up suggestions | ✅ Implemented | `suggest-level-up` CLI |
 | Companion tracking | ✅ Implemented | `companion add/list/get/remove` |
-| Companion management | ⚠️ Partial | Functions exist; limited CLI commands |
+| Post-combat sheet sync | ✅ Implemented | `sync` reconciles combat → sheet |
 | Full multiclass builder UI | ❌ Prompt-only | Grok guides; use `--class` per level |
 
 ## Tools & Scripts
@@ -40,7 +40,13 @@ python .grok/skills/dnd-character-manager/scripts/character_manager.py inventory
 python .grok/skills/dnd-character-manager/scripts/character_manager.py inventory "My Campaign" attune --name "Cloak of Protection"
 python .grok/skills/dnd-character-manager/scripts/character_manager.py death-save "My Campaign" success
 python .grok/skills/dnd-character-manager/scripts/character_manager.py export "My Campaign"
+python .grok/skills/dnd-character-manager/scripts/character_manager.py suggest-level-up "My Campaign"
+python .grok/skills/dnd-character-manager/scripts/character_manager.py companion "My Campaign" add --name "Wolf" --hp 11
+python .grok/skills/dnd-character-manager/scripts/character_manager.py companion "My Campaign" list
+python .grok/skills/dnd-character-manager/scripts/character_manager.py sync "My Campaign"
 ```
+
+Primary script: `character_manager.py` — commands: `summary`, `level-up`, `inventory`, `death-save`, `export`, `suggest-level-up`, `companion`, `sync`
 
 **Level-up note:** Always pass `--class` when adding a class level (e.g. `--class Wizard` for a multiclass dip). Omitting it levels the primary class only.
 
@@ -56,6 +62,14 @@ python .grok/skills/dnd-character-manager/scripts/character_manager.py export "M
 | `state/player_character.json` | R/W | Full PC sheet |
 | `state/player_character.md` | W | Human-readable export |
 | `state/companions.json` | R/W | Companion data (import functions) |
+
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | Character sheet, level-up, inventory intents → this skill |
+| Orchestrator | `plan` may chain loot pickup → `inventory add` |
+| Playbooks | `end-combat` may call `sync` for sheet reconciliation |
+| sync_bridge | combat-assistant writes HP/death saves here during fights |
 
 ## Integration
 - **Uses:** dnd-utils paths and world state

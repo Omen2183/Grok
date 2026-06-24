@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.2.1 — Documentation sweep + Grok iOS integration hardening
+
+### Added
+- `scripts/validate_skill_docs.py` — verifies SKILL.md documents all CLI commands, Skill Coordination, and iOS/Voice sections
+- `scripts/extract_cli_commands.py` — helper to list subcommands per skill
+- `test_paths.py` — `DND_CAMPAIGNS_ROOT` and `GROK_ARTIFACTS_ROOT` resolution tests
+- **Skill Coordination** section in all 16 SKILL.md files (registry → orchestrator → playbooks → voice)
+
+### Changed
+- All 16 `SKILL.md` files updated with honest capability matrices and complete CLI examples
+- `paths.py` — Grok iOS host env vars (`GROK_ARTIFACTS_ROOT`, `GROK_USER_DATA`, `GROK_HOME`) + mobile path candidates
+- `procedural_loot.py` — uses `bootstrap`/`paths` instead of hardcoded `/home/workdir/` fallback
+- `_PRODUCTION_CONVENTIONS.md` — SKILL.md requirements checklist + iOS path notes
+- CI runs `validate_skill_docs.py`
+
 ## 3.2.0 — Full Python backends for all 16 skills
 
 ### Added

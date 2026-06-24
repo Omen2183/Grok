@@ -1,6 +1,6 @@
 ---
 name: dnd-rumor-event-generator
-description: Generate rumors, faction actions, random world events, and downtime developments to keep campaigns reactive. v2.0.0 production. Triggers include what's the rumor mill, random event, faction move, downtime activity, kingdom event, world reacts. Especially strong in kingdom mode and sandbox play. Backed by rumor_generator.py CLI.
+description: Generate rumors, faction actions, random world events, and downtime developments to keep campaigns reactive. v3.2.0 production. Triggers include what's the rumor mill, random event, faction move, downtime activity, kingdom event, world reacts. Especially strong in kingdom mode and sandbox play. Backed by rumor_generator.py CLI with persistent ledger.
 ---
 
 # D&D Rumor & Event Generator
@@ -14,56 +14,68 @@ description: Generate rumors, faction actions, random world events, and downtime
 
 ## Quick Start (Mobile)
 1. Say **"What's happening in the world while we rest?"**
-2. Grok runs `rumor_generator rumors` from kingdom/world state.
+2. Grok runs `rumors` from kingdom/world state.
 3. Player pursues one → persistent-dm runs the scene.
 
 ## Capabilities (Honest Matrix)
 | Capability | Status | Notes |
 |------------|--------|-------|
-| Procedural rumors | ✅ Implemented | `rumor_generator.py rumors` |
-| World events | ✅ Implemented | `rumor_generator.py world-event` |
+| Procedural rumors | ✅ Implemented | `rumors` |
+| List recent rumors | ✅ Implemented | `list` (events + ledger) |
+| Faction moves | ✅ Implemented | `faction-move` |
+| Rumor ledger persistence | ✅ Implemented | `ledger`, `rumors_ledger.json` |
+| World events | ✅ Implemented | `world-event` |
 | Context-aware generation | ✅ Implemented | Reads `kingdom_state.json` + factions |
-| Kingdom/domain events | ✅ Implemented | Trade, unrest, military seeds |
-| Faction reaction narratives | ✅ Implemented | State-driven templates + Grok polish |
-| Persist generated events | ✅ Implemented | Via dnd-utils `record-event` |
+| Kingdom/domain events | ✅ Implemented | Via `kingdom_sim` domain chains |
+| Persist generated events | ✅ Implemented | `record-event` + ledger (use `--no-persist` to skip) |
 | Long-horizon faction AI | ⚠️ Partial | Use kingdom_sim for cascading effects |
 
 ## Tools & Scripts
+Primary script: `rumor_generator.py` — commands: `rumors`, `list`, `faction-move`, `world-event`, `ledger`
+
 ```bash
 python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py rumors "My Campaign" --count 3
+python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py rumors "My Campaign" --no-persist
+python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py list "My Campaign" --limit 10
+python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py faction-move "My Campaign" --faction merchants --seed bandits
 python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py world-event "My Campaign" --seed unrest
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --file kingdom_state
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py kingdom-summary "My Campaign"
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py search-events "My Campaign" --tag rumor --limit 5
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py record-event "My Campaign" "Merchants whisper of iron shortages" --tags rumor,faction
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py advance-projects "My Campaign" --turns 1
+python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py ledger "My Campaign"
 ```
 
 ## Behavior
 - Tie rumors to active factions, location, and recent player deeds.
 - Offer 2–3 hooks; let player choose — don't force all.
 - Kingdom mode: mix resource shifts, diplomatic moves, and threats.
-- Log adopted rumors/events via `record-event`.
+- Log adopted rumors/events via `record-event` (default on).
 
 ## State & Files
 | File | R/W | Contents |
 |------|-----|----------|
 | `state/kingdom_state.json` | R | Factions, resources, projects |
 | `state/world_state.json` | R | Location, time, mode |
+| `state/rumors_ledger.json` | W | Persisted rumor entries |
 | `logs/events.json` | W | Recorded rumors/events |
 
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | Rumor/world-event intents → this skill |
+| Orchestrator | `plan` may chain rumors after rest or kingdom turn |
+| Playbooks | `kingdom-turn`, `downtime` include rumor generation |
+| Voice (iOS) | One rumor at a time; ask *"Want another?"* |
+
 ## Integration
-- **Uses:** dnd-utils state + event logging
-- **Called by:** persistent-dm during downtime/kingdom turns
-- **Pairs with:** lore-archivist (canonize events), npc-weaver (involved NPCs)
+- **Uses:** dnd-utils state, `event_system`, `kingdom_sim`
+- **Called by:** persistent-dm, downtime-manager (playbook `downtime`)
+- **Pairs with:** lore-archivist (canonize events), quest-tracker (hooks), npc-weaver
 
 ## iOS / Voice Notes
 - Present one rumor at a time in voice; ask *"Want another?"*
 - Keep each rumor to 2 sentences.
+- Don't read ledger JSON — summarize `list` results.
 
 ## Example Flow
-→ `rumor_generator rumors --count 3` → present hooks
+→ `rumors --count 3` → present hooks
 → *"1) Bandits on the east road. 2) Grain prices spike. 3) A lord seeks mercenaries."*
 → Player picks #1 → persistent-dm scenes it
-→ `record-event` with tag `rumor`
 → **What do you do?**

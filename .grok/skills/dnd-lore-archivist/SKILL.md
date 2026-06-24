@@ -36,6 +36,8 @@ description: Maintain, query, and update deep campaign lore, NPC knowledge, fact
 python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py append "My Campaign" "The vault beneath Thornhold is a prison for ancient wraiths"
 python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py summary "My Campaign"
 python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py query "My Campaign" "vault"
+python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py list-npcs "My Campaign"
+python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py list-recaps "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --file kingdom_state
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py search-events "My Campaign" --tag lore --limit 10
 python .grok/skills/dnd-npc-personality-weaver/scripts/npc_manager.py get "My Campaign" npc-id
@@ -57,6 +59,14 @@ python .grok/skills/dnd-npc-personality-weaver/scripts/npc_manager.py get "My Ca
 | `logs/events.json` | R/W | Lore-tagged events |
 | `recaps/session_*.md` | R | Historical narrative |
 | `logs/session_log.md` | R | GM notes |
+
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | Lore query/update intents → this skill |
+| Orchestrator | `plan` may chain rumor events → `append` for canonization |
+| Playbooks | Optional follow-up after `kingdom-turn` rumors |
+| Voice (iOS) | One fact per sentence; offer *"Want more detail?"* |
 
 ## Integration
 - **Uses:** dnd-utils, npc-weaver (reads)

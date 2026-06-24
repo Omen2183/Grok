@@ -47,8 +47,15 @@ python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py summary "My C
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py death-save-success "My Campaign" --target "Aria"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py death-save-failure "My Campaign" --target "Aria"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py apply-condition "My Campaign" --target "Aria" --condition "Poisoned" --duration-rounds 3
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py apply-temp-hp "My Campaign" --target "Aria" --amount 5
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py set-concentration "My Campaign" --caster "Aria" --spell "Bless"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py tick-conditions "My Campaign"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py remove "My Campaign" --target "Goblin 1"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py resolve-mass-combat "My Campaign" --attacker "Kingdom forces" --defender "Bandits" --scale medium
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py end-combat "My Campaign" --xp 150
 ```
+
+Primary script: `combat_tracker.py` — all commands listed above.
 
 ## Behavior
 - Lead with whose turn it is and target HP after each change.
@@ -63,6 +70,14 @@ python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py end-combat "M
 | `combat/current_combat.json` | R/W | Combatants, round, turn index, log |
 | `state/player_character.json` | W | HP/death-save sync via sync_bridge |
 | `state/important_companion.json` | W | Companion HP sync |
+
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | `damage`, `healing`, `next_turn`, `combat_status` intents → this skill |
+| Orchestrator | `plan` chains dice-engine attack roll → `damage` on hit |
+| Playbooks | `start-combat` (init), `end-combat` (end + loot + sync) |
+| sync_bridge | **Required** on PC damage/heal/death-saves — never skip sheet sync |
 
 ## Integration
 - **Uses:** dnd-utils (`update_player_hp`, `record_combat_outcome`, `sync_bridge`)

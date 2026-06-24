@@ -50,9 +50,21 @@ python .grok/skills/dnd-utils/scripts/skill_registry.py list
 python .grok/skills/dnd-utils/scripts/skill_registry.py resolve damage --campaign "My Campaign"
 python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan "My Campaign" "next turn"
 python .grok/skills/dnd-utils/scripts/skill_orchestrator.py playbook "My Campaign" kingdom-turn
+python .grok/skills/dnd-utils/scripts/skill_orchestrator.py execute "My Campaign" damage --target Goblin --amount 8
+python .grok/skills/dnd-utils/scripts/skill_registry.py coordination damage --campaign "My Campaign"
+python .grok/skills/dnd-utils/scripts/skill_registry.py graph
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py validate "My Campaign"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py enhanced-audit "My Campaign"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py clear-combat "My Campaign"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py search-events "My Campaign" --tag combat --limit 10
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py query-sql-events "My Campaign" --limit 5
+python .grok/skills/dnd-utils/scripts/narration_cli.py mobile-status "My Campaign"
+python .grok/skills/dnd-utils/scripts/narration_cli.py opening "My Campaign"
+python .grok/skills/dnd-utils/scripts/narration_cli.py suggest "My Campaign"
+python .grok/skills/dnd-utils/scripts/narration_cli.py hp-change "My Campaign" --before 32 --after 24
 ```
 
-Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`.
+Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`, `xp_tables.py`, `errors.py`.
 
 ## Behavior
 - Resolve campaign root via `paths.py` (`DND_CAMPAIGNS_ROOT` → `~/.grok/artifacts/dnd-campaigns/`).
@@ -74,10 +86,18 @@ Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_help
 | `logs/session_log.md` | Append-only session notes |
 | `combat/current_combat.json` | Active encounter (combat-assistant) |
 
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | `skill_registry.py` — canonical map for all 16 skills |
+| Orchestrator | `skill_orchestrator.py` — `plan`, `execute`, `playbook` |
+| Mobile (iOS) | `narration_cli.py` — `mobile-status`, `opening`, `hp-change` for short replies |
+| sync_bridge | Library module — combat-assistant ↔ character-manager HP sync |
+
 ## Integration
 - **Called by:** persistent-dm, combat-assistant, character-manager, session-scribe, loot-generator, npc-weaver, visual-weaver, dice-engine
 - **Calls:** `event_system.py`, `kingdom_sim.py`, `sqlite_layer.py`, `sync_bridge.py` internally
-- **No direct player narration**
+- **No direct player narration** — use persistent-dm or narration_cli for player-facing text
 
 ## iOS / Voice Notes
 - Status replies should be ≤8 lines; lead with location + HP.

@@ -2,8 +2,9 @@
 
 ## Campaign data location
 Resolved automatically by `dnd-utils/scripts/paths.py`:
-- `DND_CAMPAIGNS_ROOT` env var (if set)
-- `~/.grok/artifacts/dnd-campaigns/` (Windows/macOS local)
+- `DND_CAMPAIGNS_ROOT` env var (if set — preferred on Grok iOS if auto-detect fails)
+- `GROK_ARTIFACTS_ROOT` / `GROK_USER_DATA` / `GROK_HOME` (host-provided roots)
+- `~/.grok/artifacts/dnd-campaigns/` (Windows/macOS local, Grok iOS when sandboxed)
 - `/home/workdir/artifacts/dnd-campaigns/` (Grok cloud)
 
 ## Script invocation
@@ -48,6 +49,16 @@ python .grok/skills/dnd-utils/scripts/skill_registry.py resolve damage --campaig
 - **Never skip** combat→character HP sync (`sync_bridge`) when damage applies to PC
 - **Session end** always chains: session-scribe → quest-tracker hooks → utils audit
 - **Kingdom turns** always chain: utils projects → rumor-generator → optional lore-archivist
+
+## SKILL.md requirements (all 16 skills)
+Each `SKILL.md` must include:
+1. **Capabilities (Honest Matrix)** — only ✅ for implemented CLI behavior
+2. **Tools & Scripts** — every subcommand from `scripts/*.py` with examples
+3. **Skill Coordination** — registry, orchestrator, relevant playbooks, voice path
+4. **Integration** — who calls this skill and what it calls
+5. **iOS / Voice Notes** — mobile-first output rules where player-facing
+
+Validate with: `python scripts/validate_skill_docs.py`
 
 ## Grok iOS output rules
 1. Lead with the answer — narration second, mechanics in a short block

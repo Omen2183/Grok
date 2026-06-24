@@ -1,6 +1,6 @@
 ---
 name: dnd-rules-reference
-description: Accurate 5e rules clarification including homebrew considerations. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Delivers clear rulings for consistent long-term play. Backend rules_cheatsheet.py for common topics; Grok knowledge for edge cases.
+description: Accurate 5e rules clarification including homebrew considerations. v3.2.0 production. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Backend rules_cheatsheet.py with 25+ topics; Grok knowledge for edge cases.
 ---
 
 # D&D Rules Reference
@@ -14,31 +14,39 @@ description: Accurate 5e rules clarification including homebrew considerations. 
 
 ## Quick Start (Mobile)
 1. Ask **"How does grappling work?"** or **"Does silence break concentration?"**
-2. Grok gives a clear ruling with brief RAW citation style.
+2. Grok runs `search` or `condition` on the cheatsheet, then gives a clear ruling.
 3. Apply ruling in play via persistent-dm or combat-assistant.
 
 ## Capabilities (Honest Matrix)
 | Capability | Status | Notes |
 |------------|--------|-------|
-| 5e rules explanations | ⚠️ Partial | Grok knowledge; no SRD script |
-| Homebrew-aware rulings | ⚠️ Partial | Reads campaign notes if present |
-| Condition reference | ⚠️ Partial | Narrative; combat-assistant applies conditions |
+| Cheatsheet topic lookup | ✅ Implemented | `rules_cheatsheet.py` + `rules_data.py` (25+ topics) |
+| Search rules by keyword | ✅ Implemented | `search` command |
+| Condition reference | ✅ Implemented | `condition` command |
+| Topic listing | ✅ Implemented | `list`, `topics` |
+| Homebrew-aware rulings | ✅ Implemented | `homebrew` reads campaign notes |
+| Full 5e explanations (edge cases) | ⚠️ Partial | Grok knowledge beyond cheatsheet |
 | Spell/feat lookup by name | ⚠️ Partial | LLM recall; verify for niche content |
-| Rules cheatsheet CLI | ✅ Implemented | `rules_cheatsheet.py lookup` for common topics |
 | Full automated rules engine | ❌ Not implemented | No complete SRD database |
 | Official source page links | ❌ Prompt-only | Summarize in chat |
 
 ## Tools & Scripts
+Primary script: `rules_cheatsheet.py` — commands: `list`, `topics`, `lookup`, `search`, `condition`, `homebrew`  
+Supporting: `rules_data.py` (import-only topic database)
+
 ```bash
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py list
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py topics
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py lookup concentration
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --file player_character
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py search grapple
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py condition prone
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py homebrew "My Campaign" custom-rest-rules
 ```
 
 ## Behavior
 - Lead with the **ruling**, then one-sentence rationale.
+- Prefer cheatsheet CLI output when topic exists; supplement with Grok for edge cases.
 - Note when table/homebrew overrides RAW.
-- For contested calls: offer both interpretations, recommend one.
 - Keep under 6 lines unless player asks *"full detail"*.
 
 ## State & Files
@@ -47,16 +55,26 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --fi
 | `state/player_character.json` | R | Class/features for context |
 | `state/world_state.json` | R | Homebrew notes field |
 
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | Rules questions route here before combat/character changes |
+| Orchestrator | `plan` may chain rules lookup → combat `apply-condition` |
+| Playbooks | Not a playbook step — on-demand during play |
+| Voice (iOS) | Verdict-first spoken rulings; avoid reading markdown lists |
+
 ## Integration
-- **Called by:** persistent-dm, voice-assistant
+- **Called by:** persistent-dm, combat-assistant, voice-assistant
 - **Feeds into:** combat-assistant (apply conditions), character-manager (features)
 
 ## iOS / Voice Notes
 - Voice rulings: verdict first, example second.
 - Avoid numbered rules subsections aloud — use plain speech.
+- Use `search` backend silently; speak the synthesized ruling.
 
 ## Example Flow
 Player: *"Can I use a bonus action while surprised?"*
-→ Ruling: *"No — surprised creatures can't take actions or reactions on their first turn."*
+→ `search surprised` or Grok ruling
+→ *"No — surprised creatures can't take actions or reactions on their first turn."*
 → persistent-dm continues combat
 → **What do you do?**

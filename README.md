@@ -60,7 +60,7 @@ Override with the `DND_CAMPAIGNS_ROOT` environment variable.
 
 - **Grok iOS native:** mobile-first replies, honest capability matrices in each `SKILL.md`, voice routing via `dnd-voice-assistant`
 - **Shared state:** `dnd-utils/scripts/paths.py` resolves campaign folders on Windows, macOS, and Grok cloud
-- **68 tests** + orchestration flow + full CLI smoke test (all 16 skills)
+- **87+ tests** + orchestration flow + full CLI smoke test (all 16 skills)
 - **skill_registry** + **skill_orchestrator** for cross-skill coordination
 - **GitHub Actions CI** on Python 3.11 and 3.12
 
@@ -73,6 +73,8 @@ python -m pytest -q            # full test suite
 python scripts/smoke_test.py   # smoke test all 16 skill CLIs
 python scripts/validate_skills.py  # verify every skill has Python backend
 python scripts/validate_orchestration.py  # verify registry matches all 16 skills
+python scripts/validate_backends.py       # min CLI depth + smoke per skill
+python scripts/validate_skill_docs.py     # SKILL.md matches backends + iOS sections
 ```
 
 ## Development
@@ -102,7 +104,7 @@ AGENTS.md              # Agent instructions for this repo
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py status "My Campaign"
 
 # Roll dice
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+5" --advantage
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 1d20+5 --advantage
 
 # Generate loot
 python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py generate "My Campaign" --cr 3

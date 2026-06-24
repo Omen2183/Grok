@@ -22,6 +22,14 @@ def get_campaigns_root() -> Path:
     if env_root:
         return Path(env_root).expanduser().resolve()
 
+    # Grok iOS / mobile app may expose a user-data root (set by host if non-default)
+    for key in ("GROK_ARTIFACTS_ROOT", "GROK_USER_DATA", "GROK_HOME"):
+        host_root = os.environ.get(key)
+        if host_root:
+            candidate = Path(host_root).expanduser() / "artifacts" / "dnd-campaigns"
+            if candidate.parent.exists():
+                return candidate.resolve()
+
     cloud = Path("/home/workdir/artifacts/dnd-campaigns")
     if cloud.parent.exists():
         return cloud
@@ -29,6 +37,8 @@ def get_campaigns_root() -> Path:
     home = Path.home()
     local_candidates = [
         home / ".grok" / "artifacts" / "dnd-campaigns",
+        home / "Library" / "Application Support" / "Grok" / "artifacts" / "dnd-campaigns",
+        home / "Documents" / "Grok" / "artifacts" / "dnd-campaigns",
         home / "artifacts" / "dnd-campaigns",
         Path.cwd() / "artifacts" / "dnd-campaigns",
     ]

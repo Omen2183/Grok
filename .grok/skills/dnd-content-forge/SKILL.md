@@ -37,7 +37,13 @@ python .grok/skills/dnd-content-forge/scripts/generate_monster.py "My Campaign" 
 python .grok/skills/dnd-content-forge/scripts/encounter_builder.py build "My Campaign" --theme "forest ambush" --difficulty Hard --save
 python .grok/skills/dnd-content-forge/scripts/content_forge.py quest "My Campaign" --theme "missing caravan"
 python .grok/skills/dnd-content-forge/scripts/content_forge.py faction "My Campaign" --name "Merchant Guild"
+python .grok/skills/dnd-content-forge/scripts/content_forge.py magic-item "My Campaign" --theme "storm-forged blade"
+python .grok/skills/dnd-content-forge/scripts/content_forge.py domain-event "My Campaign" --seed drought
+python .grok/skills/dnd-content-forge/scripts/encounter_builder.py list
+python .grok/skills/dnd-content-forge/scripts/generate_monster.py "My Campaign" --theme "Ash wraith" --cr 4 --save --content
 ```
+
+Scripts: `generate_monster.py` (positional CLI), `encounter_builder.py` (`build`, `list`), `content_forge.py` (`quest`, `faction`, `magic-item`, `domain-event`)
 
 ## Behavior
 - Pull party level from campaign state when available.
@@ -52,10 +58,18 @@ python .grok/skills/dnd-content-forge/scripts/content_forge.py faction "My Campa
 | `state/kingdom_state.json` | R | Domain context (import) |
 | `state/world_state.json` | R | Mode (tabletop/kingdom) |
 
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | Encounter/monster/quest content intents → this skill |
+| Orchestrator | `plan` may chain monster gen → combat `init` |
+| Playbooks | `start-combat` may use encounter_builder output |
+| Voice (iOS) | Summarize stat blocks verbally; full detail on request |
+
 ## Integration
 - **Uses:** dnd-utils for party/kingdom context
 - **Called by:** persistent-dm for encounters and side content
-- **Pairs with:** combat-assistant (run fight), loot-generator (rewards)
+- **Pairs with:** combat-assistant (run fight), loot-generator (rewards), npc-weaver (persist NPCs)
 
 ## iOS / Voice Notes
 - Summarize stat blocks verbally: HP, AC, one signature ability.

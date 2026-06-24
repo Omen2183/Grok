@@ -23,3 +23,4 @@ jobs:
       - run: python scripts/validate_skills.py
       - run: python scripts/validate_orchestration.py
       - run: python scripts/validate_backends.py
+      - run: python scripts/validate_skill_docs.py

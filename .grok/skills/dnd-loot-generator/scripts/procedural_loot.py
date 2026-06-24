@@ -24,26 +24,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
-# Import shared utils
-sys.path.append(str(Path(__file__).parent.parent.parent / "dnd-utils" / "scripts"))
-try:
-    from dnd_state_utils import get_campaign_path, load_json, save_json
-except ImportError:
-    print("Warning: dnd_state_utils not available. Running in limited mode.", file=sys.stderr)
-    def get_campaign_path(name): return Path(f"/home/workdir/artifacts/dnd-campaigns/{name}")
-    def load_json(p, default=None):
-        if p.exists():
-            return json.loads(p.read_text(encoding="utf-8"))
-        return default or {}
-    def save_json(p, data, create_backup=True):
-        p.parent.mkdir(parents=True, exist_ok=True)
-        temp = p.with_suffix(".tmp")
-        try:
-            with open(temp, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-            temp.replace(p)
-        except Exception:
-            pass
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-utils" / "scripts"))
+from bootstrap import ensure_utils_importable  # noqa: E402
+
+ensure_utils_importable()
+from dnd_state_utils import get_campaign_path, load_json, save_json  # noqa: E402
 
 # =============================================================================
 # GENERIC LOOT TABLES (Easily extensible)

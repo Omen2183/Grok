@@ -31,13 +31,24 @@ description: Reliable Python dice roller for all D&D actions. Triggers include r
 | 3d physical dice animation | ❌ Prompt-only | Text/JSON output only |
 
 ## Tools & Scripts
+Primary script: `dice_roller.py` — commands: `roll`, `initiative`, `parse`, `percentile`, `check`, `attack`, `save`, `history`
+
 ```bash
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+5"
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+7" --advantage --campaign "My Campaign"
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+3" --disadvantage
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "4d6kh3"
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "2d6+4" --exploding
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "2d10" 
+# General notation (legacy positional also works: dice_roller.py "1d20+5")
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 1d20+7 --advantage --campaign "My Campaign"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 4d6kh3 --campaign "My Campaign"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 2d6+4 --exploding
+
+# 5e-specific rolls
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py check 5 --advantage --dc 15 --campaign "My Campaign"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py attack 8 --advantage --campaign "My Campaign"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py save 3 --disadvantage --dc 14
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py initiative 4 --campaign "My Campaign"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py percentile 0
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py parse 4d6kh3
+
+# Campaign roll log
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py history "My Campaign" --limit 10
 ```
 
 ## Behavior
@@ -51,8 +62,16 @@ python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "2d10"
 |------|-----|------|
 | `logs/rolls.json` | W | When `--campaign` is provided |
 
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | Intent `dice_roll` / `combat_action` (step 1) → this skill |
+| Orchestrator | `plan` adds `--campaign` and follow-up combat damage when attack hits |
+| Playbooks | `start-combat` may call `initiative`; combat flow uses `check`/`attack` then combat-assistant |
+| Voice (iOS) | `voice_utils plan` → `dice_roller roll` or `attack`/`check`/`save` |
+
 ## Integration
-- **Uses:** dnd-utils `log_roll` (optional)
+- **Uses:** dnd-utils `log_roll` (optional via `--campaign`)
 - **Called by:** persistent-dm, combat-assistant, character-manager (companion initiative)
 - **Voice:** voice-assistant routes `dice_roll` intent here
 

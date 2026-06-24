@@ -1,6 +1,6 @@
 ---
 name: dnd-persistent-dm
-description: Play or continue any D&D campaign with Grok as DM. v3.0.0 production orchestrator with skill_registry coordination. Triggers include play D&D, DM mode, continue campaign, kingdom mode, end session, what's happening. Routes all 16 skills via persistent_dm.py + skill_orchestrator.py playbooks. Persistent JSON state per campaign.
+description: Play or continue any D&D campaign with Grok as DM. v3.2.0 production orchestrator with skill_registry coordination. Native Grok iOS entry point for text and voice play. Triggers include play D&D, DM mode, continue campaign, kingdom mode, end session, what's happening. Routes all 16 skills via persistent_dm.py + skill_orchestrator.py playbooks. Persistent JSON state per campaign.
 ---
 
 # D&D Persistent DM
@@ -47,6 +47,8 @@ python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py kingdom-turn "My 
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py execute "My Campaign" damage --target Goblin --amount 8
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" session-end
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py registry dnd-combat-assistant
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py status "My Campaign"
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py health "My Campaign" --enhanced
 python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan "My Campaign" "Goblin takes 8 damage"
 python .grok/skills/dnd-utils/scripts/skill_registry.py playbook session-end
 
@@ -56,7 +58,7 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py status "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py session-summary "My Campaign"
 
 # During play
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+7" --advantage --campaign "My Campaign"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 1d20+7 --advantage --campaign "My Campaign"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py init "My Campaign" --encounter "Ambush"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py damage "My Campaign" --target "Goblin" --amount 8
 python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py hoard "My Campaign" --level 5 --cr 4
@@ -125,6 +127,18 @@ Campaign root resolved by `paths.py` (`DND_CAMPAIGNS_ROOT` or `~/.grok/artifacts
 | `npcs/` | Persistent NPCs |
 | `logs/` | events, rolls, session_log |
 | `recaps/` | Session recaps |
+
+## Skill Coordination
+This skill is the **DM hub** for all 16 skills. Every cross-skill call flows through:
+
+| Layer | Script | Use |
+|-------|--------|-----|
+| Registry | `skill_registry.py` | Intent → skill + CLI before delegating |
+| Orchestrator | `skill_orchestrator.py` | `plan` / `execute` / `playbook` |
+| Voice (iOS) | `voice_utils.py` | Voice entry → `plan` → hub or specialist |
+| sync_bridge | import via combat-assistant | PC HP/death saves ↔ character sheet |
+
+Named playbooks: `new-campaign`, `start-combat`, `end-combat`, `session-end`, `kingdom-turn`, `downtime`.
 
 ## Integration
 | Trigger | Delegate to |

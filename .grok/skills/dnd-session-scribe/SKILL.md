@@ -34,7 +34,10 @@ python .grok/skills/dnd-session-scribe/scripts/session_scribe.py award-xp "My Ca
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py recap "My Campaign" "The party cleared the mine and found a sealed door." --hook "Something stirs behind the door"
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py auto-recap "My Campaign" --save
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "auto" --auto --xp 450 --reason "Session 12" --hook "Corruption spreads north"
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py append-log "My Campaign" "Party negotiated with the baron"
 ```
+
+Primary script: `session_scribe.py` — commands: `award-xp`, `recap`, `auto-recap`, `end-session`, `append-log`
 
 ## Behavior
 - Confirm XP: *"XP 2,700 → 3,150 (+450)."*
@@ -50,6 +53,14 @@ python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My
 | `logs/session_log.md` | W | Append-only notes |
 | `logs/events.json` | W | XP/session events |
 | `combat/current_combat.json` | W | Cleared on end-session |
+
+## Skill Coordination
+| Layer | Role |
+|-------|------|
+| Registry | `end_session` intent → this skill (requires confirmation in voice) |
+| Orchestrator | `plan` chains `auto-recap` → `end-session` → quest list |
+| Playbooks | `session-end`: auto-recap → end-session → quest list → enhanced audit |
+| Voice (iOS) | Confirm before `end-session`; player speaks summary |
 
 ## Integration
 - **Uses:** dnd-utils (`audit_campaign`, `clear_combat_state`, `get_world_state`)
