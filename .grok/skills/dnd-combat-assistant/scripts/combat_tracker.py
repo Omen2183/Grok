@@ -31,7 +31,12 @@ try:
         update_player_hp,
         update_important_companion,
     )
-    from sync_bridge import on_player_death_save, on_player_damaged, on_player_healed
+    from sync_bridge import (
+        on_player_death_save,
+        on_player_damaged,
+        on_player_healed,
+        sync_combatant_to_character,
+    )
 except ImportError:
     print("Warning: dnd_state_utils not available. Running in limited mode.", file=sys.stderr)
     from paths import get_campaign_path  # type: ignore
@@ -42,6 +47,7 @@ except ImportError:
     def on_player_damaged(*a, **k): return {}
     def on_player_healed(*a, **k): return {}
     def on_player_death_save(*a, **k): return {}
+    def sync_combatant_to_character(*a, **k): return None
 
 def get_combat_file(campaign_name: str) -> Path:
     return get_campaign_path(campaign_name) / "combat" / "current_combat.json"
@@ -523,7 +529,14 @@ def end_combat(campaign_name: str, award_xp: int = 0) -> Dict[str, Any]:
     combat["log"].append("=== COMBAT ENDED ===")
     if award_xp > 0:
         combat["log"].append(f"XP awarded: {award_xp}")
-    
+
+    for c in combat.get("combatants", []):
+        if c.get("is_player"):
+            try:
+                sync_combatant_to_character(campaign_name, c)
+            except Exception:
+                pass
+
     # Clear the combat file (with backup)
     combat_file = get_combat_file(campaign_name)
     if combat_file.exists():

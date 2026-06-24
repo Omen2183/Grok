@@ -39,6 +39,8 @@ except ImportError:
 
 
 def on_player_damaged(campaign_name: str, new_hp: int) -> Dict[str, Any]:
+    """Sync combat HP to the character sheet; initialize dying state at 0 HP."""
+    update_player_hp(campaign_name, new_current=max(0, new_hp))
     if new_hp <= 0:
         return handle_character_downed(campaign_name)
     return sync_character_status(campaign_name)

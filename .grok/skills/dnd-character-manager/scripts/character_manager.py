@@ -578,6 +578,8 @@ def handle_character_downed(campaign_name: str) -> Dict[str, Any]:
     Initializes or resets death save tracking and sets status to 'Dying'.
     """
     char = load_character(campaign_name)
+    hp = char.setdefault("hit_points", {"current": 0, "max": 0, "temp": 0})
+    hp["current"] = 0
     ds = char.setdefault("death_saves", {"successes": 0, "failures": 0, "status": "dying"})
     ds["successes"] = 0
     ds["failures"] = 0

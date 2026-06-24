@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.0.2 — Combat sync verification & end-of-combat reconciliation
+
+### Added
+- `end_combat` calls `sync_combatant_to_character` for player PCs before archiving combat state
+- Integration tests proving `apply_damage`, `apply_healing`, `record_death_save`, and `end_combat` sync via `sync_bridge`
+
+### Fixed
+- `sync_bridge.on_player_damaged` now writes combat HP to the character sheet (was only setting Dying status at 0 HP)
+- `handle_character_downed` explicitly zeroes sheet HP when a PC drops
+
+### Notes
+- GitHub `combat_tracker.py` already wires `sync_bridge` in damage/heal/death-save paths (v3.0.0+). Cloud/local copies that only call `update_player_hp` should pull this repo to restore full dying/stable/healing logic.
+
 ## 3.0.1 — Event system hardening
 
 ### Added
