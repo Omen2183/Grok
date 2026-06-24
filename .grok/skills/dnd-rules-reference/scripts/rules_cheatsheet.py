@@ -1,79 +1,30 @@
 #!/usr/bin/env python3
-"""Lightweight 5e rules quick-reference for Grok DM play."""
+"""Full 5e rules quick-reference backend for Grok DM play."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-CHEATSHEET: Dict[str, Dict[str, Any]] = {
-    "advantage": {
-        "summary": "Roll 2d20, take the higher result.",
-        "details": [
-            "Multiple sources of advantage still roll only 2d20.",
-            "Advantage and disadvantage on the same roll cancel out.",
-        ],
-    },
-    "disadvantage": {
-        "summary": "Roll 2d20, take the lower result.",
-        "details": [
-            "Multiple sources of disadvantage still roll only 2d20.",
-            "Advantage and disadvantage cancel — roll a single d20.",
-        ],
-    },
-    "concentration": {
-        "summary": "One concentration spell at a time; CON save DC 10 or half damage taken (whichever higher).",
-        "details": [
-            "Lose concentration when incapacitated or when you cast another concentration spell.",
-            "DM may call for CON save on environmental hazards while concentrating.",
-        ],
-    },
-    "death_saves": {
-        "summary": "At 0 HP: roll d20 each turn — 10+ success, 9- failure; 3 of either stabilizes or kills.",
-        "details": [
-            "Natural 20: regain 1 HP. Natural 1: counts as 2 failures.",
-            "Damage while at 0 HP causes 1 failure (2 on crit).",
-        ],
-    },
-    "opportunity_attack": {
-        "summary": "When a creature you can see leaves your reach, one melee attack as a reaction.",
-        "details": [
-            "Disengage prevents opportunity attacks from that creature.",
-            "Forced movement does not provoke unless the mover uses its own movement.",
-        ],
-    },
-    "grapple": {
-        "summary": "Special melee attack: Athletics vs Athletics or Acrobatics; target is grappled (speed 0).",
-        "details": [
-            "Escape: action, Athletics or Acrobatics vs grappler's Athletics.",
-            "Moving a grappled creature costs double movement.",
-        ],
-    },
-    "cover": {
-        "summary": "Half cover +2 AC/DEX saves; three-quarters +5; total cover cannot be targeted.",
-        "details": ["DM adjudicates line of sight and obstruction."],
-    },
-    "conditions": {
-        "summary": "Standard conditions include Blinded, Charmed, Frightened, Grappled, Incapacitated, and more.",
-        "details": [
-            "Incapacitated: can't take actions or reactions.",
-            "Unconscious: incapacitated, drops items, auto-fail STR/DEX saves, attacks have advantage.",
-        ],
-    },
-}
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-utils" / "scripts"))
+
+from rules_data import CHEATSHEET, CONDITION_ALIASES, TOPIC_ALIASES  # noqa: E402
+
+RULES_BACKEND_VERSION = "3.2.0"
+
+
+def list_topics(*, tag: Optional[str] = None) -> List[str]:
+    if not tag:
+        return sorted(CHEATSHEET.keys())
+    return sorted(k for k, v in CHEATSHEET.items() if tag.lower() in v.get("tags", []))
 
 
 def lookup_rule(topic: str) -> Dict[str, Any]:
     key = topic.lower().replace(" ", "_").replace("-", "_")
-    aliases = {
-        "adv": "advantage",
-        "disadv": "disadvantage",
-        "death_save": "death_saves",
-        "opportunity_attacks": "opportunity_attack",
-        "grappling": "grapple",
-    }
-    key = aliases.get(key, key)
+    key = CONDITION_ALIASES.get(key, TOPIC_ALIASES.get(key, key))
     if key not in CHEATSHEET:
         matches = [k for k in CHEATSHEET if key in k or k in key]
         if len(matches) == 1:
@@ -88,23 +39,76 @@ def lookup_rule(topic: str) -> Dict[str, Any]:
     return {"found": True, "topic": key, **entry}
 
 
-def list_topics() -> List[str]:
-    return sorted(CHEATSHEET.keys())
+def search_rules(query: str, *, limit: int = 10) -> Dict[str, Any]:
+    needle = query.lower()
+    hits: List[Dict[str, Any]] = []
+    for topic, entry in CHEATSHEET.items():
+        hay = " ".join([topic, entry.get("summary", ""), *entry.get("details", [])]).lower()
+        if needle in hay or any(needle in t for t in entry.get("tags", [])):
+            hits.append({"topic": topic, "summary": entry.get("summary", "")})
+    return {"query": query, "count": len(hits), "results": hits[:limit]}
+
+
+def lookup_condition(name: str) -> Dict[str, Any]:
+    key = name.lower().replace(" ", "_")
+    if key in CHEATSHEET:
+        return lookup_rule(key)
+    if key in CONDITION_ALIASES:
+        return lookup_rule(CONDITION_ALIASES[key])
+    return lookup_rule("conditions")
+
+
+def campaign_homebrew_notes(campaign_name: str) -> Dict[str, Any]:
+    try:
+        from dnd_state_utils import get_world_state  # noqa: E402
+
+        world = get_world_state(campaign_name)
+        return {
+            "campaign": campaign_name,
+            "notes": world.get("notes", ""),
+            "mode": world.get("mode", "tabletop"),
+            "location": world.get("current_location", ""),
+        }
+    except Exception as exc:
+        return {"campaign": campaign_name, "error": str(exc), "notes": ""}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="5e rules cheatsheet lookup")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    p_list = sub.add_parser("list")
+    sub.add_parser("list")
+    p_topics = sub.add_parser("topics")
+    p_topics.add_argument("--tag")
+
     p_lookup = sub.add_parser("lookup")
     p_lookup.add_argument("topic")
 
+    p_search = sub.add_parser("search")
+    p_search.add_argument("query")
+    p_search.add_argument("--limit", type=int, default=10)
+
+    p_cond = sub.add_parser("condition")
+    p_cond.add_argument("name")
+
+    p_home = sub.add_parser("homebrew")
+    p_home.add_argument("campaign")
+
     args = parser.parse_args()
     if args.cmd == "list":
-        result: Any = {"topics": list_topics()}
-    else:
+        result: Any = {"topics": list_topics(), "version": RULES_BACKEND_VERSION}
+    elif args.cmd == "topics":
+        result = {"topics": list_topics(tag=args.tag), "tag": args.tag}
+    elif args.cmd == "lookup":
         result = lookup_rule(args.topic)
+    elif args.cmd == "search":
+        result = search_rules(args.query, limit=args.limit)
+    elif args.cmd == "condition":
+        result = lookup_condition(args.name)
+    elif args.cmd == "homebrew":
+        result = campaign_homebrew_notes(args.campaign)
+    else:
+        result = {"error": "Unknown command"}
     print(json.dumps(result, indent=2))
 
 

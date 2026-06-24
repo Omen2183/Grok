@@ -5,59 +5,126 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
-sys.path.append(str(Path(__file__).parent.parent.parent / "dnd-utils" / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-utils" / "scripts"))
 
-from dnd_state_utils import get_player_character, load_json, save_json, update_player_hp  # noqa: E402
+from bootstrap import ensure_utils_importable
+
+ensure_utils_importable()
+
+from dnd_state_utils import get_player_character, load_json, save_json  # noqa: E402
 from event_system import record_event  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
+
+DOWNTIME_BACKEND_VERSION = "3.2.0"
+
+CLASS_HIT_DIE = {
+    "barbarian": 12,
+    "fighter": 10,
+    "paladin": 10,
+    "ranger": 10,
+    "bard": 8,
+    "cleric": 8,
+    "druid": 8,
+    "monk": 8,
+    "rogue": 8,
+    "warlock": 8,
+    "sorcerer": 6,
+    "wizard": 6,
+}
 
 
 def _char_path(campaign_name: str) -> Path:
     return get_campaign_path(campaign_name) / "state" / "player_character.json"
 
 
-def short_rest(campaign_name: str, *, spend_hd: int = 0) -> Dict[str, Any]:
-    """Short rest: optionally spend hit dice to heal."""
+def _primary_hit_die(char: Dict[str, Any]) -> int:
+    classes = char.get("classes", [{"name": "Fighter", "level": 1}])
+    primary = classes[0].get("name", "Fighter").lower()
+    return CLASS_HIT_DIE.get(primary, 8)
+
+
+def _ability_mod(char: Dict[str, Any], stat: str = "con") -> int:
+    return (char.get("stats", {}).get(stat, 10) - 10) // 2
+
+
+def _ensure_hit_dice(char: Dict[str, Any]) -> Dict[str, Any]:
+    hd = char.setdefault("hit_dice", {})
+    if "total" not in hd:
+        hd["total"] = char.get("level", 1)
+    if "spent" not in hd:
+        hd["spent"] = 0
+    hd["die_size"] = hd.get("die_size") or _primary_hit_die(char)
+    return hd
+
+
+def roll_hit_die(campaign_name: str, *, count: int = 1) -> Dict[str, Any]:
+    """Roll hit dice for healing (used by short rest and spend-hit-dice)."""
     char = load_json(_char_path(campaign_name), {})
+    hd = _ensure_hit_dice(char)
+    available = max(0, hd.get("total", 1) - hd.get("spent", 0))
+    spend = min(count, available)
+    die_size = hd.get("die_size", 8)
+    con_mod = _ability_mod(char)
+    rolls = [random.randint(1, die_size) for _ in range(spend)]
+    healed = sum(max(1, r + con_mod) for r in rolls)
+
     hp = char.setdefault("hit_points", {"current": 10, "max": 10, "temp": 0})
-    hit_dice = char.setdefault("hit_dice", {"total": char.get("level", 1), "spent": 0})
+    hp["current"] = min(hp.get("max", hp["current"]), hp.get("current", 0) + healed)
+    hd["spent"] = hd.get("spent", 0) + spend
+    char["hit_points"] = hp
+    char["hit_dice"] = hd
+    save_json(_char_path(campaign_name), char)
+
+    return {
+        "rolls": rolls,
+        "healed": healed,
+        "hit_dice_spent": spend,
+        "hp": hp,
+        "die_size": die_size,
+    }
+
+
+def short_rest(campaign_name: str, *, spend_hd: int = 0) -> Dict[str, Any]:
     healed = 0
-
+    roll_result: Optional[Dict[str, Any]] = None
     if spend_hd > 0:
-        available = hit_dice.get("total", 1) - hit_dice.get("spent", 0)
-        spend = min(spend_hd, max(0, available))
-        # Simplified: each HD heals avg of primary class die (d8 default) + CON mod
-        con_mod = (char.get("stats", {}).get("con", 10) - 10) // 2
-        per_die = 5 + con_mod  # average d8 + mod
-        healed = spend * max(1, per_die)
-        hit_dice["spent"] = hit_dice.get("spent", 0) + spend
-        hp["current"] = min(hp.get("max", hp["current"]), hp.get("current", 0) + healed)
-        char["hit_dice"] = hit_dice
-        char["hit_points"] = hp
-        save_json(_char_path(campaign_name), char)
+        roll_result = roll_hit_die(campaign_name, count=spend_hd)
+        healed = roll_result["healed"]
 
-    record_event(campaign_name, f"Short rest (healed {healed} HP)", tags=["rest", "short-rest"])
+    char = get_player_character(campaign_name)
+    record_event(
+        campaign_name,
+        f"Short rest (healed {healed} HP)",
+        tags=["rest", "short-rest"],
+        metadata={"hit_dice_spent": spend_hd},
+    )
     return {
         "rest": "short",
-        "hp": hp,
-        "hit_dice_spent": spend_hd if spend_hd else 0,
+        "hp": char.get("hit_points", {}),
+        "hit_dice": char.get("hit_dice", {}),
+        "hit_dice_spent": spend_hd,
         "healed": healed,
+        "roll_detail": roll_result,
     }
 
 
 def long_rest(campaign_name: str) -> Dict[str, Any]:
-    """Long rest: restore HP, reset hit dice spent, clear death saves."""
     char = load_json(_char_path(campaign_name), {})
     hp = char.setdefault("hit_points", {"current": 10, "max": 10, "temp": 0})
     hp["current"] = hp.get("max", hp["current"])
     hp["temp"] = 0
     char["hit_points"] = hp
-    char["hit_dice"] = {"total": char.get("level", 1), "spent": 0}
+    level = char.get("level", 1)
+    recovered_hd = max(1, level // 2)
+    hd = _ensure_hit_dice(char)
+    hd["spent"] = max(0, hd.get("spent", 0) - recovered_hd)
+    char["hit_dice"] = hd
     char["death_saves"] = {"successes": 0, "failures": 0, "status": "stable"}
     if char.get("status") in ("Dying", "Dead", "Stable (0 HP)"):
         char["status"] = "Alive"
@@ -65,7 +132,13 @@ def long_rest(campaign_name: str) -> Dict[str, Any]:
     save_json(_char_path(campaign_name), char)
 
     record_event(campaign_name, "Long rest completed", importance="normal", tags=["rest", "long-rest"])
-    return {"rest": "long", "hp": hp, "status": char.get("status")}
+    return {
+        "rest": "long",
+        "hp": hp,
+        "status": char.get("status"),
+        "hit_dice_recovered": recovered_hd,
+        "hit_dice": hd,
+    }
 
 
 def log_downtime_activity(
@@ -75,7 +148,6 @@ def log_downtime_activity(
     days: int = 1,
     outcome: str = "",
 ) -> Dict[str, Any]:
-    """Record a downtime activity and append to downtime log."""
     log_path = get_campaign_path(campaign_name) / "logs" / "downtime_log.md"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y-%m-%d")
@@ -96,13 +168,31 @@ def log_downtime_activity(
     return {"logged": str(log_path), "activity": activity, "days": days}
 
 
+def list_downtime_activities(campaign_name: str, *, limit: int = 20) -> Dict[str, Any]:
+    log_path = get_campaign_path(campaign_name) / "logs" / "downtime_log.md"
+    if not log_path.exists():
+        return {"activities": [], "path": str(log_path)}
+    text = log_path.read_text(encoding="utf-8")
+    sections = [s.strip() for s in text.split("### ") if s.strip()]
+    entries = []
+    for section in sections[-limit:]:
+        lines = section.splitlines()
+        title = lines[0] if lines else section
+        body = "\n".join(lines[1:]).strip()
+        entries.append({"title": title, "body": body})
+    return {"activities": entries, "path": str(log_path), "count": len(entries)}
+
+
 def get_rest_status(campaign_name: str) -> Dict[str, Any]:
     char = get_player_character(campaign_name)
+    hd = _ensure_hit_dice(char)
     return {
+        "version": DOWNTIME_BACKEND_VERSION,
         "hp": char.get("hit_points", {}),
-        "hit_dice": char.get("hit_dice", {}),
+        "hit_dice": hd,
         "status": char.get("status", "Alive"),
         "conditions": char.get("conditions", []),
+        "available_hit_dice": max(0, hd.get("total", 1) - hd.get("spent", 0)),
     }
 
 
@@ -117,11 +207,19 @@ def main() -> None:
     p_long = sub.add_parser("long-rest")
     p_long.add_argument("campaign")
 
+    p_hd = sub.add_parser("spend-hit-dice")
+    p_hd.add_argument("campaign")
+    p_hd.add_argument("count", type=int, nargs="?", default=1)
+
     p_log = sub.add_parser("log-activity")
     p_log.add_argument("campaign")
     p_log.add_argument("activity")
     p_log.add_argument("--days", type=int, default=1)
     p_log.add_argument("--outcome", default="")
+
+    p_list = sub.add_parser("list-activities")
+    p_list.add_argument("campaign")
+    p_list.add_argument("--limit", type=int, default=20)
 
     p_status = sub.add_parser("status")
     p_status.add_argument("campaign")
@@ -132,8 +230,12 @@ def main() -> None:
         result = short_rest(args.campaign, spend_hd=args.spend_hd)
     elif args.cmd == "long-rest":
         result = long_rest(args.campaign)
+    elif args.cmd == "spend-hit-dice":
+        result = roll_hit_die(args.campaign, count=args.count)
     elif args.cmd == "log-activity":
         result = log_downtime_activity(args.campaign, args.activity, days=args.days, outcome=args.outcome)
+    elif args.cmd == "list-activities":
+        result = list_downtime_activities(args.campaign, limit=args.limit)
     elif args.cmd == "status":
         result = get_rest_status(args.campaign)
     else:

@@ -215,6 +215,51 @@ def get_ledger(campaign_name: str) -> Dict[str, Any]:
     return load_ledger(campaign_name)
 
 
+LOOT_BACKEND_VERSION = "3.2.0"
+
+
+def ledger_summary(campaign_name: str) -> Dict[str, Any]:
+    """Summarize the campaign loot ledger."""
+    ledger = load_ledger(campaign_name)
+    found = ledger.get("found_items", [])
+    return {
+        "campaign": campaign_name,
+        "found_count": len(found),
+        "last_updated": ledger.get("last_updated"),
+        "recent": found[-5:],
+        "version": LOOT_BACKEND_VERSION,
+    }
+
+
+def search_ledger(campaign_name: str, query: str) -> Dict[str, Any]:
+    """Search found items in the ledger by substring."""
+    ledger = load_ledger(campaign_name)
+    found = ledger.get("found_items", [])
+    needle = query.lower()
+    matches = [item for item in found if needle in item.lower()]
+    return {
+        "campaign": campaign_name,
+        "query": query,
+        "matches": matches,
+        "count": len(matches),
+        "version": LOOT_BACKEND_VERSION,
+    }
+
+
+def list_loot_tables() -> Dict[str, Any]:
+    """Return available loot table metadata."""
+    return {
+        "tables": {
+            "mundane": {"count": len(MUNDANE_ITEMS), "sample": [i["name"] for i in MUNDANE_ITEMS[:3]]},
+            "consumable": {"count": len(CONSUMABLES), "sample": [i["name"] for i in CONSUMABLES[:3]]},
+            "magic_common": {"count": len(MAGIC_ITEMS_COMMON), "sample": [i["name"] for i in MAGIC_ITEMS_COMMON[:3]]},
+            "magic_uncommon": {"count": len(MAGIC_ITEMS_UNCOMMON), "sample": [i["name"] for i in MAGIC_ITEMS_UNCOMMON[:3]]},
+            "magic_rare": {"count": len(MAGIC_ITEMS_RARE), "sample": [i["name"] for i in MAGIC_ITEMS_RARE[:3]]},
+        },
+        "version": LOOT_BACKEND_VERSION,
+    }
+
+
 def generate_hoard(campaign_name: str, party_level: int = 5, cr: float = 5.0) -> Dict[str, Any]:
     """
     Generate a proper treasure hoard (coins + items).
@@ -282,6 +327,15 @@ def main():
     p_hoard.add_argument("--level", type=int, default=5, help="Party level")
     p_hoard.add_argument("--cr", type=float, default=5.0, help="Challenge rating of encounter")
 
+    p_summary = sub.add_parser("summary", help="Summarize the loot ledger")
+    p_summary.add_argument("campaign")
+
+    p_search = sub.add_parser("search-ledger", help="Search found items in the ledger")
+    p_search.add_argument("campaign")
+    p_search.add_argument("query")
+
+    sub.add_parser("tables", help="List available loot tables")
+
     args = parser.parse_args()
 
     if args.cmd == "generate":
@@ -310,6 +364,15 @@ def main():
     elif args.cmd == "hoard":
         hoard = generate_hoard(args.campaign, party_level=args.level, cr=args.cr)
         print(json.dumps(hoard, indent=2))
+
+    elif args.cmd == "summary":
+        print(json.dumps(ledger_summary(args.campaign), indent=2))
+
+    elif args.cmd == "search-ledger":
+        print(json.dumps(search_ledger(args.campaign, args.query), indent=2))
+
+    elif args.cmd == "tables":
+        print(json.dumps(list_loot_tables(), indent=2))
 
 if __name__ == "__main__":
     main()

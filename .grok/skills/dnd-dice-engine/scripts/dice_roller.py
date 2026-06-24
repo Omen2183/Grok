@@ -17,6 +17,8 @@ import math
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
+DICE_BACKEND_VERSION = "3.2.0"
+
 
 def _strip_adv_disadv(notation: str) -> Tuple[str, bool, bool]:
     """Remove adv/disadv tokens from notation; return cleaned string and flags."""
@@ -269,11 +271,66 @@ def roll_initiative(modifier: int = 0, *, campaign: Optional[str] = None) -> Dic
     }
 
 
+def roll_d20_check(
+    modifier: int = 0,
+    *,
+    advantage: bool = False,
+    disadvantage: bool = False,
+    check_type: str = "check",
+    dc: Optional[int] = None,
+    campaign: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Roll a standard 1d20 check (ability check, attack, or save)."""
+    result = roll_dice(
+        "1d20",
+        advantage=advantage,
+        disadvantage=disadvantage,
+        campaign=campaign,
+    )
+    total = result["total"] + modifier
+    outcome: Dict[str, Any] = {
+        "type": check_type,
+        "roll": result,
+        "modifier": modifier,
+        "total": total,
+        "version": DICE_BACKEND_VERSION,
+    }
+    if dc is not None:
+        outcome["dc"] = dc
+        outcome["success"] = total >= dc
+    return outcome
+
+
+def get_roll_history(campaign: str, *, limit: int = 10) -> Dict[str, Any]:
+    """Return recent rolls logged for a campaign."""
+    try:
+        sys.path.append(str(Path(__file__).parent.parent.parent / "dnd-utils" / "scripts"))
+        from paths import get_campaign_path  # noqa: E402
+
+        path = get_campaign_path(campaign) / "state" / "rolls.json"
+        if not path.exists():
+            return {"campaign": campaign, "rolls": [], "count": 0, "version": DICE_BACKEND_VERSION}
+        data = json.loads(path.read_text(encoding="utf-8"))
+        rolls = data if isinstance(data, list) else data.get("rolls", [])
+        recent = rolls[-limit:] if limit else rolls
+        return {
+            "campaign": campaign,
+            "rolls": recent,
+            "count": len(rolls),
+            "version": DICE_BACKEND_VERSION,
+        }
+    except Exception as exc:
+        return {"campaign": campaign, "rolls": [], "error": str(exc), "version": DICE_BACKEND_VERSION}
+
+
 if __name__ == "__main__":
     import argparse
 
+    KNOWN_CMDS = {
+        "roll", "initiative", "parse", "percentile", "check", "attack", "save", "history",
+    }
     argv = sys.argv[1:]
-    if argv and argv[0] not in ("initiative", "roll", "-h", "--help") and not argv[0].startswith("-"):
+    if argv and argv[0] not in KNOWN_CMDS and argv[0] not in ("-h", "--help") and not argv[0].startswith("-"):
         argv = ["roll", *argv]
         sys.argv = [sys.argv[0], *argv]
 
@@ -293,11 +350,50 @@ if __name__ == "__main__":
     p_init.add_argument("modifier", type=int, nargs="?", default=0)
     p_init.add_argument("--campaign")
 
+    p_parse = sub.add_parser("parse", help="Parse dice notation without rolling")
+    p_parse.add_argument("notation")
+
+    p_pct = sub.add_parser("percentile", help="Roll d100 (percentile)")
+    p_pct.add_argument("modifier", type=int, nargs="?", default=0)
+    p_pct.add_argument("--campaign")
+
+    for name, help_text in (
+        ("check", "Ability check: 1d20 + modifier"),
+        ("attack", "Attack roll: 1d20 + modifier"),
+        ("save", "Saving throw: 1d20 + modifier"),
+    ):
+        p = sub.add_parser(name, help=help_text)
+        p.add_argument("modifier", type=int, nargs="?", default=0)
+        p.add_argument("--advantage", action="store_true")
+        p.add_argument("--disadvantage", action="store_true")
+        p.add_argument("--dc", type=int)
+        p.add_argument("--campaign")
+
+    p_hist = sub.add_parser("history", help="Recent rolls logged for a campaign")
+    p_hist.add_argument("campaign")
+    p_hist.add_argument("--limit", type=int, default=10)
+
     args = parser.parse_args()
 
     try:
         if args.cmd == "initiative":
             result = roll_initiative(args.modifier, campaign=args.campaign)
+        elif args.cmd == "parse":
+            result = {"parsed": parse_dice_notation(args.notation), "version": DICE_BACKEND_VERSION}
+        elif args.cmd == "percentile":
+            result = roll_percentile(args.modifier)
+            result["version"] = DICE_BACKEND_VERSION
+        elif args.cmd in ("check", "attack", "save"):
+            result = roll_d20_check(
+                args.modifier,
+                advantage=args.advantage,
+                disadvantage=args.disadvantage,
+                check_type=args.cmd,
+                dc=args.dc,
+                campaign=args.campaign,
+            )
+        elif args.cmd == "history":
+            result = get_roll_history(args.campaign, limit=args.limit)
         else:
             result = roll_dice(
                 args.notation,
@@ -306,6 +402,7 @@ if __name__ == "__main__":
                 args.exploding,
                 campaign=args.campaign,
             )
+            result["version"] = DICE_BACKEND_VERSION
         print(json.dumps(result, indent=2))
     except Exception as e:
         print(json.dumps({"error": str(e)}))

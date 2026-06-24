@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.2.0 — Full Python backends for all 16 skills
+
+### Added
+- **dnd-downtime-manager** — hit-dice spending, activity ledger, class-based HD recovery (`DOWNTIME_BACKEND_VERSION = 3.2.0`)
+- **dnd-npc-personality-weaver** — personality generation, search, relationship tiers, what-knows, append-note (`NPC_BACKEND_VERSION = 3.2.0`)
+- **dnd-rules-reference** — `rules_data.py` with 25+ topics; search, condition, homebrew CLIs (`RULES_BACKEND_VERSION = 3.2.0`)
+- **dnd-rumor-event-generator** — faction moves, rumor ledger persistence, list/ledger CLIs (`RUMOR_BACKEND_VERSION = 3.2.0`)
+- **dnd-voice-assistant** — execute/plan/format-spoken/detect-voice/confirm-check pipeline (`VOICE_BACKEND_VERSION = 3.2.0`)
+- **dnd-dice-engine** — parse, percentile, check/attack/save, history CLIs (`DICE_BACKEND_VERSION = 3.2.0`)
+- **dnd-loot-generator** — summary, search-ledger, tables CLIs (`LOOT_BACKEND_VERSION = 3.2.0`)
+- **dnd-visual-weaver** — status CLI for canon/companion state (`VISUAL_BACKEND_VERSION = 3.2.0`)
+- `tests/test_full_backends.py` — integration tests for expanded backends
+- `validate_backends.py` — `MIN_CLI_COMMANDS = 5`; library-only whitelist for `dnd-utils` shared modules
+
+### Changed
+- All 16 skills now pass backend validation (≥5 CLI commands + smoke tests)
+- `dnd-utils` library modules (`event_system`, `sync_bridge`, `kingdom_sim`, etc.) exempt from per-file CLI requirement
+
 ## 3.1.1 — Complete combat sync_bridge wiring
 
 ### Fixed

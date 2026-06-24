@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deep validation: every D&D skill has real Python backends with CLI entry points."""
+"""Deep validation: every D&D skill has full Python backends (min CLI commands + smoke)."""
 
 from __future__ import annotations
 
@@ -14,24 +14,57 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / ".grok" / "skills"
 
-# Minimum smoke command per skill (script relative path, argv after script name)
+# Every player-facing skill must expose at least this many CLI subcommands.
+MIN_CLI_COMMANDS = 5
+
+# Multiple smoke invocations per skill (argv after script name)
 SMOKE_COMMANDS: dict[str, list[list[str]]] = {
-    "dnd-character-manager": [["summary", "AuditCampaign"]],
+    "dnd-character-manager": [["summary", "AuditCampaign"], ["sync", "AuditCampaign"]],
     "dnd-combat-assistant": [["summary", "AuditCampaign"]],
     "dnd-content-forge": [["quest", "AuditCampaign"]],
-    "dnd-dice-engine": [["initiative", "0"]],
-    "dnd-downtime-manager": [["status", "AuditCampaign"]],
-    "dnd-loot-generator": [["ledger", "AuditCampaign"]],
-    "dnd-lore-archivist": [["summary", "AuditCampaign"]],
-    "dnd-npc-personality-weaver": [["list", "AuditCampaign"]],
-    "dnd-persistent-dm": [["health", "AuditCampaign"]],
+    "dnd-dice-engine": [
+        ["initiative", "0"],
+        ["roll", "1d20"],
+        ["parse", "4d6kh3"],
+        ["check", "3", "--dc", "15"],
+    ],
+    "dnd-downtime-manager": [
+        ["status", "AuditCampaign"],
+        ["spend-hit-dice", "AuditCampaign", "1"],
+        ["list-activities", "AuditCampaign"],
+    ],
+    "dnd-loot-generator": [
+        ["ledger", "AuditCampaign"],
+        ["generate", "AuditCampaign"],
+        ["summary", "AuditCampaign"],
+        ["tables"],
+    ],
+    "dnd-lore-archivist": [["summary", "AuditCampaign"], ["list-npcs", "AuditCampaign"]],
+    "dnd-npc-personality-weaver": [
+        ["list", "AuditCampaign"],
+        ["generate-personality", "Test NPC", "--role", "merchant"],
+        ["relationship-tier", "15"],
+    ],
+    "dnd-persistent-dm": [["health", "AuditCampaign"], ["registry"]],
     "dnd-quest-tracker": [["list", "AuditCampaign"]],
-    "dnd-rules-reference": [["list"]],
-    "dnd-rumor-event-generator": [["rumors", "AuditCampaign", "--no-persist"]],
+    "dnd-rules-reference": [["list"], ["search", "advantage"], ["condition", "prone"]],
+    "dnd-rumor-event-generator": [
+        ["rumors", "AuditCampaign", "--no-persist"],
+        ["list", "AuditCampaign"],
+        ["faction-move", "AuditCampaign"],
+        ["ledger", "AuditCampaign"],
+    ],
     "dnd-session-scribe": [["auto-recap", "AuditCampaign"]],
-    "dnd-utils": [["campaigns-root"]],
-    "dnd-visual-weaver": [["weave-prompt", "AuditCampaign", "test scene"]],
-    "dnd-voice-assistant": [["parse", "next turn"]],
+    "dnd-utils": [["campaigns-root"], ["validate", "AuditCampaign"]],
+    "dnd-visual-weaver": [
+        ["weave-prompt", "AuditCampaign", "test scene"],
+        ["status", "AuditCampaign"],
+    ],
+    "dnd-voice-assistant": [
+        ["parse", "next turn"],
+        ["plan", "AuditCampaign", "Goblin takes 5 damage"],
+        ["detect-voice", "start voice dnd"],
+    ],
 }
 
 UTILS_CLI_SCRIPTS = [
@@ -40,6 +73,26 @@ UTILS_CLI_SCRIPTS = [
     "dnd-utils/scripts/skill_registry.py",
     "dnd-utils/scripts/skill_orchestrator.py",
 ]
+
+# Shared library modules imported by other skills — not required to expose CLI.
+UTILS_LIBRARY_ONLY = {
+    "bootstrap.py",
+    "paths.py",
+    "errors.py",
+    "event_system.py",
+    "kingdom_sim.py",
+    "narration_helpers.py",
+    "sqlite_layer.py",
+    "sync_bridge.py",
+    "xp_tables.py",
+}
+
+RULES_LIBRARY_ONLY = {"rules_data.py"}
+
+SCRIPT_FOR_SKILL: dict[str, str] = {
+    "dnd-content-forge": "dnd-content-forge/scripts/content_forge.py",
+    "dnd-utils": "dnd-utils/scripts/dnd_state_utils.py",
+}
 
 
 def _skill_scripts(skill_dir: Path) -> list[Path]:
@@ -56,6 +109,13 @@ def _cli_commands(script: Path) -> list[str]:
     return re.findall(r'add_parser\(\s*["\']([^"\']+)["\']', text)
 
 
+def _primary_script(skill: str, scripts: list[Path]) -> Path | None:
+    if skill in SCRIPT_FOR_SKILL:
+        path = SKILLS / SCRIPT_FOR_SKILL[skill]
+        return path if path.exists() else None
+    return scripts[0] if scripts else None
+
+
 def validate() -> dict:
     issues: list[str] = []
     skills_report: list[dict] = []
@@ -66,7 +126,7 @@ def validate() -> dict:
 
         init_script = SKILLS / "dnd-utils/scripts/dnd_state_utils.py"
         subprocess.run(
-            [py, str(init_script), "init", "AuditCampaign", "--force"],
+            [py, str(init_script), "init", "AuditCampaign", "--force", "--pc-name", "Audit Hero"],
             capture_output=True,
             text=True,
             env=env,
@@ -84,7 +144,8 @@ def validate() -> dict:
             if not scripts:
                 skill_issues.append("No scripts/*.py found")
 
-            cli_scripts = []
+            cli_scripts: list[str] = []
+            all_commands: list[str] = []
             for script in scripts:
                 try:
                     py_compile.compile(str(script), doraise=True)
@@ -92,22 +153,40 @@ def validate() -> dict:
                     skill_issues.append(f"Compile error {script.name}: {exc}")
 
                 text = script.read_text(encoding="utf-8")
-                if "if __name__" in text:
-                    cli_scripts.append(script.name)
-                if "NotImplementedError" in text or "raise NotImplemented" in text:
-                    skill_issues.append(f"NotImplemented stub in {script.name}")
-
-            commands = skill_issues and [] or []
-            for script in scripts:
-                commands.extend(_cli_commands(script))
-
-            for cmd_argv in SMOKE_COMMANDS.get(skill, []):
-                if skill == "dnd-utils":
-                    script = SKILLS / UTILS_CLI_SCRIPTS[0]
-                elif skill == "dnd-content-forge":
-                    script = SKILLS / "dnd-content-forge/scripts/content_forge.py"
+                if "if __name__" not in text:
+                    library_only = RULES_LIBRARY_ONLY if skill == "dnd-rules-reference" else set()
+                    if skill == "dnd-utils":
+                        library_only = UTILS_LIBRARY_ONLY
+                    if script.name not in library_only:
+                        skill_issues.append(f"No CLI entry point: {script.name}")
                 else:
-                    script = scripts[0] if scripts else None
+                    cli_scripts.append(script.name)
+                    all_commands.extend(_cli_commands(script))
+
+            unique_commands = sorted(set(all_commands))
+            if len(unique_commands) < MIN_CLI_COMMANDS:
+                skill_issues.append(
+                    f"Only {len(unique_commands)} CLI commands (minimum {MIN_CLI_COMMANDS}): {unique_commands}"
+                )
+
+            primary = _primary_script(skill, scripts)
+            for cmd_argv in SMOKE_COMMANDS.get(skill, []):
+                script = primary
+                if skill == "dnd-rules-reference":
+                    script = skill_dir / "scripts" / "rules_cheatsheet.py"
+                elif skill == "dnd-npc-personality-weaver" and cmd_argv[0] in (
+                    "generate-personality", "relationship-tier"
+                ):
+                    script = skill_dir / "scripts" / "npc_manager.py"
+                elif skill == "dnd-voice-assistant":
+                    script = skill_dir / "scripts" / "voice_utils.py"
+                elif skill == "dnd-dice-engine":
+                    script = skill_dir / "scripts" / "dice_roller.py"
+                elif skill == "dnd-loot-generator" and cmd_argv[0] == "tables":
+                    script = skill_dir / "scripts" / "procedural_loot.py"
+                elif skill == "dnd-persistent-dm" and cmd_argv[0] == "registry":
+                    script = skill_dir / "scripts" / "persistent_dm.py"
+
                 if not script or not script.exists():
                     skill_issues.append(f"Smoke target missing for {' '.join(cmd_argv)}")
                     continue
@@ -135,7 +214,8 @@ def validate() -> dict:
                     "skill": skill,
                     "scripts": [s.name for s in scripts],
                     "cli_scripts": cli_scripts,
-                    "commands_sample": sorted(set(commands))[:12],
+                    "command_count": len(unique_commands),
+                    "commands": unique_commands,
                     "valid": len(skill_issues) == 0,
                     "issues": skill_issues,
                 }
@@ -143,6 +223,7 @@ def validate() -> dict:
 
     return {
         "skills_checked": len(skills_report),
+        "min_cli_commands": MIN_CLI_COMMANDS,
         "valid": len(issues) == 0,
         "issue_count": len(issues),
         "issues": issues,

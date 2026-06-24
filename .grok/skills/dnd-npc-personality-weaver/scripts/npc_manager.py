@@ -15,6 +15,22 @@ sys.path.append(str(Path(__file__).parent.parent.parent / "dnd-utils" / "scripts
 from event_system import record_event  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
 
+NPC_BACKEND_VERSION = "3.2.0"
+
+PERSONALITY_TRAITS = [
+    "cautious", "bold", "curious", "greedy", "honorable", "secretive", "warm", "bitter",
+]
+SPEECH_PATTERNS = [
+    "speaks in short clipped sentences",
+    "uses archaic formal phrasing",
+    "mutters asides and riddles",
+    "laughs nervously between thoughts",
+]
+MOTIVATIONS = [
+    "protect their family", "recover a lost relic", "gain political influence",
+    "pay off a dangerous debt", "prove their worth to a mentor",
+]
+
 
 def _npc_index_path(campaign_name: str) -> Path:
     return get_campaign_path(campaign_name) / "npcs" / "index.json"
@@ -124,6 +140,82 @@ def append_npc_note(campaign_name: str, npc_id: str, note: str) -> Optional[Dict
     return update_npc(campaign_name, npc_id, {"notes": combined})
 
 
+def generate_personality_seed(name: str, *, role: str = "villager") -> Dict[str, str]:
+    """Procedural personality scaffold Grok can refine in play."""
+    import random
+
+    rng = random.Random(hash((name, role)))
+    return {
+        "name": name,
+        "role": role,
+        "personality": f"{rng.choice(PERSONALITY_TRAITS).title()}, {rng.choice(PERSONALITY_TRAITS)}",
+        "speech": rng.choice(SPEECH_PATTERNS),
+        "motivation": rng.choice(MOTIVATIONS),
+        "quirk": f"Always mentions {role} gossip",
+        "secret": f"Hides a connection to {role} politics",
+    }
+
+
+def relationship_tier(score: int) -> str:
+    if score >= 50:
+        return "devoted ally"
+    if score >= 20:
+        return "friendly"
+    if score >= -10:
+        return "neutral"
+    if score >= -30:
+        return "unfriendly"
+    return "hostile"
+
+
+def search_npcs(campaign_name: str, query: str) -> List[Dict[str, Any]]:
+    needle = query.lower()
+    matches = []
+    for entry in list_npcs(campaign_name):
+        npc = get_npc(campaign_name, entry.get("id", "")) or entry
+        blob = json.dumps(npc).lower()
+        if needle in blob or needle in npc.get("name", "").lower():
+            matches.append(npc)
+    return matches
+
+
+def what_npc_knows(campaign_name: str, npc_id: str) -> Optional[Dict[str, Any]]:
+    npc = get_npc(campaign_name, npc_id)
+    if not npc:
+        return None
+    return {
+        "npc_id": npc_id,
+        "name": npc.get("name"),
+        "public_knowledge": {
+            "personality": npc.get("personality", ""),
+            "speech": npc.get("speech", ""),
+            "attitude": npc.get("attitude", "neutral"),
+            "faction": npc.get("faction", ""),
+        },
+        "dm_secrets": {
+            "secret": npc.get("secret", ""),
+            "motivation": npc.get("motivation", ""),
+        },
+        "notes": npc.get("notes", ""),
+        "relationship": {
+            "score": npc.get("relationship_score", 0),
+            "tier": relationship_tier(npc.get("relationship_score", 0)),
+        },
+    }
+
+
+def delete_npc(campaign_name: str, npc_id: str) -> Dict[str, Any]:
+    path = _npc_file(campaign_name, npc_id)
+    if not path.exists():
+        return {"deleted": False, "npc_id": npc_id}
+    path.unlink()
+    index = _load_index(campaign_name)
+    index["npcs"] = [n for n in index.get("npcs", []) if n.get("id") != npc_id]
+    _save_index(campaign_name, index)
+    record_event(campaign_name, f"NPC removed: {npc_id}", tags=["npc", "removed"])
+    return {"deleted": True, "npc_id": npc_id}
+
+
 def adjust_relationship(campaign_name: str, npc_id: str, delta: int, *, note: str = "") -> Optional[Dict[str, Any]]:
     npc = get_npc(campaign_name, npc_id)
     if not npc:
@@ -166,6 +258,30 @@ def main() -> None:
     p_rel.add_argument("delta", type=int)
     p_rel.add_argument("--note", default="")
 
+    p_note = sub.add_parser("append-note")
+    p_note.add_argument("campaign")
+    p_note.add_argument("npc_id")
+    p_note.add_argument("note")
+
+    p_search = sub.add_parser("search")
+    p_search.add_argument("campaign")
+    p_search.add_argument("query")
+
+    p_gen = sub.add_parser("generate-personality")
+    p_gen.add_argument("name")
+    p_gen.add_argument("--role", default="villager")
+
+    p_knows = sub.add_parser("what-knows")
+    p_knows.add_argument("campaign")
+    p_knows.add_argument("npc_id")
+
+    p_tier = sub.add_parser("relationship-tier")
+    p_tier.add_argument("score", type=int)
+
+    p_del = sub.add_parser("delete")
+    p_del.add_argument("campaign")
+    p_del.add_argument("npc_id")
+
     args = parser.parse_args()
 
     if args.cmd == "create":
@@ -193,9 +309,23 @@ def main() -> None:
         result = list_npcs(args.campaign)
     elif args.cmd == "adjust-relationship":
         result = adjust_relationship(args.campaign, args.npc_id, args.delta, note=args.note)
+    elif args.cmd == "append-note":
+        result = append_npc_note(args.campaign, args.npc_id, args.note) or {"error": "NPC not found"}
+    elif args.cmd == "search":
+        result = {"matches": search_npcs(args.campaign, args.query), "version": NPC_BACKEND_VERSION}
+    elif args.cmd == "generate-personality":
+        result = generate_personality_seed(args.name, role=args.role)
+    elif args.cmd == "what-knows":
+        result = what_npc_knows(args.campaign, args.npc_id) or {"error": "NPC not found"}
+    elif args.cmd == "relationship-tier":
+        result = {"score": args.score, "tier": relationship_tier(args.score)}
+    elif args.cmd == "delete":
+        result = delete_npc(args.campaign, args.npc_id)
     else:
         result = {"error": "Unknown command"}
 
+    if isinstance(result, dict) and "version" not in result and args.cmd not in ("generate-personality", "relationship-tier"):
+        result["version"] = NPC_BACKEND_VERSION
     print(json.dumps(result, indent=2))
 
 

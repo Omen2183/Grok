@@ -14,6 +14,8 @@ sys.path.append(str(Path(__file__).parent.parent.parent / "dnd-utils" / "scripts
 from dnd_state_utils import get_player_character, get_world_state, load_json  # noqa: E402  # type: ignore
 from paths import get_campaign_path  # noqa: E402
 
+VISUAL_BACKEND_VERSION = "3.2.0"
+
 
 def load_visual_canon(campaign_name: str) -> str:
     canon_path = get_campaign_path(campaign_name) / "state" / "visual_canon.md"
@@ -143,6 +145,27 @@ def update_visual_canon_after_generation(
     return {"updated": str(path), "subject": subject, "category": category}
 
 
+def visual_status(campaign_name: str) -> Dict[str, Any]:
+    """Summarize visual assets and canon state for a campaign."""
+    world = get_world_state(campaign_name)
+    player = get_player_character(campaign_name)
+    canon = load_visual_canon(campaign_name)
+    companion = load_companion_visual(campaign_name)
+    canon_path = get_campaign_path(campaign_name) / "state" / "visual_canon.md"
+    return {
+        "campaign": campaign_name,
+        "location": world.get("current_location", "unknown"),
+        "mode": world.get("mode", "tabletop"),
+        "character": player.get("name", "unknown"),
+        "has_canon": bool(canon),
+        "canon_chars": len(canon),
+        "canon_path": str(canon_path) if canon_path.exists() else None,
+        "has_companion": bool(companion),
+        "companion_preview": companion[:120] if companion else "",
+        "version": VISUAL_BACKEND_VERSION,
+    }
+
+
 def save_visual_canon(campaign_name: str, content: str) -> Dict[str, Any]:
     path = get_campaign_path(campaign_name) / "state" / "visual_canon.md"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -175,6 +198,9 @@ def main() -> None:
     p_append.add_argument("description")
     p_append.add_argument("--category", default="generated")
 
+    p_status = sub.add_parser("status", help="Visual canon and companion status")
+    p_status.add_argument("campaign")
+
     args = parser.parse_args()
 
     if args.cmd == "weave-prompt":
@@ -187,6 +213,8 @@ def main() -> None:
         result = update_visual_canon_after_generation(
             args.campaign, args.subject, args.description, category=args.category
         )
+    elif args.cmd == "status":
+        result = visual_status(args.campaign)
     else:
         result = {"error": "Unknown command"}
 
