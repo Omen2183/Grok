@@ -1,6 +1,6 @@
 ---
 name: dnd-voice-assistant
-description: Voice execution layer for the D&D skills suite. Triggers include voice mode, play by voice, DM voice, start voice D&D, continue voice campaign. Routes utterances to persistent-dm, combat-assistant, dice-engine, and session-scribe. Parses damage/healing phrases, confirms destructive actions, and formats listenable short replies. Full mechanical parity with text play.
+description: Voice execution layer for the D&D skills suite. v2.0.0 production. Triggers include voice mode, play by voice, DM voice, start voice D&D, continue voice campaign. Routes utterances to persistent-dm, combat-assistant, dice-engine, and session-scribe. Parses damage/healing phrases, confirms destructive actions, and formats listenable short replies. Full mechanical parity with text play.
 ---
 
 # D&D Voice Assistant
@@ -21,17 +21,17 @@ description: Voice execution layer for the D&D skills suite. Triggers include vo
 | Capability | Status | Notes |
 |------------|--------|-------|
 | Voice session detection | ✅ Implemented | `is_voice_session()` |
-| Intent routing | ✅ Implemented | `route_voice_request()` |
+| Full intent routing | ✅ Implemented | `route_voice_request()` — narrative, combat, dice, session |
 | Damage phrase parsing | ✅ Implemented | *"Goblin takes 8 damage"* |
 | Healing phrase parsing | ✅ Implemented | *"Aria heals 10"* |
 | Confirmation gates | ✅ Implemented | end-session, level-up, attune, init |
 | Spoken reply formatting | ✅ Implemented | `format_spoken_reply()` |
-| Speech-to-text / TTS | ❌ Prompt-only | Platform handles I/O; utils format only |
-| Continuous ambient listening | ❌ Prompt-only | Turn-based voice turns |
+| Speech-to-text / TTS | ❌ Platform | Platform handles I/O; utils format only |
+| Continuous ambient listening | ❌ Platform | Turn-based voice turns |
 
 ## Tools & Scripts
 ```python
-# Import helpers (no standalone CLI):
+# Import from voice_utils.py (no standalone CLI):
 from voice_utils import (
     route_voice_request,
     format_spoken_reply,
@@ -39,6 +39,8 @@ from voice_utils import (
     parse_healing_phrase,
     voice_confirm_prompt,
     is_voice_session,
+    detect_intent,
+    needs_confirmation,
 )
 ```
 
@@ -46,11 +48,15 @@ Example routing:
 ```python
 route_voice_request("Goblin takes 8 damage")
 # → primary_skill: dnd-combat-assistant, damage: ("Goblin", 8)
+
+route_voice_request("Roll attack with advantage")
+# → primary_skill: dnd-dice-engine, intent: dice_roll
 ```
 
 Downstream CLIs invoked after routing:
 ```bash
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py damage "My Campaign" --target "Goblin" --amount 8
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py heal "My Campaign" --target "Aria" --amount 10
 python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+5" --advantage
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "Summary here"
 ```

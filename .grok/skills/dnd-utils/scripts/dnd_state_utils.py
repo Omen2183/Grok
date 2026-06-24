@@ -132,6 +132,11 @@ def init_campaign(
 
     if enable_sqlite:
         (root / "state" / "sqlite_enabled.flag").write_text("1", encoding="utf-8")
+        try:
+            from sqlite_layer import init_db
+            init_db(campaign_name)
+        except Exception:
+            pass
 
     record_event(campaign_name, "Campaign initialized", importance="major", tags=["init"])
     return {"status": "created", "path": str(root), "campaign_name": campaign_name}
@@ -324,13 +329,20 @@ def advance_kingdom_projects(campaign_name: str, turns: int = 1) -> Dict[str, An
             project["status"] = "completed"
             completed.append(project.get("name", "project"))
     update_kingdom_state(campaign_name, {"projects": kingdom.get("projects", [])})
+    consequences: List[str] = []
     if completed:
         record_event(
             campaign_name,
             f"Kingdom projects completed: {', '.join(completed)}",
             tags=["kingdom", "project"],
         )
-    return {"completed": completed, "projects": kingdom.get("projects", [])}
+        try:
+            from kingdom_sim import apply_cascading_consequences
+            for project_name in completed:
+                consequences.extend(apply_cascading_consequences(campaign_name, project_name))
+        except Exception:
+            pass
+    return {"completed": completed, "projects": kingdom.get("projects", []), "consequences": consequences}
 
 
 def get_kingdom_summary(campaign_name: str) -> str:

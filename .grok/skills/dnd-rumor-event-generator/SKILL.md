@@ -1,6 +1,6 @@
 ---
 name: dnd-rumor-event-generator
-description: Generate rumors, faction actions, random world events, and downtime developments to keep campaigns reactive. Triggers include what's the rumor mill, random event, faction move, downtime activity, kingdom event, world reacts. Especially strong in kingdom mode and sandbox play. Prompt-only — reads state, no generator script.
+description: Generate rumors, faction actions, random world events, and downtime developments to keep campaigns reactive. v2.0.0 production. Triggers include what's the rumor mill, random event, faction move, downtime activity, kingdom event, world reacts. Especially strong in kingdom mode and sandbox play. Backed by rumor_generator.py CLI.
 ---
 
 # D&D Rumor & Event Generator
@@ -14,22 +14,24 @@ description: Generate rumors, faction actions, random world events, and downtime
 
 ## Quick Start (Mobile)
 1. Say **"What's happening in the world while we rest?"**
-2. Grok reads kingdom/world state and generates 1–3 rumors or events.
+2. Grok runs `rumor_generator rumors` from kingdom/world state.
 3. Player pursues one → persistent-dm runs the scene.
 
 ## Capabilities (Honest Matrix)
 | Capability | Status | Notes |
 |------------|--------|-------|
-| Context-aware rumor generation | ⚠️ Partial | Grok + state reads |
-| Kingdom/domain events | ⚠️ Partial | Uses `kingdom_state.json` |
-| Faction reaction narratives | ⚠️ Partial | Prompt-driven |
+| Procedural rumors | ✅ Implemented | `rumor_generator.py rumors` |
+| World events | ✅ Implemented | `rumor_generator.py world-event` |
+| Context-aware generation | ✅ Implemented | Reads `kingdom_state.json` + factions |
+| Kingdom/domain events | ✅ Implemented | Trade, unrest, military seeds |
+| Faction reaction narratives | ✅ Implemented | State-driven templates + Grok polish |
 | Persist generated events | ✅ Implemented | Via dnd-utils `record-event` |
-| Procedural event tables script | ❌ Prompt-only | No `event_generator.py` |
-| Long-horizon faction AI | ❌ Prompt-only | No simulation backend |
+| Long-horizon faction AI | ⚠️ Partial | Use kingdom_sim for cascading effects |
 
 ## Tools & Scripts
-Read context, then log chosen events:
 ```bash
+python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py rumors "My Campaign" --count 3
+python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py world-event "My Campaign" --seed unrest
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --file kingdom_state
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py kingdom-summary "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py search-events "My Campaign" --tag rumor --limit 5
@@ -60,7 +62,7 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py advance-projects "My Ca
 - Keep each rumor to 2 sentences.
 
 ## Example Flow
-→ Read kingdom summary → generate 3 rumors
+→ `rumor_generator rumors --count 3` → present hooks
 → *"1) Bandits on the east road. 2) Grain prices spike. 3) A lord seeks mercenaries."*
 → Player picks #1 → persistent-dm scenes it
 → `record-event` with tag `rumor`

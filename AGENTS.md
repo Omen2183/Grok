@@ -24,7 +24,7 @@ This repository is a Grok Build skill pack for persistent D&D 5e campaigns.
 
 ## Before Editing
 
-1. Run `python -m pytest -q` from the repo root (19 tests).
+1. Run `python -m pytest -q` and `python scripts/smoke_test.py` from the repo root (27 tests).
 2. Prefer extending `dnd_state_utils.py` over duplicating state logic.
 3. Do not commit `__pycache__`, campaign artifacts, or zip exports.
 

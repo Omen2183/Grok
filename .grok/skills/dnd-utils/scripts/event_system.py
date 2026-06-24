@@ -56,6 +56,11 @@ def record_event(
     events = _load_events(campaign_name)
     events.append(entry)
     _save_events(campaign_name, events)
+    try:
+        from sqlite_layer import sync_event_to_sqlite
+        sync_event_to_sqlite(campaign_name, entry)
+    except Exception:
+        pass
     return entry
 
 

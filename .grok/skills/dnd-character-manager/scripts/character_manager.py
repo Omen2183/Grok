@@ -699,7 +699,7 @@ def run_cli() -> None:
     p_level = sub.add_parser("level-up")
     p_level.add_argument("campaign")
     p_level.add_argument("--levels", type=int, default=1)
-    p_level.add_argument("--class")
+    p_level.add_argument("--class", dest="class_name")
 
     p_inv = sub.add_parser("inventory")
     p_inv.add_argument("campaign")
@@ -719,7 +719,7 @@ def run_cli() -> None:
     if args.cmd == "summary":
         print(get_character_summary(args.campaign))
     elif args.cmd == "level-up":
-        result = level_up(args.campaign, levels=args.levels, class_name=args.class)
+        result = level_up(args.campaign, levels=args.levels, class_name=args.class_name)
         print(json.dumps(result, indent=2))
     elif args.cmd == "inventory":
         item = {"name": args.name, "type": args.type}

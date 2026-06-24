@@ -31,6 +31,7 @@ try:
         update_player_hp,
         update_important_companion,
     )
+    from sync_bridge import on_player_death_save, on_player_damaged, on_player_healed
 except ImportError:
     print("Warning: dnd_state_utils not available. Running in limited mode.", file=sys.stderr)
     from paths import get_campaign_path  # type: ignore
@@ -38,6 +39,9 @@ except ImportError:
     def update_player_hp(*a, **k): return {"current": 0, "max": 0}
     def update_important_companion(*a, **k): return {}
     def record_combat_outcome(*a, **k): return {}
+    def on_player_damaged(*a, **k): return {}
+    def on_player_healed(*a, **k): return {}
+    def on_player_death_save(*a, **k): return {}
 
 def get_combat_file(campaign_name: str) -> Path:
     return get_campaign_path(campaign_name) / "combat" / "current_combat.json"
@@ -225,11 +229,14 @@ def apply_damage(campaign_name: str, target_name: str, amount: int) -> Dict[str,
             hp_delta = max(0, hp_before_damage - c.get("hp_current", 0))
 
             # === Sync to main campaign state ===
-            if c.get("is_player") and hp_delta > 0:
+            if c.get("is_player"):
                 try:
-                    update_player_hp(campaign_name, delta=-hp_delta)
+                    on_player_damaged(campaign_name, c.get("hp_current", 0))
                 except Exception:
-                    pass
+                    try:
+                        update_player_hp(campaign_name, delta=-hp_delta)
+                    except Exception:
+                        pass
             elif c.get("is_companion"):
                 try:
                     update_important_companion(campaign_name, {
@@ -286,9 +293,12 @@ def apply_healing(campaign_name: str, target_name: str, amount: int) -> Dict[str
             )
             if c.get("is_player") and healed > 0:
                 try:
-                    update_player_hp(campaign_name, delta=healed)
+                    on_player_healed(campaign_name, healed)
                 except Exception:
-                    pass
+                    try:
+                        update_player_hp(campaign_name, delta=healed)
+                    except Exception:
+                        pass
             elif c.get("is_companion") and healed > 0:
                 try:
                     update_important_companion(campaign_name, {
@@ -444,12 +454,22 @@ def record_death_save(campaign_name: str, creature_name: str, success: bool) -> 
             if success:
                 ds["successes"] = ds.get("successes", 0) + 1
                 combat["log"].append(f"{creature_name} rolled a Death Save Success ({ds['successes']}/3)")
+                if c.get("is_player"):
+                    try:
+                        on_player_death_save(campaign_name, True)
+                    except Exception:
+                        pass
                 if ds["successes"] >= 3:
                     c["is_unconscious"] = False
                     combat["log"].append(f"🎉 {creature_name} has stabilized (3 death save successes)!")
             else:
                 ds["failures"] = ds.get("failures", 0) + 1
                 combat["log"].append(f"{creature_name} rolled a Death Save Failure ({ds['failures']}/3)")
+                if c.get("is_player"):
+                    try:
+                        on_player_death_save(campaign_name, False)
+                    except Exception:
+                        pass
                 if ds["failures"] >= 3:
                     combat["log"].append(f"💀 {creature_name} has died (3 death save failures)!")
                     c["is_unconscious"] = False  # Consider marking as dead in future versions

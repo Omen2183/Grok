@@ -1,6 +1,6 @@
 ---
 name: dnd-utils
-description: Shared Python backend for all D&D skills — campaign init, JSON state persistence, HP sync, kingdom project queue/advance, event logging, roll logs, and mobile narration helpers. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
+description: Shared Python backend for all D&D skills — campaign init, JSON state persistence, HP sync, kingdom project queue/advance, event logging, roll logs, SQLite analytics, kingdom simulation, and mobile narration helpers. v2.0.0 production. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
 ---
 
 # D&D Utils
@@ -8,8 +8,8 @@ description: Shared Python backend for all D&D skills — campaign init, JSON st
 ## When to Use
 - Bootstrapping or resuming a campaign folder structure
 - Reading/writing `world_state.json`, `player_character.json`, `kingdom_state.json`
-- Kingdom project queue and turn advancement
-- Event logging, roll logging, campaign audits
+- Kingdom project queue, turn advancement, and simulation hooks
+- Event logging, roll logging, campaign audits, SQLite indexing
 - Formatting short mobile status blocks via `narration_helpers.py`
 
 **Do not use when:** The player wants narration, rules, or combat — route to `dnd-persistent-dm` or the specialist skill.
@@ -25,16 +25,18 @@ description: Shared Python backend for all D&D skills — campaign init, JSON st
 | Campaign init & folder scaffold | ✅ Implemented | `init` creates state/npcs/logs/recaps/combat |
 | World & player JSON read/write | ✅ Implemented | Atomic saves with backups |
 | Kingdom project queue/advance | ✅ Implemented | `queue-project`, `advance-projects` |
+| Kingdom simulation | ✅ Implemented | `kingdom_sim.py` — population, trade, military, cascading consequences |
 | Event log (JSON) | ✅ Implemented | `event_system.py` → `logs/events.json` |
 | Roll logging | ✅ Implemented | Used by dice-engine when `--campaign` set |
 | Session start summary | ✅ Implemented | `session-summary` command |
 | Campaign audit | ✅ Implemented | `audit` checks key files |
 | Narration helpers | ✅ Implemented | `format_mobile_status`, `suggest_next_actions` |
-| SQLite analytics layer | ❌ Prompt-only | `--enable-sqlite` writes a flag only; no `sqlite_layer.py` |
+| SQLite analytics layer | ✅ Implemented | `sqlite_layer.py`; enable via `init --enable-sqlite` |
+| Combat ↔ character sync bridge | ✅ Implemented | `sync_bridge.py` — HP, healing, death saves |
 
 ## Tools & Scripts
 ```bash
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py init "My Campaign" --pc-name "Aria"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py init "My Campaign" --pc-name "Aria" --enable-sqlite
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py status "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py update "My Campaign" --set-location "Whisperwood" --advance-time 8
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py kingdom-summary "My Campaign"
@@ -46,12 +48,13 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py record-event "My Campai
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py campaigns-root
 ```
 
-Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`.
+Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`.
 
 ## Behavior
 - Resolve campaign root via `paths.py` (`DND_CAMPAIGNS_ROOT` → `~/.grok/artifacts/dnd-campaigns/`).
 - Never invent state — load JSON first, write via `save_json`.
 - Confirm location/mode/HP changes with before → after when surfacing to the player.
+- `advance-projects` may invoke `kingdom_sim.apply_cascading_consequences` on completion.
 - Keep replies scannable; use `format_mobile_status` for status checks.
 
 ## State & Files
@@ -59,8 +62,9 @@ Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_help
 |------|---------|
 | `state/world_state.json` | Location, time, mode, weather |
 | `state/player_character.json` | PC stats, HP, XP, conditions |
-| `state/kingdom_state.json` | Domain resources, projects, factions |
+| `state/kingdom_state.json` | Domain resources, projects, factions, military |
 | `state/important_companion.json` | Key companion snapshot |
+| `state/campaign_index.sqlite` | Optional event index (JSON remains source of truth) |
 | `logs/events.json` | Structured event timeline |
 | `logs/rolls.json` | Dice roll history |
 | `logs/session_log.md` | Append-only session notes |
@@ -68,7 +72,8 @@ Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_help
 
 ## Integration
 - **Called by:** persistent-dm, combat-assistant, character-manager, session-scribe, loot-generator, npc-weaver, visual-weaver, dice-engine
-- **Calls:** `event_system.py` internally; no direct player narration
+- **Calls:** `event_system.py`, `kingdom_sim.py`, `sqlite_layer.py`, `sync_bridge.py` internally
+- **No direct player narration**
 
 ## iOS / Voice Notes
 - Status replies should be ≤8 lines; lead with location + HP.

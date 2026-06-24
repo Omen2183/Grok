@@ -1,6 +1,6 @@
 ---
 name: dnd-combat-assistant
-description: Combat encounter tracker for initiative, HP, healing, conditions, concentration, death saves, and turn order. Triggers include start combat, roll initiative, next turn, damage to [target], heal [target], apply condition, end combat. Mobile-first text combat for any D&D campaign. Syncs HP to central state on end-combat.
+description: Combat encounter tracker for initiative, HP, healing, conditions, concentration, death saves, and turn order. v2.0.0 production. Triggers include start combat, roll initiative, next turn, damage to [target], heal [target], apply condition, end combat. Mobile-first text combat for any D&D campaign. Syncs HP and death saves to character sheet via sync_bridge.
 ---
 
 # D&D Combat Assistant
@@ -9,6 +9,7 @@ description: Combat encounter tracker for initiative, HP, healing, conditions, c
 - Starting or running an active encounter
 - Tracking initiative, HP, temp HP, conditions, concentration
 - Applying damage/healing with before → after confirmation
+- Death saves with bidirectional character-sheet sync
 - Ending combat and syncing player HP to campaign state
 
 **Do not use when:** Out of combat (use character-manager), rules questions (rules-reference), or loot rolls (loot-generator).
@@ -23,9 +24,11 @@ description: Combat encounter tracker for initiative, HP, healing, conditions, c
 |------------|--------|-------|
 | Init & add combatants | ✅ Implemented | Player, companion, monster flags |
 | Initiative & turn order | ✅ Implemented | `next-turn`, `status` |
-| Damage & healing | ✅ Implemented | Syncs player/companion HP via dnd-utils |
+| Damage & healing | ✅ Implemented | `apply_healing()` + `heal` CLI |
 | Temp HP, conditions, concentration | ✅ Implemented | Duration rounds supported |
 | Death saves | ✅ Implemented | Success/failure tracking |
+| Death save ↔ character sync | ✅ Implemented | `sync_bridge.on_player_death_save` |
+| HP sync on damage/heal | ✅ Implemented | `sync_bridge` for player PC |
 | End combat + XP hook | ✅ Implemented | Clears combat file, records outcome |
 | Mass combat resolver | ✅ Implemented | Abstract kingdom-scale battles |
 | Auto-roll monster initiative | ⚠️ Partial | Manual `--initiative` required on add |
@@ -40,6 +43,8 @@ python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py damage "My Ca
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py heal "My Campaign" --target "Aria" --amount 8
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py next-turn "My Campaign"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py status "My Campaign"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py death-save-success "My Campaign" --target "Aria"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py death-save-failure "My Campaign" --target "Aria"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py apply-condition "My Campaign" --target "Aria" --condition "Poisoned" --duration-rounds 3
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py end-combat "My Campaign" --xp 150
 ```
@@ -47,6 +52,7 @@ python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py end-combat "M
 ## Behavior
 - Lead with whose turn it is and target HP after each change.
 - Confirm: *"Goblin 1: 7 → 0 HP (down)."*
+- Player death saves sync to `player_character.json` via `sync_bridge`.
 - End scenes with **What do you do?** between player turns.
 - On `end-combat`, sync PC HP to `player_character.json`.
 
@@ -54,13 +60,13 @@ python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py end-combat "M
 | File | R/W | Contents |
 |------|-----|----------|
 | `combat/current_combat.json` | R/W | Combatants, round, turn index, log |
-| `state/player_character.json` | W | HP sync on end-combat |
+| `state/player_character.json` | W | HP/death-save sync via sync_bridge |
 | `state/important_companion.json` | W | Companion HP sync |
 
 ## Integration
-- **Uses:** dnd-utils (`update_player_hp`, `record_combat_outcome`)
+- **Uses:** dnd-utils (`update_player_hp`, `record_combat_outcome`, `sync_bridge`)
 - **Called by:** persistent-dm, voice-assistant (damage/healing phrases)
-- **Pairs with:** dice-engine (attack rolls), loot-generator (post-fight rewards)
+- **Pairs with:** dice-engine (attack rolls), loot-generator (post-fight rewards), character-manager (death saves)
 
 ## iOS / Voice Notes
 - Keep combat blocks ≤6 lines: turn → HP snapshot → prompt.
