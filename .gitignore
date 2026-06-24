@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Campaign data (keep local, don't commit play state)
+artifacts/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Archives (source lives in .grok/skills/)
+dnd-skills-source/
+grok-dnd-skills-export/
+grok-dnd-skills-export.zip
