@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Campaign orchestrator — init, resume, kingdom turns, and action routing."""
+"""Campaign orchestrator — init, resume, routing, delegation, and playbooks."""
 
 from __future__ import annotations
 
 import argparse
 import json
-import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 SKILLS_ROOT = Path(__file__).resolve().parent.parent.parent
 UTILS = SKILLS_ROOT / "dnd-utils" / "scripts"
@@ -30,6 +29,8 @@ from dnd_state_utils import (  # noqa: E402
 )
 from narration_helpers import format_mobile_status, proactive_opening, suggest_next_actions  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
+from skill_orchestrator import execute_intent, route_and_plan, run_playbook  # noqa: E402
+from skill_registry import PLAYBOOKS, coordination_summary, list_all_skills  # noqa: E402
 
 
 def _campaign_exists(campaign_name: str) -> bool:
@@ -43,12 +44,13 @@ def resume_campaign(campaign_name: str) -> Dict[str, Any]:
             "status": "not_initialized",
             "campaign": campaign_name,
             "action": "init",
-            "message": f"Campaign '{campaign_name}' not found. Run init first.",
+            "playbook": "new-campaign",
+            "message": f"Campaign '{campaign_name}' not found. Run init or playbook new-campaign.",
         }
     opening = proactive_opening(campaign_name)
     combat_file = get_campaign_path(campaign_name) / "combat" / "current_combat.json"
     combat_active = combat_file.exists()
-    result = {
+    result: Dict[str, Any] = {
         "status": "ready",
         "campaign": campaign_name,
         "mode": get_world_state(campaign_name).get("mode", "tabletop"),
@@ -56,26 +58,30 @@ def resume_campaign(campaign_name: str) -> Dict[str, Any]:
         "mobile_status": opening["mobile_status"],
         "suggestions": opening["suggestions"],
         "combat_active": combat_active,
+        "coordination": {
+            "registry": "dnd-utils/scripts/skill_registry.py",
+            "orchestrator": "dnd-utils/scripts/skill_orchestrator.py",
+        },
     }
     if combat_active:
         try:
             sys.path.insert(0, str(SKILLS_ROOT / "dnd-combat-assistant" / "scripts"))
             from combat_tracker import get_combat_summary
             result["combat_summary"] = get_combat_summary(campaign_name)
+            result["next_skill"] = "dnd-combat-assistant"
         except Exception:
             pass
     return result
 
 
 def kingdom_turn(campaign_name: str, *, turns: int = 1, rumor_count: int = 2) -> Dict[str, Any]:
-    """Advance domain projects and surface rumors for kingdom mode."""
+    """Advance domain projects and surface rumors — or use playbook kingdom-turn."""
     projects = advance_kingdom_projects(campaign_name, turns=turns)
-    rumors: List[str] = []
+    rumors: List[Any] = []
     try:
         sys.path.insert(0, str(SKILLS_ROOT / "dnd-rumor-event-generator" / "scripts"))
         from rumor_generator import generate_rumors
-        rumor_result = generate_rumors(campaign_name, count=rumor_count)
-        rumors = rumor_result if isinstance(rumor_result, list) else rumor_result.get("rumors", [])
+        rumors = generate_rumors(campaign_name, count=rumor_count)
     except Exception:
         pass
     return {
@@ -85,30 +91,23 @@ def kingdom_turn(campaign_name: str, *, turns: int = 1, rumor_count: int = 2) ->
         "rumors": rumors,
         "mobile_status": format_mobile_status(campaign_name),
         "suggestions": suggest_next_actions(campaign_name, mode="kingdom"),
+        "follow_up_skills": ["dnd-quest-tracker", "dnd-content-forge", "dnd-lore-archivist"],
     }
 
 
 def route_player_action(campaign_name: str, text: str) -> Dict[str, Any]:
-    """Map free-text player input to the responsible skill/backend."""
-    sys.path.insert(0, str(SKILLS_ROOT / "dnd-voice-assistant" / "scripts"))
-    from voice_utils import route_voice_request
-
-    route = route_voice_request(text)
-    route["campaign"] = campaign_name
-    route["player_text"] = text
-    world = get_world_state(campaign_name)
-    route["mode"] = world.get("mode", "tabletop")
-    route["location"] = world.get("current_location", "Unknown")
-    return route
+    """Map player input to skill delegation with executable CLI plan."""
+    return route_and_plan(campaign_name, text)
 
 
 def whats_happening(campaign_name: str) -> Dict[str, Any]:
-    """Proactive DM beat when the player is stuck or asks what's going on."""
+    """Proactive DM beat when the player is stuck."""
     if not _campaign_exists(campaign_name):
-        return {"status": "not_initialized", "campaign": campaign_name}
+        return {"status": "not_initialized", "campaign": campaign_name, "playbook": "new-campaign"}
     world = get_world_state(campaign_name)
     player = get_player_character(campaign_name)
     recent = generate_session_start_summary(campaign_name)
+    suggestions = suggest_next_actions(campaign_name)
     return {
         "status": "ok",
         "campaign": campaign_name,
@@ -117,31 +116,22 @@ def whats_happening(campaign_name: str) -> Dict[str, Any]:
         "character": player.get("name"),
         "mobile_status": format_mobile_status(campaign_name),
         "recent_events": recent.get("briefing_markdown", ""),
-        "suggestions": suggest_next_actions(campaign_name),
+        "suggestions": suggestions,
+        "suggested_skills": _suggest_skills_for_context(campaign_name),
         "prompt": "What do you do?",
     }
 
 
-def run_script(relative_script: str, args: List[str]) -> Dict[str, Any]:
-    """Run another skill script and return parsed JSON stdout when possible."""
-    script = SKILLS_ROOT / relative_script
-    result = subprocess.run(
-        [sys.executable, str(script), *args],
-        capture_output=True,
-        text=True,
-        cwd=str(SKILLS_ROOT.parent.parent),
-    )
-    stdout = result.stdout.strip()
-    try:
-        payload = json.loads(stdout) if stdout else {}
-    except json.JSONDecodeError:
-        payload = {"output": stdout}
-    return {
-        "ok": result.returncode == 0,
-        "returncode": result.returncode,
-        "result": payload,
-        "stderr": result.stderr.strip() or None,
-    }
+def _suggest_skills_for_context(campaign_name: str) -> List[str]:
+    skills = []
+    if (get_campaign_path(campaign_name) / "combat" / "current_combat.json").exists():
+        skills.append("dnd-combat-assistant")
+    world = get_world_state(campaign_name)
+    if world.get("mode") == "kingdom":
+        skills.extend(["dnd-utils", "dnd-rumor-event-generator", "dnd-quest-tracker"])
+    else:
+        skills.extend(["dnd-dice-engine", "dnd-lore-archivist", "dnd-npc-personality-weaver"])
+    return skills
 
 
 def main() -> None:
@@ -172,6 +162,20 @@ def main() -> None:
     p_route.add_argument("campaign")
     p_route.add_argument("text")
 
+    p_exec = sub.add_parser("execute")
+    p_exec.add_argument("campaign")
+    p_exec.add_argument("intent")
+    p_exec.add_argument("--target")
+    p_exec.add_argument("--amount", type=int)
+    p_exec.add_argument("--confirmed", action="store_true")
+
+    p_playbook = sub.add_parser("playbook")
+    p_playbook.add_argument("campaign")
+    p_playbook.add_argument("name", choices=list(PLAYBOOKS.keys()))
+
+    p_registry = sub.add_parser("registry")
+    p_registry.add_argument("skill_id", nargs="?", default=None)
+
     p_health = sub.add_parser("health")
     p_health.add_argument("campaign")
     p_health.add_argument("--enhanced", action="store_true")
@@ -200,6 +204,19 @@ def main() -> None:
         result = kingdom_turn(args.campaign, turns=args.turns, rumor_count=args.rumors)
     elif args.cmd == "route":
         result = route_player_action(args.campaign, args.text)
+    elif args.cmd == "execute":
+        ctx: Dict[str, Any] = {}
+        if args.target and args.amount is not None:
+            key = "healing" if args.intent == "healing" else "damage"
+            ctx[key] = (args.target, args.amount)
+        result = execute_intent(args.campaign, args.intent, context=ctx, confirmed=args.confirmed)
+    elif args.cmd == "playbook":
+        result = run_playbook(args.campaign, args.name)
+    elif args.cmd == "registry":
+        if args.skill_id:
+            result = coordination_summary(args.skill_id)
+        else:
+            result = {"skills": list_all_skills(), "playbooks": list(PLAYBOOKS.keys())}
     elif args.cmd == "health":
         result = enhanced_audit_campaign(args.campaign) if args.enhanced else audit_campaign(args.campaign)
     else:

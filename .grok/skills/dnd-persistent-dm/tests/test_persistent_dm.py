@@ -17,6 +17,8 @@ def test_resume_initialized_campaign(campaign):
 def test_route_attack_text(campaign):
     route = route_player_action(campaign, "Goblin takes 5 damage")
     assert route["primary_skill"] == "dnd-combat-assistant"
+    assert "delegation" in route
+    assert route["delegation"]["resolved_args"] == ["--target", "Goblin", "--amount", "5"]
 
 
 def test_whats_happening(campaign):

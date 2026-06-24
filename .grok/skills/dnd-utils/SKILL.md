@@ -1,6 +1,6 @@
 ---
 name: dnd-utils
-description: Shared Python backend for all D&D skills — campaign init, JSON state persistence, HP sync, kingdom project queue/advance, event logging, roll logs, SQLite analytics, kingdom simulation, and mobile narration helpers. v2.1.0 production. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
+description: Shared Python backend for all D&D skills — campaign init, state, events, kingdom sim, plus skill_registry and skill_orchestrator for cross-skill coordination. v3.0.0 production foundation. Not player-facing; all skills route through registry for delegation. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
 ---
 
 # D&D Utils
@@ -46,6 +46,10 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py audit "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py session-summary "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py record-event "My Campaign" "Party entered the crypt" --tags exploration
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py campaigns-root
+python .grok/skills/dnd-utils/scripts/skill_registry.py list
+python .grok/skills/dnd-utils/scripts/skill_registry.py resolve damage --campaign "My Campaign"
+python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan "My Campaign" "next turn"
+python .grok/skills/dnd-utils/scripts/skill_orchestrator.py playbook "My Campaign" kingdom-turn
 ```
 
 Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`.

@@ -60,7 +60,8 @@ Override with the `DND_CAMPAIGNS_ROOT` environment variable.
 
 - **Grok iOS native:** mobile-first replies, honest capability matrices in each `SKILL.md`, voice routing via `dnd-voice-assistant`
 - **Shared state:** `dnd-utils/scripts/paths.py` resolves campaign folders on Windows, macOS, and Grok cloud
-- **60+ tests** + integration flow + full CLI smoke test (all 16 skills)
+- **68 tests** + orchestration flow + full CLI smoke test (all 16 skills)
+- **skill_registry** + **skill_orchestrator** for cross-skill coordination
 - **GitHub Actions CI** on Python 3.11 and 3.12
 
 See `.grok/skills/_PRODUCTION_CONVENTIONS.md` for agent conventions.
@@ -71,6 +72,7 @@ See `.grok/skills/_PRODUCTION_CONVENTIONS.md` for agent conventions.
 python -m pytest -q            # full test suite
 python scripts/smoke_test.py   # smoke test all 16 skill CLIs
 python scripts/validate_skills.py  # verify every skill has Python backend
+python scripts/validate_orchestration.py  # verify registry matches all 16 skills
 ```
 
 ## Development

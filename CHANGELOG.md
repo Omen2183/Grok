@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.0.0 — Production orchestration (10/10)
+
+### Added
+- `skill_registry.py` — canonical intent→skill map, playbooks, coordination graph
+- `skill_orchestrator.py` — `plan`, `execute`, `playbook` cross-skill runner
+- `persistent_dm` commands: `execute`, `playbook`, `registry`
+- Playbooks: new-campaign, start-combat, end-combat, session-end, kingdom-turn, downtime
+- Session scribe pulls active quests/hooks into recaps automatically
+- Orchestration integration tests (70+ total tests)
+- `_PRODUCTION_CONVENTIONS.md` skill coordination section
+
+### Changed
+- All routing flows through registry before skill invocation
+- Voice routes include coordination hints for orchestrator enrichment
+- persistent-dm is the required hub for multi-skill sequences
+
 ## 2.2.0 — Full Python backend coverage
 
 ### Added

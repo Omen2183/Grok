@@ -103,9 +103,23 @@ def save_recap(
         f"- **XP this session:** {xp_gained}",
     ]
 
-    if hooks:
+    quest_hooks: List[str] = []
+    try:
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent / "dnd-quest-tracker" / "scripts"))
+        from quest_tracker import list_active
+        active = list_active(campaign_name)
+        for q in active.get("active_quests", [])[:3]:
+            quest_hooks.append(f"Quest: {q.get('title', 'Unknown')}")
+        for h in active.get("open_hooks", [])[:3]:
+            text = h.get("text", h) if isinstance(h, dict) else str(h)
+            quest_hooks.append(f"Hook: {text}")
+    except Exception:
+        pass
+
+    all_hooks = list(hooks or []) + quest_hooks
+    if all_hooks:
         lines.extend(["", "## Hooks for Next Session"])
-        for hook in hooks:
+        for hook in all_hooks:
             lines.append(f"- {hook}")
 
     content = "\n".join(lines) + "\n"

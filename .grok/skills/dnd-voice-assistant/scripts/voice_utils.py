@@ -119,11 +119,14 @@ def route_voice_request(text: str) -> Dict[str, Any]:
     }
 
     if damage:
-        route.update({"primary_skill": "dnd-combat-assistant", "damage": damage})
+        route.update({"primary_skill": "dnd-combat-assistant", "damage": damage, "intent": "damage"})
     elif healing:
-        route.update({"primary_skill": "dnd-combat-assistant", "healing": healing})
+        route.update({"primary_skill": "dnd-combat-assistant", "healing": healing, "intent": "healing"})
     elif intent in skill_map:
         route["primary_skill"] = skill_map[intent]
+    route["coordination_hint"] = (
+        "Enrich via: python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan <campaign> <text>"
+    )
     return route
 
 

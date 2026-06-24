@@ -14,6 +14,7 @@ This repository is a Grok Build skill pack for persistent D&D 5e campaigns.
 - `dnd-utils` is the shared foundation — other skills import from `dnd-utils/scripts/`.
 - Use atomic JSON writes (temp file + rename) for state files.
 - Keep `SKILL.md` files as the behavior spec; Python scripts handle deterministic logic.
+- Cross-skill calls **must** go through `skill_registry.py` / `skill_orchestrator.py` — see `_PRODUCTION_CONVENTIONS.md`.
 
 ## Production Rules (Grok iOS)
 

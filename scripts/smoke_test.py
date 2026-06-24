@@ -29,6 +29,9 @@ def main() -> int:
         run([py, str(SKILLS / "dnd-persistent-dm/scripts/persistent_dm.py"), "init", campaign, "--enable-sqlite"], env)
         run([py, str(SKILLS / "dnd-persistent-dm/scripts/persistent_dm.py"), "resume", campaign], env)
         run([py, str(SKILLS / "dnd-persistent-dm/scripts/persistent_dm.py"), "route", campaign, "roll stealth"], env)
+        run([py, str(SKILLS / "dnd-persistent-dm/scripts/persistent_dm.py"), "registry"], env)
+        run([py, str(SKILLS / "dnd-utils/scripts/skill_registry.py"), "resolve", "loot", "--campaign", campaign], env)
+        run([py, str(SKILLS / "dnd-utils/scripts/skill_orchestrator.py"), "plan", campaign, "next turn"], env)
         run([py, str(SKILLS / "dnd-utils/scripts/dnd_state_utils.py"), "validate", campaign], env)
         run([py, str(SKILLS / "dnd-utils/scripts/narration_cli.py"), "mobile-status", campaign], env)
 

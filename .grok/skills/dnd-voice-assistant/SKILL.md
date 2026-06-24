@@ -21,7 +21,7 @@ description: Voice execution layer for the D&D skills suite. v2.0.0 production. 
 | Capability | Status | Notes |
 |------------|--------|-------|
 | Voice session detection | ✅ Implemented | `is_voice_session()` |
-| Full intent routing | ✅ Implemented | `route_voice_request()` — narrative, combat, dice, session |
+| Full intent routing | ✅ Implemented | `route_voice_request()` → enrich via `skill_orchestrator plan` |
 | Damage phrase parsing | ✅ Implemented | *"Goblin takes 8 damage"* |
 | Healing phrase parsing | ✅ Implemented | *"Aria heals 10"* |
 | Confirmation gates | ✅ Implemented | end-session, level-up, attune, init |
@@ -71,8 +71,10 @@ No direct file I/O — delegates to routed skills. Reads campaign context via pe
 | `narrative` (default) | dnd-persistent-dm |
 | damage/healing parsed | dnd-combat-assistant |
 | `dice_roll` | dnd-dice-engine |
-| `end_session` | dnd-session-scribe |
-| `combat_action` | dnd-persistent-dm → combat-assistant |
+| `end_session` | dnd-session-scribe → playbook session-end |
+| `rest` | dnd-downtime-manager |
+| `quest_list` / `add_quest` | dnd-quest-tracker |
+| `combat_action` | dnd-dice-engine → dnd-combat-assistant |
 
 ## iOS / Voice Notes
 - Avoid bullet lists and markdown in spoken output.

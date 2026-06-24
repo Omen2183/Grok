@@ -1,6 +1,6 @@
 ---
 name: dnd-persistent-dm
-description: Play or continue any D&D campaign with Grok as DM. Classic tabletop and kingdom/domain builder modes. v2.2.0 production orchestrator. Triggers include play D&D, DM mode, continue the campaign, switch to kingdom mode, kingdom actions, generate encounter, update state, end session, what's happening. Supports 5e + heavy homebrew. Orchestrates all D&D skills via persistent_dm.py. Persistent JSON state per campaign.
+description: Play or continue any D&D campaign with Grok as DM. v3.0.0 production orchestrator with skill_registry coordination. Triggers include play D&D, DM mode, continue campaign, kingdom mode, end session, what's happening. Routes all 16 skills via persistent_dm.py + skill_orchestrator.py playbooks. Persistent JSON state per campaign.
 ---
 
 # D&D Persistent DM
@@ -32,7 +32,9 @@ description: Play or continue any D&D campaign with Grok as DM. Classic tabletop
 | Kingdom simulation | ✅ Implemented | Population, trade, military, cascading effects |
 | Visual moment offers | ⚠️ Partial | visual-weaver prompts; image is optional |
 | Voice play | ✅ Implemented | Route through voice-assistant first |
-| Orchestrator script | ✅ Implemented | `persistent_dm.py` — resume, route, kingdom-turn |
+| Orchestrator script | ✅ Implemented | `persistent_dm.py` — route, execute, playbook, registry |
+| Cross-skill coordination | ✅ Implemented | `skill_registry.py` + `skill_orchestrator.py` |
+| Named playbooks | ✅ Implemented | session-end, kingdom-turn, end-combat, downtime |
 
 ## Tools & Scripts
 ```bash
@@ -42,9 +44,13 @@ python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py resume "My Campai
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py whats-happening "My Campaign"
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py route "My Campaign" "I attack the goblin"
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py kingdom-turn "My Campaign"
-python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py health "My Campaign" --enhanced
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py execute "My Campaign" damage --target Goblin --amount 8
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" session-end
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py registry dnd-combat-assistant
+python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan "My Campaign" "Goblin takes 8 damage"
+python .grok/skills/dnd-utils/scripts/skill_registry.py playbook session-end
 
-# Direct specialists (still available)
+# Direct specialists (when not using playbooks)
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py init "My Campaign" --pc-name "Aria" --enable-sqlite
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py status "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py session-summary "My Campaign"
@@ -94,13 +100,14 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py audit "My Campaign"
 | **tabletop** | Scenes, combat, social | combat-assistant, dice-engine, npc-weaver |
 | **kingdom** | Domain resources, projects, factions | dnd-utils, kingdom_sim, rumor-event-generator |
 
-### Automation patterns
-- **Combat:** `combat_tracker init` → add combatants → damage/heal each hit → `end-combat --xp N` → optional `procedural_loot hoard`
-- **Significant NPC:** `npc_manager create` after Grok authors personality
-- **Lore beat:** `lore_archivist append` after major revelations
-- **Downtime / travel:** `rumor_generator rumors` → `record-event`
-- **Session end:** `session_scribe end-session` (confirm first)
-- **Health check:** `audit` if state feels inconsistent
+### Automation patterns (use playbooks when possible)
+- **New campaign:** `playbook new-campaign`
+- **Combat:** `playbook start-combat` → dice-engine rolls → `execute damage` → `playbook end-combat`
+- **Session end:** `playbook session-end` (auto-recap → end-session → quests → audit)
+- **Kingdom:** `playbook kingdom-turn` or `kingdom-turn` command
+- **Downtime:** `playbook downtime`
+- **Any utterance:** `route` → read `delegation` → `execute` or call skill CLI directly
+- **Always** resolve routing via `skill_registry.py` before improvising skill calls
 
 ### Narration helpers
 Import `narration_helpers.py` for `format_mobile_status`, `suggest_next_actions`, `build_opening_scene`. Offer proactive suggestions when player says *"What's happening?"* or seems stuck.
