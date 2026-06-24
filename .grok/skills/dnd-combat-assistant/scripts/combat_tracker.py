@@ -537,6 +537,19 @@ def end_combat(campaign_name: str, award_xp: int = 0) -> Dict[str, Any]:
             except Exception:
                 pass
 
+    xp_result: Optional[Dict[str, Any]] = None
+    if award_xp > 0:
+        try:
+            scribe_dir = Path(__file__).parent.parent.parent / "dnd-session-scribe" / "scripts"
+            if str(scribe_dir) not in sys.path:
+                sys.path.insert(0, str(scribe_dir))
+            from session_scribe import award_xp as grant_combat_xp  # noqa: E402
+
+            xp_result = grant_combat_xp(campaign_name, award_xp, reason="Combat victory")
+            combat["log"].append(f"XP applied to character sheet: +{award_xp}")
+        except Exception as exc:
+            combat["log"].append(f"Warning: XP award failed: {exc}")
+
     # Clear the combat file (with backup)
     combat_file = get_combat_file(campaign_name)
     if combat_file.exists():
@@ -552,7 +565,12 @@ def end_combat(campaign_name: str, award_xp: int = 0) -> Dict[str, Any]:
     except Exception:
         pass
     
-    return {"status": "combat_ended", "log": combat["log"], "xp_awarded": award_xp}
+    return {
+        "status": "combat_ended",
+        "log": combat["log"],
+        "xp_awarded": award_xp,
+        "xp_result": xp_result,
+    }
 
 
 def resolve_mass_combat(

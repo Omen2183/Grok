@@ -257,29 +257,56 @@ def _log_roll(campaign: str, notation: str, total: int, metadata: Dict[str, Any]
         pass
 
 
+def roll_initiative(modifier: int = 0, *, campaign: Optional[str] = None) -> Dict[str, Any]:
+    """Roll 1d20 + modifier for initiative order."""
+    base = roll_dice("1d20", campaign=campaign)
+    total = base["total"] + modifier
+    return {
+        "type": "initiative",
+        "roll": base,
+        "modifier": modifier,
+        "initiative_total": total,
+    }
+
+
 if __name__ == "__main__":
     import argparse
+
+    argv = sys.argv[1:]
+    if argv and argv[0] not in ("initiative", "roll", "-h", "--help") and not argv[0].startswith("-"):
+        argv = ["roll", *argv]
+        sys.argv = [sys.argv[0], *argv]
 
     parser = argparse.ArgumentParser(
         description="Reliable D&D Dice Roller (supports 5e notation + keep highest/lowest + advantage/disadvantage)"
     )
-    parser.add_argument("notation", help="Dice notation e.g. 1d20+5, 4d6kh3, 2d20 advantage, d100")
-    parser.add_argument("--advantage", action="store_true", help="Roll with advantage (best of two)")
-    parser.add_argument("--disadvantage", action="store_true", help="Roll with disadvantage (worst of two)")
-    parser.add_argument("--exploding", action="store_true", help="Enable exploding dice (roll again on max value)")
-    parser.add_argument("--campaign", help="Optional campaign name to log this roll")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_roll = sub.add_parser("roll", help="Roll dice notation e.g. 1d20+5, 4d6kh3")
+    p_roll.add_argument("notation")
+    p_roll.add_argument("--advantage", action="store_true")
+    p_roll.add_argument("--disadvantage", action="store_true")
+    p_roll.add_argument("--exploding", action="store_true")
+    p_roll.add_argument("--campaign")
+
+    p_init = sub.add_parser("initiative", help="Roll 1d20 + modifier for initiative")
+    p_init.add_argument("modifier", type=int, nargs="?", default=0)
+    p_init.add_argument("--campaign")
 
     args = parser.parse_args()
 
     try:
-        result = roll_dice(
-            args.notation,
-            args.advantage,
-            args.disadvantage,
-            args.exploding,
-            campaign=args.campaign,
-        )
+        if args.cmd == "initiative":
+            result = roll_initiative(args.modifier, campaign=args.campaign)
+        else:
+            result = roll_dice(
+                args.notation,
+                args.advantage,
+                args.disadvantage,
+                args.exploding,
+                campaign=args.campaign,
+            )
         print(json.dumps(result, indent=2))
     except Exception as e:
-        print(json.dumps({"error": str(e), "notation": args.notation}))
+        print(json.dumps({"error": str(e)}))
         sys.exit(1)

@@ -12,7 +12,8 @@ from typing import Any, Dict, List
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-utils" / "scripts"))
 
-from dnd_state_utils import get_kingdom_state, get_world_state, record_event  # noqa: E402
+from dnd_state_utils import get_kingdom_state, get_world_state  # noqa: E402
+from event_system import record_event  # noqa: E402
 from kingdom_sim import generate_domain_event_chain  # noqa: E402
 
 
@@ -24,7 +25,13 @@ RUMOR_TEMPLATES = [
 ]
 
 
-def generate_rumors(campaign_name: str, count: int = 3, *, seed: str = "") -> List[Dict[str, Any]]:
+def generate_rumors(
+    campaign_name: str,
+    count: int = 3,
+    *,
+    seed: str = "",
+    persist: bool = True,
+) -> List[Dict[str, Any]]:
     world = get_world_state(campaign_name)
     kingdom = get_kingdom_state(campaign_name)
     location = world.get("current_location", "the region")
@@ -37,6 +44,15 @@ def generate_rumors(campaign_name: str, count: int = 3, *, seed: str = "") -> Li
     for template in rng.sample(RUMOR_TEMPLATES, k=min(count, len(RUMOR_TEMPLATES))):
         text = template.format(subject=subject, location=location, domain=domain)
         rumors.append({"text": text, "reliability": rng.choice(["likely", "uncertain", "dubious"])})
+    if persist and rumors:
+        for rumor in rumors:
+            record_event(
+                campaign_name,
+                rumor["text"],
+                tags=["rumor"],
+                importance="normal",
+                metadata={"reliability": rumor["reliability"]},
+            )
     return rumors
 
 
@@ -55,6 +71,7 @@ def main() -> None:
     p_rumors.add_argument("campaign")
     p_rumors.add_argument("--count", type=int, default=3)
     p_rumors.add_argument("--seed", default="")
+    p_rumors.add_argument("--no-persist", action="store_true")
 
     p_event = sub.add_parser("world-event")
     p_event.add_argument("campaign")
@@ -62,7 +79,9 @@ def main() -> None:
 
     args = parser.parse_args()
     if args.cmd == "rumors":
-        result = generate_rumors(args.campaign, args.count, seed=args.seed)
+        result = generate_rumors(
+            args.campaign, args.count, seed=args.seed, persist=not args.no_persist
+        )
     elif args.cmd == "world-event":
         result = generate_world_event(args.campaign, seed=args.seed)
     else:

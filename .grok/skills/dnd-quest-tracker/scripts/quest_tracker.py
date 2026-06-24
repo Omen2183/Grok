@@ -124,6 +124,12 @@ def main() -> None:
     p_list = sub.add_parser("list")
     p_list.add_argument("campaign")
 
+    p_obj = sub.add_parser("complete-objective")
+    p_obj.add_argument("campaign")
+    p_obj.add_argument("quest_id")
+    p_obj.add_argument("index", type=int)
+    p_obj.add_argument("--undo", action="store_true")
+
     args = parser.parse_args()
 
     if args.cmd == "add":
@@ -134,6 +140,10 @@ def main() -> None:
         result = complete_quest(args.campaign, args.quest_id, notes=args.notes) or {"error": "Quest not found"}
     elif args.cmd == "list":
         result = list_active(args.campaign)
+    elif args.cmd == "complete-objective":
+        result = update_objective(
+            args.campaign, args.quest_id, args.index, done=not args.undo
+        ) or {"error": "Quest or objective not found"}
     else:
         result = {"error": "Unknown command"}
 

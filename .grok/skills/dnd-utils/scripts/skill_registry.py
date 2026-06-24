@@ -279,7 +279,7 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
     ],
     "start-combat": [
         {"skill": "dnd-combat-assistant", "command": "init", "args": ["--encounter", "Encounter"]},
-        {"skill": "dnd-dice-engine", "command": "initiative", "notes": "Roll initiative per combatant, then add"},
+        {"skill": "dnd-dice-engine", "command": "initiative", "args": ["0"], "notes": "Repeat per combatant with DEX mod, then combat add"},
         {"skill": "dnd-combat-assistant", "command": "summary"},
     ],
     "end-combat": [

@@ -65,8 +65,31 @@ def apply_cascading_consequences(campaign_name: str, completed_project: str) -> 
 def generate_domain_event_chain(campaign_name: str, seed: str) -> List[str]:
     kingdom = get_kingdom_state(campaign_name)
     domain = kingdom.get("domain_name", "the realm")
-    return [
-        f"Rumors spread in {domain} about {seed}",
-        f"A minor faction reacts to news of {seed}",
-        f"Trade prices shift slightly due to {seed}",
-    ]
+    factions = kingdom.get("factions", {})
+    chain = [f"Rumors spread in {domain} about {seed}"]
+    if factions:
+        faction_name, faction_data = next(iter(factions.items()))
+        attitude = faction_data.get("attitude", "wary")
+        influence = faction_data.get("influence", 0)
+        chain.append(
+            f"The {faction_name} faction ({attitude}, influence {influence}) mobilizes in response to {seed}"
+        )
+    else:
+        chain.append(f"A minor faction reacts to news of {seed}")
+    chain.append(f"Trade prices shift slightly due to {seed}")
+    return chain
+
+
+def advance_kingdom_turn_simulation(campaign_name: str) -> Dict[str, Any]:
+    """Run passive kingdom simulation hooks on domain turn advancement."""
+    kingdom = get_kingdom_state(campaign_name)
+    results: Dict[str, Any] = {}
+    results["trade"] = process_trade_flows(campaign_name)
+    if kingdom.get("flags", {}).get("population_tracking"):
+        results["population"] = simple_population_update(
+            campaign_name, 1, reason="Seasonal growth"
+        )
+    military = kingdom.get("military", {})
+    if military:
+        results["military"] = {"units": military}
+    return results

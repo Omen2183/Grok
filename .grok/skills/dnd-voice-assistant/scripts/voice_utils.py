@@ -23,6 +23,8 @@ AMBIGUOUS_PATTERNS = (
     (re.compile(r"\b(heal|healing word|cure wounds|lay on hands)\b", re.I), "healing"),
     (re.compile(r"\b(apply condition|grappled|stunned|prone)\b", re.I), "apply_condition"),
     (re.compile(r"\b(level up|level-up)\b", re.I), "level_up"),
+    (re.compile(r"\b(attune|attunement)\b", re.I), "attune"),
+    (re.compile(r"\b(init campaign|new campaign|start (a )?new campaign)\b", re.I), "init_campaign"),
     (re.compile(r"\b(generate loot|treasure|what did we find)\b", re.I), "loot"),
     (re.compile(r"\b(rumor|rumour|what('s| is) the word)\b", re.I), "rumor"),
     (re.compile(r"\b(short rest|long rest|take a rest)\b", re.I), "rest"),
@@ -93,7 +95,7 @@ def voice_confirm_prompt(action: str) -> str:
     return f"Confirm {action}? Say yes to proceed or correct me."
 
 
-def route_voice_request(text: str) -> Dict[str, Any]:
+def route_voice_request(text: str, *, campaign: Optional[str] = None) -> Dict[str, Any]:
     intent = detect_intent(text) or "narrative"
     damage = parse_damage_phrase(text)
     healing = parse_healing_phrase(text)
@@ -116,6 +118,8 @@ def route_voice_request(text: str) -> Dict[str, Any]:
         "rest": "dnd-downtime-manager",
         "quest_list": "dnd-quest-tracker",
         "add_quest": "dnd-quest-tracker",
+        "attune": "dnd-character-manager",
+        "init_campaign": "dnd-persistent-dm",
     }
 
     if damage:
@@ -124,9 +128,27 @@ def route_voice_request(text: str) -> Dict[str, Any]:
         route.update({"primary_skill": "dnd-combat-assistant", "healing": healing, "intent": "healing"})
     elif intent in skill_map:
         route["primary_skill"] = skill_map[intent]
-    route["coordination_hint"] = (
-        "Enrich via: python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan <campaign> <text>"
-    )
+    if campaign:
+        route["campaign"] = campaign
+        try:
+            import sys
+            from pathlib import Path
+
+            utils = Path(__file__).resolve().parent.parent.parent / "dnd-utils" / "scripts"
+            if str(utils) not in sys.path:
+                sys.path.insert(0, str(utils))
+            from skill_orchestrator import enrich_route  # noqa: E402
+
+            route = enrich_route(campaign, route)
+        except Exception:
+            route["coordination_hint"] = (
+                "Enrich via: python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan "
+                f"{campaign} \"{text[:80]}\""
+            )
+    else:
+        route["coordination_hint"] = (
+            "Enrich via: python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan <campaign> <text>"
+        )
     return route
 
 
@@ -147,8 +169,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.cmd == "route":
-        result = route_voice_request(args.text)
-        result["campaign"] = args.campaign
+        result = route_voice_request(args.text, campaign=args.campaign)
     elif args.cmd == "parse":
         result = {
             "intent": detect_intent(args.text),

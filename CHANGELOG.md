@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.1.0 — Full backend audit & hardening pass
+
+### Added
+- `scripts/validate_backends.py` — multi-level audit: compile check, CLI detection, per-skill smoke invocation
+- `dice_roller initiative` subcommand (legacy `roll` notation shim preserved)
+- `character_manager sync` CLI for post-combat sheet reconciliation
+- `session_scribe append-log`, `quest_tracker complete-objective`, `lore_archivist list-npcs` / `list-recaps`
+- `dnd_state_utils query-sql-events` for SQLite-enabled campaigns
+- `kingdom_sim.advance_kingdom_turn_simulation` wired into `advance-projects`
+- Rumor persistence by default (`--no-persist` to opt out)
+- Faction-aware domain event chains in `kingdom_sim`
+- Voice routing now calls `skill_orchestrator.enrich_route`; attune/init intent detection
+- Integration tests for XP-on-end-combat, rumor persist, initiative, sync CLI
+
+### Fixed
+- `end_combat --xp` now awards XP to `player_character.json` via session-scribe
+- Playbook `initiative` and `sync` commands now map to real CLIs
+- `rumor_generator` imports `record_event` from `event_system` directly
+
 ## 3.0.2 — Combat sync verification & end-of-combat reconciliation
 
 ### Added

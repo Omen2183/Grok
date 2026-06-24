@@ -37,10 +37,12 @@ def main() -> int:
 
         # Core play backends
         run([py, str(SKILLS / "dnd-dice-engine/scripts/dice_roller.py"), "1d20", "--campaign", campaign], env)
+        run([py, str(SKILLS / "dnd-dice-engine/scripts/dice_roller.py"), "initiative", "2", "--campaign", campaign], env)
         run([py, str(SKILLS / "dnd-combat-assistant/scripts/combat_tracker.py"), "init", campaign], env)
         run([py, str(SKILLS / "dnd-combat-assistant/scripts/combat_tracker.py"), "summary", campaign], env)
         run([py, str(SKILLS / "dnd-character-manager/scripts/character_manager.py"), "summary", campaign], env)
         run([py, str(SKILLS / "dnd-character-manager/scripts/character_manager.py"), "suggest-level-up", campaign], env)
+        run([py, str(SKILLS / "dnd-character-manager/scripts/character_manager.py"), "sync", campaign], env)
 
         # Content & world
         run([py, str(SKILLS / "dnd-content-forge/scripts/generate_monster.py"), campaign, "--theme", "Test"], env)
@@ -49,6 +51,7 @@ def main() -> int:
         run([py, str(SKILLS / "dnd-loot-generator/scripts/procedural_loot.py"), "generate", campaign], env)
         run([py, str(SKILLS / "dnd-npc-personality-weaver/scripts/npc_manager.py"), "create", campaign, "--name", "Test NPC"], env)
         run([py, str(SKILLS / "dnd-lore-archivist/scripts/lore_archivist.py"), "append", campaign, "Smoke lore"], env)
+        run([py, str(SKILLS / "dnd-lore-archivist/scripts/lore_archivist.py"), "list-npcs", campaign], env)
         run([py, str(SKILLS / "dnd-rumor-event-generator/scripts/rumor_generator.py"), "rumors", campaign], env)
         run([py, str(SKILLS / "dnd-rules-reference/scripts/rules_cheatsheet.py"), "lookup", "advantage"], env)
         run([py, str(SKILLS / "dnd-visual-weaver/scripts/visual_prompt_library.py"), "weave-prompt", campaign, "tavern scene"], env)
@@ -61,6 +64,7 @@ def main() -> int:
         # Voice + session
         run([py, str(SKILLS / "dnd-voice-assistant/scripts/voice_utils.py"), "route", campaign, "next turn"], env)
         run([py, str(SKILLS / "dnd-session-scribe/scripts/session_scribe.py"), "auto-recap", campaign], env)
+        run([py, str(SKILLS / "dnd-session-scribe/scripts/session_scribe.py"), "append-log", campaign, "Smoke note"], env)
         run([py, str(SKILLS / "dnd-session-scribe/scripts/session_scribe.py"), "end-session", campaign, "Smoke complete", "--xp", "50"], env)
 
         skill_dirs = [d for d in SKILLS.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]

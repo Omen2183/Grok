@@ -239,6 +239,10 @@ def main() -> None:
     p_end.add_argument("--skip-audit", action="store_true")
     p_end.add_argument("--auto", action="store_true", help="Generate summary from events if summary empty")
 
+    p_log = sub.add_parser("append-log")
+    p_log.add_argument("campaign")
+    p_log.add_argument("text")
+
     args = parser.parse_args()
 
     if args.cmd == "award-xp":
@@ -249,6 +253,9 @@ def main() -> None:
             result["saved"] = save_recap(args.campaign, result["summary"], hooks=result.get("hooks"))
     elif args.cmd == "recap":
         result = save_recap(args.campaign, args.summary, hooks=args.hook)
+    elif args.cmd == "append-log":
+        _append_session_log(args.campaign, f"\n{args.text}\n")
+        result = {"status": "appended", "campaign": args.campaign}
     elif args.cmd == "end-session":
         summary = args.summary
         hooks = args.hook

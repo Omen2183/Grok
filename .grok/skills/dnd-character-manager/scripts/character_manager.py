@@ -724,6 +724,9 @@ def run_cli() -> None:
     p_comp.add_argument("--name")
     p_comp.add_argument("--hp", type=int, default=10)
 
+    p_sync = sub.add_parser("sync", help="Reconcile character status/death saves from combat state")
+    p_sync.add_argument("campaign")
+
     args = parser.parse_args()
 
     if args.cmd == "summary":
@@ -758,6 +761,9 @@ def run_cli() -> None:
             result = {"removed": remove_companion(args.campaign, args.name or "")}
         else:
             result = {"error": "Unknown companion action"}
+        print(json.dumps(result, indent=2))
+    elif args.cmd == "sync":
+        result = sync_character_status(args.campaign)
         print(json.dumps(result, indent=2))
 
 

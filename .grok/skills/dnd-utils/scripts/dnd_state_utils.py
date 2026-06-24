@@ -435,6 +435,13 @@ def advance_kingdom_projects(campaign_name: str, turns: int = 1) -> Dict[str, An
             completed.append(project.get("name", "project"))
     update_kingdom_state(campaign_name, {"projects": kingdom.get("projects", [])})
     consequences: List[str] = []
+    simulation: Dict[str, Any] = {}
+    try:
+        from kingdom_sim import advance_kingdom_turn_simulation
+
+        simulation = advance_kingdom_turn_simulation(campaign_name)
+    except Exception:
+        pass
     if completed:
         record_event(
             campaign_name,
@@ -447,7 +454,12 @@ def advance_kingdom_projects(campaign_name: str, turns: int = 1) -> Dict[str, An
                 consequences.extend(apply_cascading_consequences(campaign_name, project_name))
         except Exception:
             pass
-    return {"completed": completed, "projects": kingdom.get("projects", []), "consequences": consequences}
+    return {
+        "completed": completed,
+        "projects": kingdom.get("projects", []),
+        "consequences": consequences,
+        "simulation": simulation,
+    }
 
 
 def get_kingdom_summary(campaign_name: str) -> str:
@@ -568,6 +580,11 @@ def main() -> None:
     p_advance.add_argument("campaign")
     p_advance.add_argument("--turns", type=int, default=1)
 
+    p_sql = sub.add_parser("query-sql-events")
+    p_sql.add_argument("campaign")
+    p_sql.add_argument("--tag")
+    p_sql.add_argument("--limit", type=int, default=20)
+
     args = parser.parse_args()
 
     if args.cmd == "init":
@@ -633,6 +650,19 @@ def main() -> None:
         result = queue_kingdom_project(args.campaign, args.name, turns_remaining=args.turns)
     elif args.cmd == "advance-projects":
         result = advance_kingdom_projects(args.campaign, turns=args.turns)
+    elif args.cmd == "query-sql-events":
+        try:
+            from sqlite_layer import is_enabled, query_events_sql
+
+            if not is_enabled(args.campaign):
+                result = {"enabled": False, "events": [], "message": "SQLite not enabled for campaign"}
+            else:
+                result = {
+                    "enabled": True,
+                    "events": query_events_sql(args.campaign, tag=args.tag, limit=args.limit),
+                }
+        except Exception as exc:
+            result = {"enabled": False, "error": str(exc)}
     else:
         result = {"error": "Unknown command"}
 
