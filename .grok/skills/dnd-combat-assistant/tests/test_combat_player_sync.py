@@ -42,6 +42,19 @@ def test_death_save_syncs_to_character_sheet(campaign):
     assert char["death_saves"]["successes"] == 1
 
 
+def test_sync_reconciles_death_saves(campaign):
+    init_combat(campaign, "DS Sync")
+    add_combatant(campaign, "Test Hero", hp=12, initiative=10, is_player=True)
+    apply_damage(campaign, "Test Hero", 12)
+    record_death_save(campaign, "Test Hero", success=True)
+    record_death_save(campaign, "Test Hero", success=True)
+
+    char = state.get_player_character(campaign)
+    assert char["death_saves"]["successes"] == 2
+    assert char["hit_points"]["current"] == 0
+    assert "Unconscious" in char.get("conditions", [])
+
+
 def test_end_combat_reconciles_player_hp(campaign):
     init_combat(campaign, "End Sync")
     add_combatant(campaign, "Test Hero", hp=12, initiative=10, is_player=True)

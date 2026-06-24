@@ -13,6 +13,8 @@ Production-ready combat tracking with persistent state:
 Designed for reliability during mobile play and long campaigns.
 """
 
+COMBAT_SYNC_VERSION = "3.1.1-full-sync-bridge"
+
 import argparse
 import json
 import sys
@@ -37,8 +39,12 @@ try:
         on_player_healed,
         sync_combatant_to_character,
     )
-except ImportError:
-    print("Warning: dnd_state_utils not available. Running in limited mode.", file=sys.stderr)
+except ImportError as import_err:
+    print(
+        f"CRITICAL: sync_bridge/dnd_state_utils unavailable ({import_err}). "
+        "Player HP/death saves will NOT sync to character sheet.",
+        file=sys.stderr,
+    )
     from paths import get_campaign_path  # type: ignore
 
     def update_player_hp(*a, **k): return {"current": 0, "max": 0}
@@ -238,6 +244,7 @@ def apply_damage(campaign_name: str, target_name: str, amount: int) -> Dict[str,
             if c.get("is_player"):
                 try:
                     on_player_damaged(campaign_name, c.get("hp_current", 0))
+                    sync_combatant_to_character(campaign_name, c)
                 except Exception:
                     try:
                         update_player_hp(campaign_name, delta=-hp_delta)
@@ -300,6 +307,7 @@ def apply_healing(campaign_name: str, target_name: str, amount: int) -> Dict[str
             if c.get("is_player") and healed > 0:
                 try:
                     on_player_healed(campaign_name, healed)
+                    sync_combatant_to_character(campaign_name, c)
                 except Exception:
                     try:
                         update_player_hp(campaign_name, delta=healed)
@@ -463,6 +471,7 @@ def record_death_save(campaign_name: str, creature_name: str, success: bool) -> 
                 if c.get("is_player"):
                     try:
                         on_player_death_save(campaign_name, True)
+                        sync_combatant_to_character(campaign_name, c)
                     except Exception:
                         pass
                 if ds["successes"] >= 3:
@@ -474,6 +483,7 @@ def record_death_save(campaign_name: str, creature_name: str, success: bool) -> 
                 if c.get("is_player"):
                     try:
                         on_player_death_save(campaign_name, False)
+                        sync_combatant_to_character(campaign_name, c)
                     except Exception:
                         pass
                 if ds["failures"] >= 3:

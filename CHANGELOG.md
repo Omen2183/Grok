@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.1.1 — Complete combat sync_bridge wiring
+
+### Fixed
+- `sync_combatant_to_character` now runs full bridge logic: HP via `on_player_damaged`, death save reconciliation, Unconscious condition on sheet
+- `apply_damage`, `apply_healing`, and `record_death_save` all call `sync_combatant_to_character` after bridge hooks (not HP-only)
+- Import failure now logs CRITICAL warning when sync_bridge is unavailable (no silent stub mode)
+- `COMBAT_SYNC_VERSION` marker in combat_tracker for deployment verification
+
+### Notes
+- GitHub had wiring since v3.0.2; Grok cloud `/home/workdir/.grok/skills/` and stale local copies may lag — pull v3.1.1 and run `install.ps1 -Global`
+
 ## 3.1.0 — Full backend audit & hardening pass
 
 ### Added
