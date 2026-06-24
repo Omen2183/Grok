@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.1 — Event system hardening
+
+### Added
+- `paths.ensure_dir` and `paths.backup_file` — shared helpers for atomic writes and backups
+- `search_events` filters for `event_type` and `importance` (comma-separated)
+- `search-events` CLI flags: `--type`, `--importance`
+- Tests for path helpers and event search filters
+
+### Fixed
+- Event log writes now back up `events.json` before atomic replace (matches state save pattern)
+- Aligns cloud sandbox fixes with the GitHub repo
+
 ## 3.0.0 — Production orchestration (10/10)
 
 ### Added

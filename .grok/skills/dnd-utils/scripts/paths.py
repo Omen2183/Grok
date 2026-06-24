@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import os
+import shutil
+from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 
 def get_campaigns_root() -> Path:
@@ -42,3 +45,21 @@ def get_campaign_path(campaign_name: str) -> Path:
     if not safe_name:
         raise ValueError("Campaign name cannot be empty")
     return get_campaigns_root() / safe_name
+
+
+def ensure_dir(path: Path) -> Path:
+    """Create a directory (and parents) if missing."""
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def backup_file(path: Path, *, backup_dir: Optional[Path] = None) -> Optional[Path]:
+    """Copy an existing file into the campaign backups folder."""
+    if not path.exists():
+        return None
+    target_dir = backup_dir or (path.parent.parent / "backups")
+    ensure_dir(target_dir)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    dest = target_dir / f"{path.stem}_{stamp}{path.suffix}"
+    shutil.copy2(path, dest)
+    return dest

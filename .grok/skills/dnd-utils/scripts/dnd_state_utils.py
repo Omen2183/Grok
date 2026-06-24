@@ -550,6 +550,8 @@ def main() -> None:
     p_search = sub.add_parser("search-events")
     p_search.add_argument("campaign")
     p_search.add_argument("--tag")
+    p_search.add_argument("--type", dest="event_type")
+    p_search.add_argument("--importance")
     p_search.add_argument("--limit", type=int, default=10)
 
     p_root = sub.add_parser("campaigns-root")
@@ -616,7 +618,13 @@ def main() -> None:
         tags = [t.strip() for t in args.tags.split(",") if t.strip()] if args.tags else []
         result = record_event(args.campaign, args.description, importance=args.importance, tags=tags)
     elif args.cmd == "search-events":
-        result = search_events(args.campaign, tag=args.tag, limit=args.limit)
+        result = search_events(
+            args.campaign,
+            tag=args.tag,
+            event_type=args.event_type,
+            importance=args.importance,
+            limit=args.limit,
+        )
     elif args.cmd == "campaigns-root":
         result = {"campaigns_root": str(get_campaigns_root())}
     elif args.cmd == "kingdom-summary":

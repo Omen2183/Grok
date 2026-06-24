@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from paths import get_campaign_path
+from paths import backup_file, ensure_dir, get_campaign_path
 
 
 def _events_file(campaign_name: str) -> Path:
@@ -28,7 +28,8 @@ def _load_events(campaign_name: str) -> List[Dict[str, Any]]:
 
 def _save_events(campaign_name: str, events: List[Dict[str, Any]]) -> None:
     path = _events_file(campaign_name)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_dir(path.parent)
+    backup_file(path)
     temp = path.with_suffix(".tmp")
     with open(temp, "w", encoding="utf-8") as handle:
         json.dump(events, handle, indent=2, ensure_ascii=False)
@@ -86,9 +87,11 @@ def search_events(
     campaign_name: str,
     *,
     tag: Optional[str] = None,
+    event_type: Optional[str] = None,
+    importance: Optional[str] = None,
     limit: int = 20,
 ) -> List[Dict[str, Any]]:
-    """Search recent events, optionally filtered by tag."""
+    """Search recent events with optional tag, type, and importance filters."""
     events = _load_events(campaign_name)
     if tag:
         tags = {t.strip().lower() for t in tag.split(",") if t.strip()}
@@ -97,4 +100,9 @@ def search_events(
             for e in events
             if tags.intersection({t.lower() for t in e.get("tags", [])})
         ]
+    if event_type:
+        events = [e for e in events if e.get("type", "general") == event_type]
+    if importance:
+        levels = {level.strip().lower() for level in importance.split(",") if level.strip()}
+        events = [e for e in events if e.get("importance", "normal").lower() in levels]
     return events[-limit:]
