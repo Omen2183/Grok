@@ -1,6 +1,6 @@
 ---
 name: dnd-rules-reference
-description: Accurate 5e rules clarification including homebrew considerations. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Delivers clear rulings for consistent long-term play. Optional rules_cheatsheet.py for common topics.
+description: Accurate 5e rules clarification including homebrew considerations. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Delivers clear rulings for consistent long-term play. Backend rules_cheatsheet.py for common topics; Grok knowledge for edge cases.
 ---
 
 # D&D Rules Reference

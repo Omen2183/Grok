@@ -1,6 +1,6 @@
 ---
 name: dnd-persistent-dm
-description: Play or continue any D&D campaign with Grok as DM. Classic tabletop and kingdom/domain builder modes. v2.0.0 production orchestrator (10/10). Triggers include play D&D, DM mode, continue the campaign, switch to kingdom mode, kingdom actions, generate encounter, update state, end session, what's happening. Supports 5e + heavy homebrew. Orchestrates all D&D skills — coordinates backends and prompt skills. Persistent JSON state per campaign.
+description: Play or continue any D&D campaign with Grok as DM. Classic tabletop and kingdom/domain builder modes. v2.2.0 production orchestrator. Triggers include play D&D, DM mode, continue the campaign, switch to kingdom mode, kingdom actions, generate encounter, update state, end session, what's happening. Supports 5e + heavy homebrew. Orchestrates all D&D skills via persistent_dm.py. Persistent JSON state per campaign.
 ---
 
 # D&D Persistent DM
@@ -32,12 +32,19 @@ description: Play or continue any D&D campaign with Grok as DM. Classic tabletop
 | Kingdom simulation | ✅ Implemented | Population, trade, military, cascading effects |
 | Visual moment offers | ⚠️ Partial | visual-weaver prompts; image is optional |
 | Voice play | ✅ Implemented | Route through voice-assistant first |
-| Single orchestrator script | ❌ N/A | Coordination skill — no `persistent_dm.py` |
+| Orchestrator script | ✅ Implemented | `persistent_dm.py` — resume, route, kingdom-turn |
 
 ## Tools & Scripts
-Orchestrator invokes specialists — no dedicated script:
 ```bash
-# Bootstrap
+# Orchestrator (preferred entry point)
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py init "My Campaign" --pc-name "Aria" --enable-sqlite
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py resume "My Campaign"
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py whats-happening "My Campaign"
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py route "My Campaign" "I attack the goblin"
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py kingdom-turn "My Campaign"
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py health "My Campaign" --enhanced
+
+# Direct specialists (still available)
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py init "My Campaign" --pc-name "Aria" --enable-sqlite
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py status "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py session-summary "My Campaign"
@@ -126,6 +133,9 @@ Campaign root resolved by `paths.py` (`DND_CAMPAIGNS_ROOT` or `~/.grok/artifacts
 | Rumors / world events | dnd-rumor-event-generator |
 | Images | dnd-visual-weaver |
 | End session | dnd-session-scribe |
+| Short/long rest | dnd-downtime-manager |
+| Quest tracking | dnd-quest-tracker |
+| Encounter build | dnd-content-forge `encounter_builder.py` |
 | All state I/O | dnd-utils |
 | Voice input | dnd-voice-assistant → back here |
 

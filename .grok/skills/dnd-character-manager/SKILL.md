@@ -27,7 +27,8 @@ description: Player character sheet management — summary, level-up, inventory,
 | Death saves on sheet | ✅ Implemented | `death-save success/failure` |
 | Combat sync | ✅ Implemented | `sync_bridge` — HP, healing while dying, stabilize |
 | Markdown export | ✅ Implemented | `export` command |
-| Level-up suggestions | ⚠️ Partial | `suggest_level_up_options()` — import only, no CLI |
+| Level-up suggestions | ✅ Implemented | `suggest-level-up` CLI |
+| Companion tracking | ✅ Implemented | `companion add/list/get/remove` |
 | Companion management | ⚠️ Partial | Functions exist; limited CLI commands |
 | Full multiclass builder UI | ❌ Prompt-only | Grok guides; use `--class` per level |
 

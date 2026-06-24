@@ -20,7 +20,7 @@ from dnd_state_utils import (  # noqa: E402
     load_json,
     save_json,
 )
-from event_system import record_event  # noqa: E402
+from event_system import record_event, search_events  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
 from xp_tables import check_level_up, level_from_xp, xp_to_next_level  # noqa: E402
 
@@ -116,6 +116,62 @@ def save_recap(
     return {"recap_path": str(recap_path), "hooks": hooks or []}
 
 
+def generate_auto_recap(
+    campaign_name: str,
+    *,
+    event_limit: int = 25,
+    include_hooks: bool = True,
+) -> Dict[str, Any]:
+    """Build a session recap draft from recent campaign events."""
+    events = search_events(campaign_name, limit=event_limit)
+    if not events:
+        return {
+            "campaign": campaign_name,
+            "summary": "No events logged yet this session.",
+            "event_count": 0,
+            "hooks": [],
+        }
+
+    world = get_world_state(campaign_name)
+    player = get_player_character(campaign_name)
+    bullets: List[str] = []
+    hooks: List[str] = []
+    xp_total = 0
+
+    for event in events:
+        desc = event.get("description", "")
+        tags = event.get("tags", [])
+        importance = event.get("importance", "normal")
+        if importance in ("major", "normal") and desc:
+            bullets.append(f"- {desc}")
+        if "hook" in tags or importance == "major":
+            hooks.append(desc)
+        if "xp" in tags:
+            xp_total += int(event.get("metadata", {}).get("amount", 0))
+
+    summary_lines = [
+        f"The party ({player.get('name', 'Adventurer')}, level {player.get('level', 1)}) "
+        f"operated near {world.get('current_location', 'unknown')}.",
+        "",
+        "**Key beats:**",
+        *bullets[-12:],
+    ]
+    if xp_total:
+        summary_lines.append(f"\n**XP this period:** {xp_total}")
+
+    summary = "\n".join(summary_lines)
+    hook_list = hooks[-3:] if include_hooks else []
+
+    return {
+        "campaign": campaign_name,
+        "summary": summary,
+        "hooks": hook_list,
+        "event_count": len(events),
+        "location": world.get("current_location"),
+        "suggested_xp": xp_total or None,
+    }
+
+
 def end_session(
     campaign_name: str,
     summary: str,
@@ -155,6 +211,11 @@ def main() -> None:
     p_recap.add_argument("summary")
     p_recap.add_argument("--hook", action="append", default=[])
 
+    p_auto = sub.add_parser("auto-recap")
+    p_auto.add_argument("campaign")
+    p_auto.add_argument("--events", type=int, default=25)
+    p_auto.add_argument("--save", action="store_true")
+
     p_end = sub.add_parser("end-session")
     p_end.add_argument("campaign")
     p_end.add_argument("summary")
@@ -162,17 +223,28 @@ def main() -> None:
     p_end.add_argument("--reason", default="Session completion")
     p_end.add_argument("--hook", action="append", default=[])
     p_end.add_argument("--skip-audit", action="store_true")
+    p_end.add_argument("--auto", action="store_true", help="Generate summary from events if summary empty")
 
     args = parser.parse_args()
 
     if args.cmd == "award-xp":
         result = award_xp(args.campaign, args.amount, reason=args.reason)
+    elif args.cmd == "auto-recap":
+        result = generate_auto_recap(args.campaign, event_limit=args.events)
+        if args.save:
+            result["saved"] = save_recap(args.campaign, result["summary"], hooks=result.get("hooks"))
     elif args.cmd == "recap":
         result = save_recap(args.campaign, args.summary, hooks=args.hook)
     elif args.cmd == "end-session":
+        summary = args.summary
+        hooks = args.hook
+        if args.auto or summary.strip().lower() in ("", "auto", "generate"):
+            auto = generate_auto_recap(args.campaign)
+            summary = auto["summary"]
+            hooks = hooks or auto.get("hooks", [])
         result = end_session(
             args.campaign,
-            args.summary,
+            summary,
             xp=args.xp,
             xp_reason=args.reason,
             hooks=args.hook,

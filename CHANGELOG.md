@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.2.0 — Full Python backend coverage
+
+### Added
+- `persistent_dm.py` — orchestrator CLI (init, resume, route, kingdom-turn, health)
+- `encounter_builder.py` and `content_forge.py` — encounters, quests, factions, domain events
+- `narration_cli.py` — mobile status and opening helpers
+- **New skill:** `dnd-downtime-manager` — short/long rest, downtime activity log
+- **New skill:** `dnd-quest-tracker` — quests and session hooks
+- `session_scribe auto-recap` and `end-session --auto`
+- `character_manager suggest-level-up` and `companion` CLI
+- `voice_utils.py` CLI (`route`, `parse`)
+- 16 skills total — every skill has a Python CLI backend
+
+### Fixed
+- `character_manager` — moved `if __name__` to end so phase-3 helpers work in CLI
+
+### Changed
+- Smoke test covers all 16 skill CLIs
+- `validate_skills.py` requires scripts/ on every skill
+- Voice routing extended for rest and quest intents
+
 ## 2.1.0 — Strengthening pass
 
 ### Added

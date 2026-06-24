@@ -713,6 +713,15 @@ def run_cli() -> None:
     p_export = sub.add_parser("export")
     p_export.add_argument("campaign")
 
+    p_suggest = sub.add_parser("suggest-level-up")
+    p_suggest.add_argument("campaign")
+
+    p_comp = sub.add_parser("companion")
+    p_comp.add_argument("campaign")
+    p_comp.add_argument("action", choices=["add", "list", "get", "remove"])
+    p_comp.add_argument("--name")
+    p_comp.add_argument("--hp", type=int, default=10)
+
     args = parser.parse_args()
 
     if args.cmd == "summary":
@@ -730,10 +739,25 @@ def run_cli() -> None:
         char = load_character(args.campaign)
         md = generate_character_markdown(args.campaign, char)
         print(md)
+    elif args.cmd == "suggest-level-up":
+        result = suggest_level_up_options(args.campaign)
+        print(json.dumps(result, indent=2))
+    elif args.cmd == "companion":
+        if args.action == "add":
+            if not args.name:
+                result = {"error": "--name required for add"}
+            else:
+                result = add_companion(args.campaign, {"name": args.name, "hp": {"current": args.hp, "max": args.hp}})
+        elif args.action == "list":
+            result = {"companions": list_companions(args.campaign)}
+        elif args.action == "get":
+            result = get_companion(args.campaign, args.name or "") or {"error": "Companion not found"}
+        elif args.action == "remove":
+            result = {"removed": remove_companion(args.campaign, args.name or "")}
+        else:
+            result = {"error": "Unknown companion action"}
+        print(json.dumps(result, indent=2))
 
-
-if __name__ == "__main__":
-    run_cli()
 
 # ============================================================
 # PHASE 3: Lightweight Multi-Character & Level-up Suggestions
@@ -1290,3 +1314,7 @@ def filter_companions(
         filtered.append(name)
 
     return filtered
+
+
+if __name__ == "__main__":
+    run_cli()

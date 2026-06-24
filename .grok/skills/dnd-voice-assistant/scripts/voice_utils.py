@@ -25,6 +25,9 @@ AMBIGUOUS_PATTERNS = (
     (re.compile(r"\b(level up|level-up)\b", re.I), "level_up"),
     (re.compile(r"\b(generate loot|treasure|what did we find)\b", re.I), "loot"),
     (re.compile(r"\b(rumor|rumour|what('s| is) the word)\b", re.I), "rumor"),
+    (re.compile(r"\b(short rest|long rest|take a rest)\b", re.I), "rest"),
+    (re.compile(r"\b(active quests|quest list|what quests)\b", re.I), "quest_list"),
+    (re.compile(r"\b(track quest|new quest|add quest)\b", re.I), "add_quest"),
 )
 
 
@@ -110,6 +113,9 @@ def route_voice_request(text: str) -> Dict[str, Any]:
         "level_up": "dnd-character-manager",
         "loot": "dnd-loot-generator",
         "rumor": "dnd-rumor-event-generator",
+        "rest": "dnd-downtime-manager",
+        "quest_list": "dnd-quest-tracker",
+        "add_quest": "dnd-quest-tracker",
     }
 
     if damage:
@@ -119,3 +125,39 @@ def route_voice_request(text: str) -> Dict[str, Any]:
     elif intent in skill_map:
         route["primary_skill"] = skill_map[intent]
     return route
+
+
+def main() -> None:
+    import argparse
+    import json
+
+    parser = argparse.ArgumentParser(description="Voice assistant routing and parsing")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_route = sub.add_parser("route")
+    p_route.add_argument("campaign")
+    p_route.add_argument("text")
+
+    p_parse = sub.add_parser("parse")
+    p_parse.add_argument("text")
+
+    args = parser.parse_args()
+
+    if args.cmd == "route":
+        result = route_voice_request(args.text)
+        result["campaign"] = args.campaign
+    elif args.cmd == "parse":
+        result = {
+            "intent": detect_intent(args.text),
+            "damage": parse_damage_phrase(args.text),
+            "healing": parse_healing_phrase(args.text),
+            "needs_confirmation": needs_confirmation(detect_intent(args.text) or "", args.text),
+        }
+    else:
+        result = {"error": "Unknown command"}
+
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

@@ -22,16 +22,21 @@ description: Generate balanced encounters, monsters, magic items, quests, domain
 |------------|--------|-------|
 | Monster prompt + CR scaling | ✅ Implemented | `generate_monster.py` |
 | Encounter XP budget | ✅ Implemented | `--encounter` flag |
+| Full encounter builder | ✅ Implemented | `encounter_builder.py build` |
+| Quest / faction / item prompts | ✅ Implemented | `content_forge.py` |
 | Party level from state | ✅ Implemented | Reads `player_character.json` |
 | Full stat block output | ⚠️ Partial | Script builds prompt; Grok writes stats |
-| Quest / faction / domain events | ❌ Prompt-only | No dedicated scripts |
-| Magic item generator | ❌ Prompt-only | Use loot-generator for tables |
+| Domain event prompts | ✅ Implemented | `content_forge.py domain-event` |
+| Procedural magic items | ❌ Use loot-generator | content_forge builds prompts only |
 | Auto-add to campaign JSON | ❌ Prompt-only | Manual save via npc-weaver / lore-archivist |
 
 ## Tools & Scripts
 ```bash
 python .grok/skills/dnd-content-forge/scripts/generate_monster.py "My Campaign" --theme "Corrupted treant" --cr 5 --difficulty Hard
 python .grok/skills/dnd-content-forge/scripts/generate_monster.py "My Campaign" --theme "Veil stalker" --cr 7 --encounter --difficulty Deadly --extra "Uses fear aura and hit-and-run"
+python .grok/skills/dnd-content-forge/scripts/encounter_builder.py build "My Campaign" --theme "forest ambush" --difficulty Hard --save
+python .grok/skills/dnd-content-forge/scripts/content_forge.py quest "My Campaign" --theme "missing caravan"
+python .grok/skills/dnd-content-forge/scripts/content_forge.py faction "My Campaign" --name "Merchant Guild"
 ```
 
 ## Behavior

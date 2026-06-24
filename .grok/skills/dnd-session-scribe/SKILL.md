@@ -25,14 +25,15 @@ description: Session recaps, XP awards, end-of-session cleanup, and log manageme
 | End session (full) | ✅ Implemented | Recap + XP + audit + combat clear |
 | Append session log | ✅ Implemented | `logs/session_log.md` |
 | Event recording | ✅ Implemented | Via dnd-utils `record_event` |
-| Auto-generate recap from events | ⚠️ Partial | Grok narrates; no auto-summarize script |
+| Auto-generate recap from events | ✅ Implemented | `auto-recap`; `end-session --auto` |
 | Kingdom domain XP formulas | ⚠️ Partial | Same `award-xp`; amounts are DM judgment |
 
 ## Tools & Scripts
 ```bash
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py award-xp "My Campaign" 300 --reason "Defeated bandit chief"
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py recap "My Campaign" "The party cleared the mine and found a sealed door." --hook "Something stirs behind the door"
-python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "Explored Whisperwood, allied with elves." --xp 450 --reason "Session 12" --hook "Corruption spreads north"
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py auto-recap "My Campaign" --save
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "auto" --auto --xp 450 --reason "Session 12" --hook "Corruption spreads north"
 ```
 
 ## Behavior

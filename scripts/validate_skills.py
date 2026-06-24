@@ -42,11 +42,12 @@ def validate_skill_md(path: Path) -> dict:
             issues.append(f"Missing section (one of: {', '.join(hints)})")
 
     scripts_dir = path.parent / "scripts"
-    script_count = len(list(scripts_dir.glob("*.py"))) if scripts_dir.exists() else 0
-    orchestrator_only = "orchestrator" in body_lower or "no script" in body_lower or "no single script" in body_lower
-    claims_script = "script" in body_lower or "cli" in body_lower or "backend" in body_lower
-    if claims_script and script_count == 0 and "prompt-only" not in body_lower and not orchestrator_only:
-        issues.append("Claims backend/scripts but scripts/ is empty")
+    scripts = list(scripts_dir.glob("*.py")) if scripts_dir.exists() else []
+    script_count = len(scripts)
+    if script_count == 0:
+        issues.append("Missing scripts/ — every skill must have at least one Python backend")
+    elif not any("if __name__" in s.read_text(encoding="utf-8") for s in scripts):
+        issues.append("No CLI entry point found (scripts lack if __name__ == '__main__')")
 
     return {
         "skill": path.parent.name,

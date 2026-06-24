@@ -30,18 +30,13 @@ description: Voice execution layer for the D&D skills suite. v2.0.0 production. 
 | Continuous ambient listening | ❌ Platform | Turn-based voice turns |
 
 ## Tools & Scripts
+```bash
+python .grok/skills/dnd-voice-assistant/scripts/voice_utils.py route "My Campaign" "Goblin takes 8 damage"
+python .grok/skills/dnd-voice-assistant/scripts/voice_utils.py parse "next turn"
+```
+
 ```python
-# Import from voice_utils.py (no standalone CLI):
-from voice_utils import (
-    route_voice_request,
-    format_spoken_reply,
-    parse_damage_phrase,
-    parse_healing_phrase,
-    voice_confirm_prompt,
-    is_voice_session,
-    detect_intent,
-    needs_confirmation,
-)
+from voice_utils import route_voice_request, format_spoken_reply, parse_damage_phrase
 ```
 
 Example routing:

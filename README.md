@@ -4,24 +4,26 @@ A complete Grok Build skill pack for running persistent, high-quality D&D 5e cam
 
 ## What's Included
 
-14 interconnected skills with Python backends for reliable state management:
+16 interconnected skills — **every skill has a Python CLI backend**:
 
 | Skill | Role |
 |-------|------|
-| `dnd-persistent-dm` | Central DM orchestrator |
-| `dnd-utils` | Campaign state, events, audits |
+| `dnd-persistent-dm` | DM orchestrator (`persistent_dm.py`) |
+| `dnd-utils` | Campaign state, events, audits, narration CLI |
 | `dnd-combat-assistant` | Initiative, HP, conditions |
 | `dnd-dice-engine` | 5e dice rolling |
-| `dnd-character-manager` | Sheets, leveling, inventory |
-| `dnd-session-scribe` | Recaps, XP, session close |
+| `dnd-character-manager` | Sheets, leveling, inventory, level-up suggestions |
+| `dnd-session-scribe` | Recaps, XP, auto-recap from events |
 | `dnd-loot-generator` | Procedural loot + ledger |
-| `dnd-content-forge` | Encounters, monsters, items |
+| `dnd-content-forge` | Monsters, encounters, quests, factions |
 | `dnd-npc-personality-weaver` | NPC personality + persistence |
 | `dnd-lore-archivist` | Campaign lore memory |
-| `dnd-rules-reference` | 5e rules lookup |
+| `dnd-rules-reference` | Rules cheatsheet CLI + Grok rulings |
 | `dnd-rumor-event-generator` | World events and rumors |
 | `dnd-visual-weaver` | Consistent image prompts |
-| `dnd-voice-assistant` | Voice-optimized campaign layer |
+| `dnd-voice-assistant` | Voice routing and phrase parsing |
+| `dnd-downtime-manager` | Short/long rests, downtime logging |
+| `dnd-quest-tracker` | Active quests and session hooks |
 
 ## Quick Start
 
@@ -44,7 +46,7 @@ Say to Grok: **"Let's play D&D"** or **"DM mode"**
 Or initialize manually:
 
 ```powershell
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py init "My Campaign"
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py init "My Campaign"
 ```
 
 Campaign state is stored at:
@@ -58,7 +60,7 @@ Override with the `DND_CAMPAIGNS_ROOT` environment variable.
 
 - **Grok iOS native:** mobile-first replies, honest capability matrices in each `SKILL.md`, voice routing via `dnd-voice-assistant`
 - **Shared state:** `dnd-utils/scripts/paths.py` resolves campaign folders on Windows, macOS, and Grok cloud
-- **27 tests** + integration flow + CLI smoke test
+- **60+ tests** + integration flow + full CLI smoke test (all 16 skills)
 - **GitHub Actions CI** on Python 3.11 and 3.12
 
 See `.grok/skills/_PRODUCTION_CONVENTIONS.md` for agent conventions.
@@ -66,8 +68,9 @@ See `.grok/skills/_PRODUCTION_CONVENTIONS.md` for agent conventions.
 ## Quality Gates
 
 ```powershell
-python -m pytest -q          # 27 tests
-python scripts/smoke_test.py # CLI smoke test all backends
+python -m pytest -q            # full test suite
+python scripts/smoke_test.py   # smoke test all 16 skill CLIs
+python scripts/validate_skills.py  # verify every skill has Python backend
 ```
 
 ## Development
