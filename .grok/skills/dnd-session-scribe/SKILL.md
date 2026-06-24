@@ -1,63 +1,64 @@
 ---
 name: dnd-session-scribe
-description: Handles session recaps, state synchronization, XP tracking (including kingdom/domain awards), and preparation of future hooks. Turns play into clean, usable records so campaigns remain easy to resume even after long breaks.
+description: Session recaps, XP awards, end-of-session cleanup, and log management. Triggers include end session, wrap up, award XP, session recap, save recap, what happened last time. Keeps campaigns resumable after long breaks. Integrates with dnd-utils audit and event logging.
 ---
 
-# Dnd Session Scribe
+# D&D Session Scribe
 
-## Overview
-The session closer and archivist. It turns play into clean, usable records, updates all state files, awards and logs XP (including the lighter kingdom mode awards), and gives you clear "what's next" hooks so picking up later is effortless.
+## When to Use
+- Ending a play session with recap + XP
+- Mid-campaign recap saves with future hooks
+- Awarding XP for combat, milestones, or kingdom turns
 
-## When to Activate
-- "End session"
-- "Recap what happened"
-- "Save the session"
-- After a major scene or when wrapping up play for the day
-- Automatically suggested at natural stopping points
+**Do not use when:** Active encounter tracking (combat-assistant) or live DM narration (persistent-dm).
 
-## Core Tasks
-1. **Create a Recap**:
-   - Write a concise but flavorful summary of what occurred.
-   - Highlight key decisions, revelations, combat outcomes, and kingdom developments.
-   - Note any important NPC interactions or faction shifts.
-   - Save to `recaps/` folder with date/session number.
+## Quick Start (Mobile)
+1. Say **"End session"** with a one-line summary of what happened.
+2. Grok awards XP, writes recap, runs audit, clears combat.
+3. Next time: **"What happened last time?"** → reads latest recap.
 
-2. **Update State**:
-   - Use `dnd_state_utils.py` helpers for world/kingdom state and `combat_tracker.py` for combat cleanup.
-   - Use `session_scribe.py award-xp` for experience tracking.
-   - Record major events in `logs/session_log.md`.
-   - Run `audit` when needed for consistency checks.
-   - Briefly confirm with `persistent-dm` that the campaign state is now in sync.
+## Capabilities (Honest Matrix)
+| Capability | Status | Notes |
+|------------|--------|-------|
+| Award XP | ✅ Implemented | Updates `player_character.json` |
+| Save session recap | ✅ Implemented | Timestamped markdown in `recaps/` |
+| End session (full) | ✅ Implemented | Recap + XP + audit + combat clear |
+| Append session log | ✅ Implemented | `logs/session_log.md` |
+| Event recording | ✅ Implemented | Via dnd-utils `record_event` |
+| Auto-generate recap from events | ⚠️ Partial | Grok narrates; no auto-summarize script |
+| Kingdom domain XP formulas | ⚠️ Partial | Same `award-xp`; amounts are DM judgment |
 
-**Bootstrap / Fallback Behavior**
+## Tools & Scripts
+```bash
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py award-xp "My Campaign" 300 --reason "Defeated bandit chief"
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py recap "My Campaign" "The party cleared the mine and found a sealed door." --hook "Something stirs behind the door"
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "Explored Whisperwood, allied with elves." --xp 450 --reason "Session 12" --hook "Corruption spreads north"
+```
 
-If state files are missing or incomplete when ending a session:
-- Create minimal versions of `world_state.json`, `player_character.md`, and `logs/session_log.md`.
-- Record that initialization occurred during this session close.
-- Still produce a recap and hooks.
+## Behavior
+- Confirm XP: *"XP 2,700 → 3,150 (+450)."*
+- Recaps capture location, PC status, and 1–3 hooks.
+- End-session always offers a clean resume point.
+- Ask before end-session in voice mode (destructive intent).
 
-3. **XP Tracking** (especially important in kingdom mode):
-   - Clearly log all XP awarded during the session.
-   - In kingdom mode, note the smaller domain action awards (50–300 XP range) separately so progress remains visible and satisfying.
-   - Calculate and display total XP gained this session and current progress toward next level.
+## State & Files
+| File | R/W | Contents |
+|------|-----|----------|
+| `state/player_character.json` | W | XP total |
+| `recaps/session_*.md` | W | Timestamped recaps |
+| `logs/session_log.md` | W | Append-only notes |
+| `logs/events.json` | W | XP/session events |
+| `combat/current_combat.json` | W | Cleared on end-session |
 
-4. **Next Session Hooks**:
-   - Provide 3–5 compelling hooks or loose threads for the next time you play.
-   - Include both immediate personal hooks and longer-term kingdom/domain opportunities.
-   - Note any time-sensitive situations (e.g. "The trade caravan arrives in two days").
+## Integration
+- **Uses:** dnd-utils (`audit_campaign`, `clear_combat_state`, `get_world_state`)
+- **Called by:** persistent-dm, voice-assistant (`end_session` intent)
 
-## Output Style
-- Clean, scannable format good for mobile review.
-- Separate sections: What Happened, Key Changes, XP Gained, Loose Threads & Hooks.
-- End with something like: "Session saved. Ready to continue whenever you are."
+## iOS / Voice Notes
+- End-session recap: player speaks summary; Grok condenses to ≤5 lines.
+- Voice confirmation required before `end-session`.
 
-## Kingdom Mode Specific
-When in kingdom mode, the recap should emphasize domain progress, faction reactions, construction/research outcomes, and how these actions affected the player character's standing and the wider world. Still award and clearly show the lighter XP so character growth continues.
-
-## Long Campaign Polish
-For very long-running campaigns:
-- Occasionally suggest updating `state/lore_summary.md` (compressed lore) and `state/visual_canon.md` during major recaps.
-- Consider running `dnd_state_utils.py audit "Campaign Name"` periodically to catch drift early.
-- This keeps the game coherent without context bloat.
-
-This skill turns your endless campaign into something you can easily pick up after days or weeks away and still feel fully immersed.
+## Example Flow
+Player: *"Let's wrap up — we saved the village, 400 XP"*
+→ `end-session "My Campaign" "..." --xp 400`
+→ *"Saved. XP 1,200 → 1,600. Recap filed. **See you next session.**"*

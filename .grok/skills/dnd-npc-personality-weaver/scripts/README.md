@@ -1,12 +1,9 @@
-# NPC Personality Weaver Python Backend (Planned)
+# dnd-npc-personality-weaver scripts
 
-This will contain `npc_manager.py` for persistent, consistent NPC tracking.
+`npc_manager.py` — persistent NPC storage and relationship tracking.
 
-## Planned Features
-- Store NPCs as individual JSON + MD files in campaign/npcs/
-- Relationship tracking with player and important companions
-- Secret / knowledge reveal system
-- Personality consistency enforcement across sessions
-- Quick lookup by name or faction
-
-Currently just scaffolding. Will be built on top of dnd_state_utils.
+```bash
+python .grok/skills/dnd-npc-personality-weaver/scripts/npc_manager.py create "Campaign" --name "Mira Voss" --personality "Sharp-tongued fence"
+python .grok/skills/dnd-npc-personality-weaver/scripts/npc_manager.py list "Campaign"
+python .grok/skills/dnd-npc-personality-weaver/scripts/npc_manager.py adjust-relationship "Campaign" mira-voss 1 --note "Helped with the dock dispute"
+```

@@ -1,131 +1,80 @@
 ---
 name: dnd-utils
-description: Shared Python backend library and state management utilities used by all other D&D skills. Provides reliable campaign initialization, JSON state persistence, HP/condition tracking, time advancement, and common helpers. Not usually called directly by the player — other skills invoke it internally.
+description: Shared Python backend for all D&D skills — campaign init, JSON state persistence, HP sync, kingdom project queue/advance, event logging, roll logs, and mobile narration helpers. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
 ---
 
-# D&D Utils (Shared Python Library)
+# D&D Utils
 
-## Purpose
-This is the **foundational backend** of the entire D&D skill suite. It delivers deterministic, auditable, file-based state management that feels native to Grok — reliable, transparent, and engineered for long-term campaign coherence.
+## When to Use
+- Bootstrapping or resuming a campaign folder structure
+- Reading/writing `world_state.json`, `player_character.json`, `kingdom_state.json`
+- Kingdom project queue and turn advancement
+- Event logging, roll logging, campaign audits
+- Formatting short mobile status blocks via `narration_helpers.py`
 
-It eliminates hallucinated or drifting state, ensures consistency across dozens or hundreds of sessions, and makes complex tracking (combat, kingdom/domain play, companions, and events) robust and production-ready.
+**Do not use when:** The player wants narration, rules, or combat — route to `dnd-persistent-dm` or the specialist skill.
 
-Every other D&D skill is architected to leverage these utilities rather than relying on fragile in-prompt memory. This is what makes the suite feel seamless and trustworthy over extended play.
+## Quick Start (Mobile)
+1. Say **"Start a new campaign called [name]"** — persistent-dm calls init automatically.
+2. On resume, Grok reads `state/world_state.json` before narrating.
+3. Kingdom turns: **"Advance my domain projects"** → `advance-projects`.
 
-## Location of Scripts
-`/home/workdir/.grok/skills/dnd-utils/scripts/dnd_state_utils.py`
+## Capabilities (Honest Matrix)
+| Capability | Status | Notes |
+|------------|--------|-------|
+| Campaign init & folder scaffold | ✅ Implemented | `init` creates state/npcs/logs/recaps/combat |
+| World & player JSON read/write | ✅ Implemented | Atomic saves with backups |
+| Kingdom project queue/advance | ✅ Implemented | `queue-project`, `advance-projects` |
+| Event log (JSON) | ✅ Implemented | `event_system.py` → `logs/events.json` |
+| Roll logging | ✅ Implemented | Used by dice-engine when `--campaign` set |
+| Session start summary | ✅ Implemented | `session-summary` command |
+| Campaign audit | ✅ Implemented | `audit` checks key files |
+| Narration helpers | ✅ Implemented | `format_mobile_status`, `suggest_next_actions` |
+| SQLite analytics layer | ❌ Prompt-only | `--enable-sqlite` writes a flag only; no `sqlite_layer.py` |
 
-## Core Capabilities (via dnd_state_utils.py)
-
-### 1. Campaign Initialization
+## Tools & Scripts
 ```bash
-python3 /home/workdir/.grok/skills/dnd-utils/scripts/dnd_state_utils.py init "My Campaign Name"
-python3 ... init "My Campaign" --force          # Reset with backup
-python3 ... init "My Campaign" --pc-name "Custom Name"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py init "My Campaign" --pc-name "Aria"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py status "My Campaign"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py update "My Campaign" --set-location "Whisperwood" --advance-time 8
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py kingdom-summary "My Campaign"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py queue-project "My Campaign" "Rebuild the watchtower" --turns 4
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py advance-projects "My Campaign" --turns 1
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py audit "My Campaign"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py session-summary "My Campaign"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py record-event "My Campaign" "Party entered the crypt" --tags exploration
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py campaigns-root
 ```
 
-Creates full folder structure + seeds:
-- `state/world_state.json`
-- `state/player_character.json` + `.md` view (sensible generic defaults — easily customized with your character)
-- `state/important_companion.json` (optional, for campaigns with a major evolving companion)
-- `state/kingdom_state.json`
-- `logs/session_log.md`
-- Standard subdirs: npcs/, combat/, encounters/, recaps/, backups/
+Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`.
 
-### 2. Status & Inspection
-```bash
-python3 .../dnd_state_utils.py status "My Campaign"
-```
+## Behavior
+- Resolve campaign root via `paths.py` (`DND_CAMPAIGNS_ROOT` → `~/.grok/artifacts/dnd-campaigns/`).
+- Never invent state — load JSON first, write via `save_json`.
+- Confirm location/mode/HP changes with before → after when surfacing to the player.
+- Keep replies scannable; use `format_mobile_status` for status checks.
 
-Returns clean JSON with current location, time, mode, player HP, etc.
+## State & Files
+| File | Purpose |
+|------|---------|
+| `state/world_state.json` | Location, time, mode, weather |
+| `state/player_character.json` | PC stats, HP, XP, conditions |
+| `state/kingdom_state.json` | Domain resources, projects, factions |
+| `state/important_companion.json` | Key companion snapshot |
+| `logs/events.json` | Structured event timeline |
+| `logs/rolls.json` | Dice roll history |
+| `logs/session_log.md` | Append-only session notes |
+| `combat/current_combat.json` | Active encounter (combat-assistant) |
 
-### 3. State Updates (Safe & Audited)
-```bash
-python3 .../dnd_state_utils.py update "My Campaign" --set-location "Shadow Harbor"
-python3 .../dnd_state_utils.py update "My Campaign" --advance-time 6
-python3 .../dnd_state_utils.py update "My Campaign" --set-mode kingdom
-```
+## Integration
+- **Called by:** persistent-dm, combat-assistant, character-manager, session-scribe, loot-generator, npc-weaver, visual-weaver, dice-engine
+- **Calls:** `event_system.py` internally; no direct player narration
 
-**Kingdom Mode Helpers (Enhanced — Deeper Simulation Layer Added)**
-Use these for deeper domain play (all optional and narrative-first):
-- `get_kingdom_state`
-- `queue_kingdom_project` (status, turns_remaining, dependencies, costs/rewards)
-- `advance_kingdom_projects` (advances time and completes projects)
-- `process_resource_flows` (passive income/expense)
-- `adjust_faction_influence` (with attitude + history)
-- `get_kingdom_summary`
+## iOS / Voice Notes
+- Status replies should be ≤8 lines; lead with location + HP.
+- Voice sessions still use utils indirectly via persistent-dm routing.
 
-**New Lightweight Kingdom Simulation Helpers (High-Priority Addition)**:
-- `simple_population_update()` — Tracks rough population changes based on projects, events, and migration. Opt-in via kingdom_state.json flag.
-- `process_trade_flows()` — Simple supply/demand and trade route impact simulation (affects resources and faction standing).
-- `update_military_units()` — Basic tracking of domain military strength, recruitment, and losses from events.
-- `apply_cascading_consequences()` — After major projects or events, automatically suggests or applies follow-on effects (e.g., successful watchtower → reduced bandit activity + minor trade boost).
-- `generate_domain_event_chain()` — Creates linked event sequences for more dynamic kingdom play.
-These keep the focus narrative while adding satisfying mechanical feedback. Enable via flags in kingdom_state.json.
-
-**Optional SQLite Layer (for long campaigns)**
-Enable during init for powerful SQL queries on events, factions, and projects:
-```bash
-python3 .../dnd_state_utils.py init "My Campaign" --enable-sqlite
-```
-- `sqlite_layer.py` provides `query_events_sql()`, `sync_event_to_sqlite()`, faction trends, etc.
-- JSON/Markdown files remain the source of truth. SQLite is an opt-in query accelerator.
-
-### 4. Audit & Cleanup
-```bash
-python3 .../dnd_state_utils.py audit "My Campaign"          # Health check + list issues
-python3 .../dnd_state_utils.py clear-combat "My Campaign"   # Clean temp combat state after fights
-```
-
-### 5. Loading Specific State (for other scripts/skills)
-```bash
-python3 .../dnd_state_utils.py load "My Campaign" --file world_state
-python3 .../dnd_state_utils.py load "My Campaign" --file player_character
-python3 .../dnd_state_utils.py load "My Campaign" --file important_companion
-```
-
-### 6. Programmatic Use (import in other Python scripts)
-```python
-from dnd_state_utils import (
-    init_campaign, get_campaign_path, get_world_state,
-    update_world_state, update_player_hp, add_condition,
-    audit_campaign, clear_combat_state
-)
-```
-
-result = init_campaign("Shadows of the Veil")
-state = get_world_state("Shadows of the Veil")
-new_hp = update_player_hp("Shadows of the Veil", delta=-8)
-
-# Automated session briefing
-summary = generate_session_start_summary("Shadows of the Veil")
-print(summary["briefing_markdown"])
-
-# Record events (auto-syncs to SQLite if enabled)
-record_event("Shadows of the Veil", "Major revelation about the Veil", importance="major", tags=["revelation", "veil"])
-record_combat_outcome("Shadows of the Veil", "Victory against shadow cultists", enemies_defeated=["cultist leader"])
-```
-
-## Design Principles (xAI-Native)
-- **File-based & Human-Readable**: JSON as the machine source of truth + clean Markdown views for easy reading and direct editing.
-- **Safe & Auditable by Default**: Important files are backed up before every write. All changes are traceable.
-- **Campaign Isolation**: Every campaign lives in its own clean folder under `artifacts/dnd-campaigns/`.
-- **Extensible & Composable**: Easy to add new helpers while maintaining reliability.
-- **Built for Long Campaigns**: Robust state management prevents drift across dozens or hundreds of sessions. This is foundational to feeling native and trustworthy.
-
-## Integration with Other Skills
-- **dnd-persistent-dm**: Primary consumer — uses init/status/update on every major transition.
-- **dnd-combat-assistant**: Will use combat/ subfolder + player + companion HP/condition helpers when relevant.
-- **dnd-loot-generator**, **dnd-content-forge**, etc.: Can read current level/location from state for context-aware generation.
-- **dnd-session-scribe**: Appends to logs/ using state timestamps.
-- **dnd-dice-engine**: Can be extended to log rolls into session state.
-
-## June 2026 Enhancements (Completed)
-- Added `auto_record_significant_event()` — smart default wrapper used by the orchestrator for major beats.
-- Added `record_combat_outcome_v2()` — improved combat logging with better tagging and structure.
-- Added `enhanced_audit_campaign()` — extended cross-file consistency checks and recommendations.
-- These helpers are now integrated into `dnd-persistent-dm` orchestration for more proactive, lower-friction long-term play.
-
-The utils layer continues to be the rock-solid foundation that makes the entire skill suite feel native, reliable, and production-ready for campaigns spanning dozens or hundreds of sessions.
-
-Run `python3 /home/workdir/.grok/skills/dnd-utils/scripts/dnd_state_utils.py --help` for full CLI options (including the new helpers).
+## Example Flow
+Player: *"Switch to kingdom mode and queue a granary."*
+→ `update --set-mode kingdom` → `queue-project "Granary expansion" --turns 3`
+→ Reply: *"Granary queued (3 turns). Gold 100 → unchanged. **What do you do?**"*

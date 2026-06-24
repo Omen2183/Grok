@@ -1,47 +1,62 @@
 ---
 name: dnd-loot-generator
-description: Generates balanced, flavorful magic items and treasure hoards tailored to campaign tone and party level. Maintains a persistent "already found" ledger to avoid repetition. Supports heavy homebrew and feels like natural campaign rewards.
+description: Procedural treasure and magic item generation with party-level scaling and a persistent loot ledger to avoid duplicates. Triggers include generate loot, treasure hoard, what's been found, magic item reward, post-combat loot. Supports 5e tone + homebrew campaigns.
 ---
 
-# Dnd Loot Generator
+# D&D Loot Generator
 
-## Overview
-Generates balanced, flavorful magic items and treasure hoards appropriate to the campaign tone and party level. This skill helps make rewards feel meaningful, memorable, and connected to the world, supporting long-term player investment and campaign health.
+## When to Use
+- Post-combat or discovery rewards
+- Treasure hoards scaled to party level/CR
+- Checking what items the party already found
 
-## When to Activate
-- "Generate loot"
-- "What’s in the chest?"
-- "Create a magic item"
-- "Random magic item"
-- "Treasure hoard"
+**Do not use when:** Custom bespoke artifact design with deep lore (content-forge + lore-archivist) or inventory management (character-manager).
 
-## Core Capabilities
-- Generate individual magic items with flavor and minor mechanics
-- Create small loot parcels and full treasure hoards
-- Suggest items appropriate to party level and campaign tone
-- Include gold, gems, and art objects for complete rewards
+## Quick Start (Mobile)
+1. After a fight: **"Generate loot for CR 3"**.
+2. Grok presents 2–4 items; ledger prevents repeats.
+3. Player picks items → character-manager `inventory add`.
 
-**Python Backend**: `scripts/procedural_loot.py` provides weighted generation, CR/level scaling, and a persistent "already found" ledger so the same powerful items aren't repeated across the campaign.
+## Capabilities (Honest Matrix)
+| Capability | Status | Notes |
+|------------|--------|-------|
+| Weighted item generation | ✅ Implemented | Mundane, consumable, magic tables |
+| Loot ledger (anti-duplicate) | ✅ Implemented | `state/loot_ledger.json` |
+| Treasure hoard | ✅ Implemented | `hoard` command |
+| CR/level scaling | ✅ Implemented | `--cr`, `--level` flags |
+| Custom item authoring | ⚠️ Partial | Grok homebrews; tables are generic |
+| Magic item balance audit | ❌ Prompt-only | No automated power analysis |
 
-## Behavior Guidelines
-- Follow general 5e guidelines for appropriate power level and rarity.
-- **Mechanical Scaffolding**: Use `/home/workdir/.grok/skills/dnd-utils/loot_guidelines.md` for suggested rarity by party level, rough treasure values, and campaign flavor guidance. Treat as helpful reference, not strict rules.
-- Add flavorful descriptions and minor unique twists to make items feel special and memorable.
-- When relevant, connect items to campaign themes, factions, or ongoing story threads.
-- Offer multiple options when generating so the DM has meaningful choice.
-- Provide complete, satisfying rewards that include gold, gems, art objects, and magic items.
+## Tools & Scripts
+```bash
+python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py generate "My Campaign" --cr 3 --count 4 --type mixed --level 5
+python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py hoard "My Campaign" --level 5 --cr 5
+python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py ledger "My Campaign"
+python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py generate "My Campaign" --type magic --allow-duplicates
+```
+
+## Behavior
+- Present loot as a short bullet list with rarity hints.
+- Note ledger additions silently; don't dump JSON.
+- Match tone to campaign (grim, whimsical, high-magic).
+- Confirm when player claims an item → route to inventory.
+
+## State & Files
+| File | R/W | Contents |
+|------|-----|----------|
+| `state/loot_ledger.json` | R/W | Items already generated/found |
 
 ## Integration
-Notable or story-relevant magic items should be recorded using `dnd-persistent-dm` (or create the file manually if this is the first mention) so they persist and can generate future consequences or hooks.
+- **Uses:** dnd-utils paths and JSON helpers
+- **Called by:** persistent-dm after `end-combat`
+- **Pairs with:** character-manager for pickup/attunement
 
-## State & Bootstrap Assumptions
-This skill expects the campaign folder structure to exist (created by `dnd-persistent-dm` on first use).  
-If files are missing, follow minimal fallback behavior and notify `dnd-persistent-dm`.
+## iOS / Voice Notes
+- Read loot lists slowly in voice; 3 items max per beat.
+- *"You find a potion of healing and 40 gold."*
 
-## Example Output
-**Item:** [Campaign-themed Cloak]  
-**Rarity:** Uncommon  
-**Description:** A dark gray cloak that seems to drink in light. While wearing it, you have advantage on Dexterity (Stealth) checks made in dim light or darkness.  
-**Twist:** The cloak occasionally whispers faint, unintelligible words at night (or another flavorful minor effect fitting your campaign).
-
-This skill helps treasure feel exciting and campaign-appropriate instead of generic.
+## Example Flow
+→ `hoard "My Campaign" --level 4 --cr 4`
+→ *"Hoard: Potion of Greater Healing, +1 dagger, 120 gp, silk pouch."*
+→ Player takes dagger → `inventory add --name "+1 Dagger"`
+→ **What do you do?**

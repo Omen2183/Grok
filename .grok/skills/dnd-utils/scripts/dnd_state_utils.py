@@ -105,6 +105,20 @@ def init_campaign(
 
     save_json(root / "state" / "kingdom_state.json", DEFAULT_KINGDOM.copy(), create_backup=False)
 
+    player_md = root / "state" / "player_character.md"
+    if not player_md.exists():
+        player_md.write_text(
+            f"# {player['name']}\n\n*Level {player['level']} {player['race']}*\n",
+            encoding="utf-8",
+        )
+
+    visual_canon = root / "state" / "visual_canon.md"
+    if not visual_canon.exists():
+        visual_canon.write_text(
+            "# Visual Canon\n\nAdd appearance notes for PCs, companions, and key locations.\n",
+            encoding="utf-8",
+        )
+
     session_log = root / "logs" / "session_log.md"
     if not session_log.exists():
         session_log.write_text(
@@ -263,6 +277,92 @@ def audit_campaign(campaign_name: str) -> Dict[str, Any]:
     }
 
 
+def get_kingdom_state(campaign_name: str) -> Dict[str, Any]:
+    return load_json(_state_dir(campaign_name) / "kingdom_state.json", DEFAULT_KINGDOM)
+
+
+def update_kingdom_state(campaign_name: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+    path = _state_dir(campaign_name) / "kingdom_state.json"
+    state = load_json(path, DEFAULT_KINGDOM)
+    state.update(updates)
+    save_json(path, state)
+    return state
+
+
+def queue_kingdom_project(
+    campaign_name: str,
+    name: str,
+    *,
+    turns_remaining: int = 3,
+    cost: Optional[Dict[str, int]] = None,
+    reward: Optional[str] = None,
+) -> Dict[str, Any]:
+    kingdom = get_kingdom_state(campaign_name)
+    projects = kingdom.setdefault("projects", [])
+    project = {
+        "name": name,
+        "status": "queued",
+        "turns_remaining": turns_remaining,
+        "cost": cost or {},
+        "reward": reward or "",
+        "created": datetime.now().isoformat(),
+    }
+    projects.append(project)
+    update_kingdom_state(campaign_name, {"projects": projects})
+    record_event(campaign_name, f"Kingdom project queued: {name}", tags=["kingdom", "project"])
+    return project
+
+
+def advance_kingdom_projects(campaign_name: str, turns: int = 1) -> Dict[str, Any]:
+    kingdom = get_kingdom_state(campaign_name)
+    completed: List[str] = []
+    for project in kingdom.get("projects", []):
+        if project.get("status") != "queued":
+            continue
+        project["turns_remaining"] = max(0, project.get("turns_remaining", 0) - turns)
+        if project["turns_remaining"] == 0:
+            project["status"] = "completed"
+            completed.append(project.get("name", "project"))
+    update_kingdom_state(campaign_name, {"projects": kingdom.get("projects", [])})
+    if completed:
+        record_event(
+            campaign_name,
+            f"Kingdom projects completed: {', '.join(completed)}",
+            tags=["kingdom", "project"],
+        )
+    return {"completed": completed, "projects": kingdom.get("projects", [])}
+
+
+def get_kingdom_summary(campaign_name: str) -> str:
+    kingdom = get_kingdom_state(campaign_name)
+    resources = kingdom.get("resources", {})
+    active = [p for p in kingdom.get("projects", []) if p.get("status") == "queued"]
+    lines = [
+        f"**Domain:** {kingdom.get('domain_name', 'Unknown')}",
+        f"**Resources:** {resources}",
+        f"**Active projects:** {len(active)}",
+    ]
+    for project in active[:5]:
+        lines.append(f"- {project.get('name')} ({project.get('turns_remaining')} turns left)")
+    return "\n".join(lines)
+
+
+def record_combat_outcome(
+    campaign_name: str,
+    description: str,
+    *,
+    enemies_defeated: Optional[List[str]] = None,
+    importance: str = "normal",
+) -> Dict[str, Any]:
+    return record_combat_event(
+        campaign_name,
+        description,
+        outcome="completed",
+        importance=importance,
+        metadata={"enemies_defeated": enemies_defeated or []},
+    )
+
+
 def generate_session_start_summary(campaign_name: str) -> Dict[str, Any]:
     world = get_world_state(campaign_name)
     player = get_player_character(campaign_name)
@@ -330,6 +430,19 @@ def main() -> None:
     p_search.add_argument("--limit", type=int, default=10)
 
     p_root = sub.add_parser("campaigns-root")
+
+    p_kingdom = sub.add_parser("kingdom-summary")
+    p_kingdom.add_argument("campaign")
+
+    p_queue = sub.add_parser("queue-project")
+    p_queue.add_argument("campaign")
+    p_queue.add_argument("name")
+    p_queue.add_argument("--turns", type=int, default=3)
+
+    p_advance = sub.add_parser("advance-projects")
+    p_advance.add_argument("campaign")
+    p_advance.add_argument("--turns", type=int, default=1)
+
     args = parser.parse_args()
 
     if args.cmd == "init":
@@ -379,6 +492,12 @@ def main() -> None:
         result = search_events(args.campaign, tag=args.tag, limit=args.limit)
     elif args.cmd == "campaigns-root":
         result = {"campaigns_root": str(get_campaigns_root())}
+    elif args.cmd == "kingdom-summary":
+        result = {"summary": get_kingdom_summary(args.campaign), "state": get_kingdom_state(args.campaign)}
+    elif args.cmd == "queue-project":
+        result = queue_kingdom_project(args.campaign, args.name, turns_remaining=args.turns)
+    elif args.cmd == "advance-projects":
+        result = advance_kingdom_projects(args.campaign, turns=args.turns)
     else:
         result = {"error": "Unknown command"}
 

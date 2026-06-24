@@ -1,85 +1,64 @@
 ---
 name: dnd-dice-engine
-description: Provides reliable, accurate dice rolling for all D&D actions. Supports full 5e notation, advantage/disadvantage, keep highest/lowest, exploding dice, and homebrew modifiers. Uses a dedicated Python roller for transparency and consistency. Works seamlessly in both text and voice.
+description: Reliable Python dice roller for all D&D actions. Triggers include roll, attack roll, saving throw, ability check, advantage, disadvantage, 4d6 drop lowest, exploding dice. Full 5e notation with transparent results. Works in text and voice. Optional campaign logging to rolls.json.
 ---
 
-# Dnd Dice Engine
+# D&D Dice Engine
 
-## Overview
-Provides fast, trustworthy, and well-formatted dice rolls for your campaign. Handles classic 5e rolls as well as any homebrew modifiers, custom abilities, or advantage/disadvantage situations that arise in either tabletop or kingdom play.
+## When to Use
+- Any mechanical roll: attacks, saves, checks, damage, initiative
+- Advantage/disadvantage on d20 tests
+- Stat generation (`4d6kh3`) or homebrew exploding dice
 
-## When to Activate
-Use for any dice resolution:
-- Attack rolls, saves, skill checks
-- Damage rolls
-- Initiative
-- Random events
-- Advantage / Disadvantage rolls
-- Keep highest / lowest rolls (e.g. 4d6kh3)
+**Do not use when:** The player wants a ruling without rolling (rules-reference) or narrative-only outcomes.
 
-## Core Behavior
-- Use the included `scripts/dice_roller.py` for all rolls when possible. It supports:
-  - Standard notation: `1d20+5`, `2d6+3`, `4d6kh3` (keep highest 3), `2d20kl1`
-  - Advantage and Disadvantage with clear dual-roll output
-  - Keep Highest / Keep Lowest mechanics
-  - Basic exploding dice (`--exploding` flag — common homebrew)
-  - Modifiers (+ Proficiency, Expertise, cover, etc.)
-  - Clear structured JSON output with breakdown of both rolls when using advantage/disadvantage
-- **Official D&D Dice Types** supported:
-  - Core polyhedral: d4, d6, d8, d10, d12, d20
-  - Percentile: d100 or 2d10 (tens + units)
-  - Common derived: d3 (d6/2), d2 (even/odd on d20 or coin flip)
-- Always present results clearly for mobile:
-  - Show the notation
-  - List individual rolls + kept/dropped when using keep mechanics
-  - Show final total with modifier applied
-  - Add brief flavorful commentary when appropriate
-- Support homebrew elements and custom modifiers from your character or campaign.
+## Quick Start (Mobile)
+1. Say **"Roll stealth with advantage"** — Grok runs the roller and shows dice.
+2. Results appear as: *"Stealth 1d20+7 → 22 (15, 11 kept)."*
+3. Add `--campaign` to log rolls for session recaps.
 
-## Output Format Example
-**Stealth Check (Advantage)**  
-Notation: 1d20+7 (advantage)  
-Rolls: [18, 9] → Took higher  
-Modifier: +7 (Dex) + 2 (homebrew cloak)  
-**Total: 27** — Critical success. You move like living shadow through the market.
+## Capabilities (Honest Matrix)
+| Capability | Status | Notes |
+|------------|--------|-------|
+| Standard notation (2d6+3) | ✅ Implemented | CLI + importable |
+| Advantage / disadvantage | ✅ Implemented | Best/worst of 2d20 |
+| Keep highest/lowest (kh/kl) | ✅ Implemented | e.g. `4d6kh3` |
+| Exploding dice | ✅ Implemented | `--exploding` flag |
+| Campaign roll logging | ✅ Implemented | `--campaign` → `logs/rolls.json` |
+| Secret DM rolls | ⚠️ Partial | Grok narrates result; no hidden-channel API |
+| 3d physical dice animation | ❌ Prompt-only | Text/JSON output only |
 
-## Common Core D&D Modifiers (for context)
-When rolling, consider these standard sources:
-- **Ability Modifier** (Str, Dex, Con, Int, Wis, Cha)
-- **Proficiency Bonus** (+2 to +6 depending on level)
-- **Expertise** (double proficiency on certain skills)
-- **Advantage / Disadvantage** (situational)
-- **Cover** (+2 or +5 to AC on attacks)
-- **Magic items, class features, homebrew bonuses**
-
-The engine applies whatever modifiers you specify in the roll request.
-
-## Rules Notes
-- Default to 5e + your established homebrew.
-- When in doubt about a modifier, ask once and remember via state for the session.
-- For contested rolls, roll once for each side and compare (or ask persistent-dm to adjudicate).
-- Never fudge rolls unless explicitly requested for narrative reasons.
-
-**Real Invocation (Recommended)**:
-Use the dedicated dice roller (now strengthened as part of the shared D&D Python ecosystem):
-
+## Tools & Scripts
 ```bash
-python3 /home/workdir/.grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+7" --advantage
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+5"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+7" --advantage --campaign "My Campaign"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "1d20+3" --disadvantage
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "4d6kh3"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "2d6+4" --exploding
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py "2d10" 
 ```
 
-Or import in other Python scripts:
-```python
-import sys
-sys.path.append("/home/workdir/.grok/skills/dnd-dice-engine/scripts")
-from dice_roller import roll_dice
+## Behavior
+- Always show notation, individual dice, modifier, and total.
+- On adv/disadv, show both d20 values and which was kept.
+- Lead with the number; flavor second.
+- Never fudge — use the script output.
 
-result = roll_dice("2d6+3", advantage=True)
-print(result)  # Full breakdown JSON
-```
+## State & Files
+| File | R/W | When |
+|------|-----|------|
+| `logs/rolls.json` | W | When `--campaign` is provided |
 
-The dice roller can optionally log results into a campaign's session state via dnd_state_utils in future extensions.
+## Integration
+- **Uses:** dnd-utils `log_roll` (optional)
+- **Called by:** persistent-dm, combat-assistant, character-manager (companion initiative)
+- **Voice:** voice-assistant routes `dice_roll` intent here
 
-**Flow**:
-Player action → dice-engine (real roll via dice_roller.py) → parse JSON → narrate outcome with breakdown.
+## iOS / Voice Notes
+- Voice rolls: speak naturally — *"Roll perception"* → Grok asks modifier if needed.
+- Keep result to 2–3 lines on mobile.
 
-Never simulate rolls manually when this skill is available. Always use the real script for fairness and transparency.
+## Example Flow
+Player: *"I attack with advantage, +8"*
+→ `dice_roller.py "1d20+8" --advantage --campaign "My Campaign"`
+→ *"**24** to hit (d20: 16, 11 — kept 16). **What do you do?**"*

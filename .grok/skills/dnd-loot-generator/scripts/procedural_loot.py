@@ -162,9 +162,19 @@ def save_ledger(campaign_name: str, ledger: Dict[str, Any]) -> None:
             temp_path.unlink()
         print(f"Warning: Failed to save loot ledger for {campaign_name}: {e}", file=sys.stderr)
 
+def _party_level_from_state(campaign_name: str, fallback: int = 3) -> int:
+    try:
+        from dnd_state_utils import get_player_character
+        return int(get_player_character(campaign_name).get("level", fallback))
+    except Exception:
+        return fallback
+
+
 def generate_loot(campaign_name: str, cr: float = 1.0, count: int = 3, 
-                  item_type: str = "mixed", party_level: int = 3,
+                  item_type: str = "mixed", party_level: Optional[int] = None,
                   avoid_duplicates: bool = True) -> List[Dict]:
+    if party_level is None:
+        party_level = _party_level_from_state(campaign_name)
     """
     Generate a list of loot items.
     - cr: Challenge rating of encounter (affects quality slightly)

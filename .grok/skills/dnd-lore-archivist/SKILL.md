@@ -1,64 +1,69 @@
 ---
 name: dnd-lore-archivist
-description: Use to maintain, query, or update deep campaign lore, NPC knowledge, faction relationships, and world consistency. Triggers include what does [NPC] know, update the lore, recap factions, kingdom state query, or questions about custom/homebrew elements. Essential for long-term consistency in both tabletop and kingdom modes. Works with any campaign.
+description: Maintain, query, and update deep campaign lore, NPC knowledge, faction relationships, and world consistency. Triggers include what does [NPC] know, update the lore, recap factions, kingdom state query, homebrew lore question, what happened at [location]. Essential for long-running sandbox and kingdom campaigns. Prompt-driven with JSON state reads.
 ---
 
-# Dnd Lore Archivist
-
-## Overview
-Acts as the living memory and librarian of your campaign. It prevents contradictions, tracks what NPCs and factions know, and maintains both personal-scale lore and kingdom-scale information across hundreds of sessions. This skill is essential for making long campaigns feel coherent, reactive, and genuinely lived-in.
-
-## Core Responsibilities
-- Maintain a clear, queryable record of:
-  - Established world lore and custom/homebrew setting elements
-  - NPC knowledge, motivations, secrets, and relationships to the player character(s)
-  - Faction relationships and influence levels
-  - Custom companion or important entity tracking (e.g. bonded creatures, special items)
-  - Major historical events and their lingering consequences
-  - Kingdom/domain developments and their effects on the wider world
+# D&D Lore Archivist
 
 ## When to Use
-- Player asks about NPC knowledge or history
-- You need to check consistency before a major decision or revelation
-- Updating faction standing or domain progress after kingdom actions
-- Preparing for a session or generating content that must respect prior events
-- Player says "update the state", "what do they know about...", or "recap the political situation"
+- Player asks about established world facts, history, or factions
+- Updating lore after major story beats
+- Consistency checks before introducing new elements
 
-## Behavior Guidelines
-- **Never invent contradictions**. If something is not recorded, say so and offer to establish it.
-- When the player introduces new lore or reveals information, record it promptly in the appropriate files (npcs/ folder or kingdom_state) **and inform persistent-dm** that state was updated.
-- For kingdom mode: Track how domain actions affect external perception, trade, alliances, and threats.
-- Support both modes: Tabletop scenes may reveal personal secrets; kingdom actions may shift faction power or unlock new research.
-- Keep entries concise but useful. Include sections like "What the player character knows", "What the NPC/faction knows", and "Current status".
-- After major updates, consider suggesting a state sync via session-scribe.
+**Do not use when:** Creating new NPC profiles (npc-weaver), rules lookups (rules-reference), or live encounter play (persistent-dm).
 
-**State Assumptions & Fallback**
+## Quick Start (Mobile)
+1. Ask **"What do the Iron Compact know about the vault?"**
+2. Grok reads state, events, NPC files, and session recaps.
+3. After revelations: **"Update lore — the vault is a prison"**.
 
-This skill assumes the campaign folder and `npcs/` directory exist.  
-If they do not:
-- Create the minimal `npcs/` folder and requested `.md` file.
-- Inform `dnd-persistent-dm` that new lore/NPC files were created.
-- Never invent prior knowledge — state clearly what is newly established.
+## Capabilities (Honest Matrix)
+| Capability | Status | Notes |
+|------------|--------|-------|
+| Query campaign JSON state | ✅ Implemented | Via dnd-utils `load` / reads |
+| Search event log | ✅ Implemented | `search-events` in dnd-utils |
+| Read NPC profiles | ✅ Implemented | `npcs/*.json` |
+| Read session recaps | ✅ Implemented | `recaps/*.md` |
+| Lore consistency reasoning | ⚠️ Partial | Grok LLM; no vector DB |
+| Automated lore writes | ❌ Prompt-only | Grok appends to notes/recaps |
+| Faction simulation engine | ❌ Prompt-only | Use rumor-event-generator |
 
-## Recommended File Structure (use or extend)
-- `npcs/[npc-name].md` for important individuals
-- `state/kingdom_state.md` for domain-level developments
-- `state/world_state.json` for high-level current facts
-- `state/lore_summary.md` — Periodically create compressed summaries of major lore, factions, and ongoing threads (especially useful after 50+ sessions).
-- Update `logs/session_log.md` when major lore revelations occur
+## Tools & Scripts
+No dedicated script — read state via dnd-utils:
+```bash
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --file world_state
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --file kingdom_state
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py search-events "My Campaign" --tag lore --limit 10
+python .grok/skills/dnd-npc-personality-weaver/scripts/npc_manager.py get "My Campaign" npc-id
+```
 
-## Lore Compression Guidance (for Long Campaigns)
-After significant story arcs or every 30–50 sessions:
-1. Ask the player (or proactively suggest) to create/update `state/lore_summary.md`.
-2. Summarize key established facts, current faction standings, major mysteries, and what different groups know about the player character(s) and any important companions or entities.
-3. This keeps context manageable while preserving continuity.
-4. Use helpers from `dnd_state_utils.py` when adding new compressed sections when available.
+## Behavior
+- **Never invent** established facts — read files first.
+- Cite uncertainty: *"Not recorded yet — want to establish it?"*
+- Updates go to `world_state.json` notes, NPC files, or `record-event`.
+- Keep answers ≤8 lines unless player asks for deep lore.
 
-## Response Style
-When queried, give a clean summary and offer to dive deeper or update anything. Example:
+## State & Files
+| File | R/W | Contents |
+|------|-----|----------|
+| `state/world_state.json` | R/W | Location, notes, mode |
+| `state/kingdom_state.json` | R | Factions, domain flags |
+| `npcs/{id}.json` | R | NPC knowledge in notes/secrets |
+| `logs/events.json` | R/W | Lore-tagged events |
+| `recaps/session_*.md` | R | Historical narrative |
+| `logs/session_log.md` | R | GM notes |
 
-**Query: What does Captain Veyra know about the recent disappearances?**  
-Captain Veyra believes the disappearances are connected to local smugglers. She does not yet suspect the player character's involvement. Relationship with the player: Wary but respectful after a previous incident.  
-Would you like to update her knowledge or have the player try to learn more?
+## Integration
+- **Uses:** dnd-utils, npc-weaver (reads)
+- **Called by:** persistent-dm for lore questions
+- **Pairs with:** rumor-event-generator for world reactions
 
-This skill is what makes your endless campaign feel coherent and lived-in over time.
+## iOS / Voice Notes
+- Voice lore answers: one fact per sentence, chronological when recounting history.
+- Offer *"Want more detail?"* instead of dumping paragraphs.
+
+## Example Flow
+Player: *"What factions control the eastern trade road?"*
+→ Read `kingdom_state.json` + `search-events --tag faction`
+→ *"Iron Compact (friendly) patrols the road; Hollow Guild smuggles at night."*
+→ **What do you do?**

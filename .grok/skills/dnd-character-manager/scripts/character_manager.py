@@ -13,19 +13,20 @@ Version 0.4 — Phase 3 enhancements:
 - Basic level-up suggestion system (class features & feat ideas)
 """
 
+import argparse
 import json
 import os
 import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
-# Try to import shared utilities
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-utils" / "scripts"))
 try:
+    from bootstrap import ensure_utils_importable
+    ensure_utils_importable()
     from dnd_state_utils import get_campaign_path, load_world_state, update_world_state
 except ImportError:
-    # Fallback for standalone testing
-    def get_campaign_path(campaign_name: str) -> Path:
-        return Path(f"/home/workdir/artifacts/dnd-campaigns/{campaign_name}")
+    from paths import get_campaign_path  # type: ignore
 
     def load_world_state(campaign_name: str) -> Dict:
         return {}
@@ -688,98 +689,52 @@ def get_character_summary(campaign_name: str) -> str:
     return base
 
 
+def run_cli() -> None:
+    parser = argparse.ArgumentParser(description="D&D character manager")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_summary = sub.add_parser("summary")
+    p_summary.add_argument("campaign")
+
+    p_level = sub.add_parser("level-up")
+    p_level.add_argument("campaign")
+    p_level.add_argument("--levels", type=int, default=1)
+    p_level.add_argument("--class")
+
+    p_inv = sub.add_parser("inventory")
+    p_inv.add_argument("campaign")
+    p_inv.add_argument("action", choices=["add", "remove", "attune", "unattune"])
+    p_inv.add_argument("--name", required=True)
+    p_inv.add_argument("--type", default="item")
+
+    p_ds = sub.add_parser("death-save")
+    p_ds.add_argument("campaign")
+    p_ds.add_argument("result", choices=["success", "failure"])
+
+    p_export = sub.add_parser("export")
+    p_export.add_argument("campaign")
+
+    args = parser.parse_args()
+
+    if args.cmd == "summary":
+        print(get_character_summary(args.campaign))
+    elif args.cmd == "level-up":
+        result = level_up(args.campaign, levels=args.levels, class_name=args.class)
+        print(json.dumps(result, indent=2))
+    elif args.cmd == "inventory":
+        item = {"name": args.name, "type": args.type}
+        print(json.dumps(update_inventory(args.campaign, args.action, item), indent=2))
+    elif args.cmd == "death-save":
+        success = args.result == "success"
+        print(json.dumps(apply_death_save(args.campaign, success), indent=2))
+    elif args.cmd == "export":
+        char = load_character(args.campaign)
+        md = generate_character_markdown(args.campaign, char)
+        print(md)
+
+
 if __name__ == "__main__":
-    """
-    Demo / Test block for dnd-character-manager level-up system.
-    Run this file directly to see the improved leveling in action.
-    """
-    import tempfile
-    import shutil
-    from pathlib import Path
-
-    print("=== dnd-character-manager Level-Up Demo ===\n")
-
-    # Use a temporary campaign for safe testing
-    test_campaign = "Test_Character_Manager_Demo"
-    test_path = Path(f"/home/workdir/artifacts/dnd-campaigns/{test_campaign}")
-
-    # Clean up previous test if it exists
-    if test_path.exists():
-        shutil.rmtree(test_path, ignore_errors=True)
-
-    # Create fresh character
-    char = create_default_character()
-    char["name"] = "Elara Voss"
-    char["race"] = "Half-Elf"
-    char["classes"] = [{"name": "Ranger", "level": 1}]
-    char["background"] = "Outlander"
-    char["stats"] = {"str": 12, "dex": 16, "con": 14, "int": 10, "wis": 13, "cha": 10}
-
-    # Manually save initial state
-    from pathlib import Path as P
-    base = P(f"/home/workdir/artifacts/dnd-campaigns/{test_campaign}/state")
-    base.mkdir(parents=True, exist_ok=True)
-    with open(base / "player_character.json", "w") as f:
-        json.dump(char, f, indent=2)
-
-    print("Initial Character:")
-    print(get_character_summary(test_campaign))
-    print()
-
-    # Level up a few times
-    print("→ Leveling up to Ranger 3...")
-    level_up(test_campaign, levels=2, class_name="Ranger")
-
-    print("→ Multiclassing into Fighter at level 4...")
-    level_up(test_campaign, levels=1, class_name="Fighter")
-
-    print("→ Leveling to total level 5...")
-    level_up(test_campaign, levels=1)
-
-    # Record an ASI choice
-    record_asi_or_feat(test_campaign, level=4, choice="ASI: +2 Dexterity", details="Increased Dex for better attacks and AC")
-
-    # === Inventory Demo ===
-    print("\n→ Adding items to inventory...")
-    update_inventory(test_campaign, "add", {
-        "name": "Longbow +1",
-        "type": "weapon",
-        "rarity": "uncommon",
-        "description": "A well-crafted longbow that grants a +1 bonus to attack and damage rolls."
-    })
-    update_inventory(test_campaign, "add", {
-        "name": "Cloak of Elvenkind",
-        "type": "wondrous item",
-        "rarity": "uncommon",
-        "description": "Grants advantage on Stealth checks."
-    })
-    update_inventory(test_campaign, "add", {
-        "name": "Boots of Striding and Springing",
-        "type": "wondrous item",
-        "rarity": "uncommon"
-    })
-
-    print("→ Attuning to Cloak of Elvenkind...")
-    update_inventory(test_campaign, "attune", {"name": "Cloak of Elvenkind"})
-
-    print("\n=== Inventory Summary ===")
-    print(get_inventory_summary(test_campaign))
-
-    print("\n=== Final Character Summary ===")
-    print(get_character_summary(test_campaign))
-
-    final_char = load_character(test_campaign)
-    print(f"\nClasses: {final_char['classes']}")
-    print(f"Total Level: {final_char['level']}")
-    print(f"HP Max: {final_char['hit_points']['max']}")
-    print(f"Proficiency Bonus: +{final_char['proficiency_bonus']}")
-    print(f"\nASI Choices: {final_char.get('asi_choices', [])}")
-    print(f"\nLevel History:\n{final_char.get('level_history', [])}")
-
-    print("\nMarkdown sheet generated at:")
-    print(f"  {base / 'player_character.md'}")
-
-    print("\n=== Demo Complete ===")
+    run_cli()
 
 # ============================================================
 # PHASE 3: Lightweight Multi-Character & Level-up Suggestions
@@ -1047,12 +1002,15 @@ def add_companion_to_active_combat(campaign_name: str, companion_name: str, init
     if full_name not in existing_names:
         combatant_entry = {
             "name": full_name,
-            "hp": companion_data["hp"],
-            "max_hp": companion_data["max_hp"],
+            "hp_current": companion_data["hp"],
+            "hp_max": companion_data["max_hp"],
+            "hp_temp": 0,
             "initiative": initiative if initiative is not None else 0,
             "conditions": companion_data.get("conditions", []),
             "is_companion": True,
-            "status": companion_data.get("status", "Alive")
+            "is_player": False,
+            "is_unconscious": companion_data.get("status", "Alive").lower() in ("dying", "unconscious"),
+            "status": companion_data.get("status", "Alive"),
         }
         combat_data.setdefault("combatants", []).append(combatant_entry)
 
@@ -1204,7 +1162,7 @@ def add_all_companions_to_combat(
     dice_available = False
 
     try:
-        sys.path.append(str(Path(__file__).parent.parent / "dnd-dice-engine" / "scripts"))
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-dice-engine" / "scripts"))
         from dice_roller import roll_dice
         dice_available = True
     except Exception:

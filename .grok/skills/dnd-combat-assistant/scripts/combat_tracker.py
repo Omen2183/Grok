@@ -21,22 +21,23 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 # Import shared utils
-sys.path.append(str(Path(__file__).parent.parent.parent / "dnd-utils" / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "dnd-utils" / "scripts"))
 try:
+    from bootstrap import ensure_utils_importable
+    ensure_utils_importable()
     from dnd_state_utils import (
-        get_campaign_path, 
-        update_player_hp, 
-        add_condition,
-        update_important_companion
+        get_campaign_path,
+        record_combat_outcome,
+        update_player_hp,
+        update_important_companion,
     )
-    from event_system import record_combat_event
 except ImportError:
-    print("Warning: dnd_state_utils or event_system not available. Running in limited mode.", file=sys.stderr)
-    def get_campaign_path(name): return Path(f"/home/workdir/artifacts/dnd-campaigns/{name}")
+    print("Warning: dnd_state_utils not available. Running in limited mode.", file=sys.stderr)
+    from paths import get_campaign_path  # type: ignore
+
     def update_player_hp(*a, **k): return {"current": 0, "max": 0}
-    def add_condition(*a, **k): return {}
     def update_important_companion(*a, **k): return {}
-    def record_combat_event(*a, **k): return False
+    def record_combat_outcome(*a, **k): return {}
 
 def get_combat_file(campaign_name: str) -> Path:
     return get_campaign_path(campaign_name) / "combat" / "current_combat.json"
@@ -159,6 +160,7 @@ def apply_damage(campaign_name: str, target_name: str, amount: int) -> Dict[str,
     for c in combat["combatants"]:
         if c["name"].lower() == target_name.lower():
             target_found = True
+            hp_before_damage = c.get("hp_current", 0)
             remaining = amount
             is_group = c.get("is_group", False) and c.get("group_size", 1) > 1
             hp_per = c.get("hp_max", c.get("hp_current", 1))
@@ -220,10 +222,12 @@ def apply_damage(campaign_name: str, target_name: str, amount: int) -> Dict[str,
                     })
                 combat["log"].append(f"⚠ {target_name} has been knocked Unconscious!")
 
+            hp_delta = max(0, hp_before_damage - c.get("hp_current", 0))
+
             # === Sync to main campaign state ===
-            if c.get("is_player"):
+            if c.get("is_player") and hp_delta > 0:
                 try:
-                    update_player_hp(campaign_name, delta=-amount)
+                    update_player_hp(campaign_name, delta=-hp_delta)
                 except Exception:
                     pass
             elif c.get("is_companion"):
@@ -249,6 +253,55 @@ def apply_damage(campaign_name: str, target_name: str, amount: int) -> Dict[str,
         combat.setdefault("log", []).append(f"[Error] Failed to persist combat state: {e}")
 
     return combat
+
+
+def _format_conditions(conditions: List[Any]) -> str:
+    if not conditions:
+        return ""
+    names = []
+    for cond in conditions:
+        if isinstance(cond, dict):
+            names.append(str(cond.get("name", cond)))
+        else:
+            names.append(str(cond))
+    return ", ".join(names)
+
+
+def apply_healing(campaign_name: str, target_name: str, amount: int) -> Dict[str, Any]:
+    """Apply healing to a combatant (cannot exceed max HP)."""
+    combat = load_combat(campaign_name)
+    for c in combat["combatants"]:
+        if c["name"].lower() == target_name.lower():
+            before = c.get("hp_current", 0)
+            c["hp_current"] = min(c.get("hp_max", before), before + amount)
+            if c["hp_current"] > 0 and c.get("is_unconscious"):
+                c["is_unconscious"] = False
+                c["conditions"] = [
+                    cond for cond in c.get("conditions", [])
+                    if not (isinstance(cond, dict) and cond.get("name") == "Unconscious")
+                ]
+            healed = c["hp_current"] - before
+            combat["log"].append(
+                f"{target_name} healed for {healed} HP ({c['hp_current']}/{c['hp_max']})"
+            )
+            if c.get("is_player") and healed > 0:
+                try:
+                    update_player_hp(campaign_name, delta=healed)
+                except Exception:
+                    pass
+            elif c.get("is_companion") and healed > 0:
+                try:
+                    update_important_companion(campaign_name, {
+                        "hp": {"current": c["hp_current"], "max": c.get("hp_max", c["hp_current"])}
+                    })
+                except Exception:
+                    pass
+            break
+    else:
+        combat["log"].append(f"Warning: Target '{target_name}' not found in combat")
+    save_combat(campaign_name, combat)
+    return combat
+
 
 def next_turn(campaign_name: str) -> Dict[str, Any]:
     """Advance to the next creature's turn. Handles empty combat gracefully."""
@@ -297,8 +350,9 @@ def get_combat_summary(campaign_name: str) -> str:
             group_info = " [last one]"
 
         status = f"{c['name']}{group_info} ({c['hp_current']}/{c['hp_max']} HP)"
-        if c.get("conditions"):
-            status += f" | {', '.join(c['conditions'])}"
+        cond_text = _format_conditions(c.get("conditions", []))
+        if cond_text:
+            status += f" | {cond_text}"
         if c.get("is_unconscious"):
             status += " [UNCONSCIOUS]"
 
@@ -456,16 +510,14 @@ def end_combat(campaign_name: str, award_xp: int = 0) -> Dict[str, Any]:
         backup_path = combat_file.with_suffix(".ended.json")
         combat_file.rename(backup_path)
 
-    # Auto-record combat event (best effort)
     try:
-        record_combat_event(
+        record_combat_outcome(
             campaign_name,
-            f"Combat ended in {combat.get('encounter_name', 'unknown encounter')}",
-            outcome="completed",
-            importance="normal"
+            f"Combat ended: {combat.get('encounter_name', 'unknown encounter')}",
+            importance="normal",
         )
     except Exception:
-        pass  # Non-critical
+        pass
     
     return {"status": "combat_ended", "log": combat["log"], "xp_awarded": award_xp}
 
@@ -542,11 +594,17 @@ def main():
     p_add.add_argument("--initiative", type=int, required=True)
     p_add.add_argument("--player", action="store_true")
     p_add.add_argument("--companion", action="store_true")
+    p_add.add_argument("--group-size", type=int, default=1)
     
     p_dmg = sub.add_parser("damage")
     p_dmg.add_argument("campaign")
     p_dmg.add_argument("--target", required=True)
     p_dmg.add_argument("--amount", type=int, required=True)
+
+    p_heal = sub.add_parser("heal")
+    p_heal.add_argument("campaign")
+    p_heal.add_argument("--target", required=True)
+    p_heal.add_argument("--amount", type=int, required=True)
     
     p_next = sub.add_parser("next-turn")
     p_next.add_argument("campaign")
@@ -603,9 +661,14 @@ def main():
     if args.cmd == "init":
         print(json.dumps(init_combat(args.campaign, args.encounter), indent=2))
     elif args.cmd == "add":
-        print(json.dumps(add_combatant(args.campaign, args.name, args.hp, args.initiative, args.player, args.companion), indent=2))
+        print(json.dumps(add_combatant(
+            args.campaign, args.name, args.hp, args.initiative,
+            args.player, args.companion, group_size=args.group_size,
+        ), indent=2))
     elif args.cmd == "damage":
         print(json.dumps(apply_damage(args.campaign, args.target, args.amount), indent=2))
+    elif args.cmd == "heal":
+        print(json.dumps(apply_healing(args.campaign, args.target, args.amount), indent=2))
     elif args.cmd == "next-turn":
         print(json.dumps(next_turn(args.campaign), indent=2))
     elif args.cmd == "status":

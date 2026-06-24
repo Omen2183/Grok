@@ -79,6 +79,13 @@ def roll_dice(notation: str, advantage: bool = False, disadvantage: bool = False
     
     If `campaign` is provided, the roll is automatically logged to logs/rolls.json.
     """
+    raw = notation.lower()
+    if not advantage and not disadvantage:
+        if "advantage" in raw or re.search(r"\badv\b", raw):
+            advantage = True
+        if "disadvantage" in raw or re.search(r"\bdisadv\b", raw):
+            disadvantage = True
+
     parsed = parse_dice_notation(notation)
     num_dice = parsed["num_dice"]
     die_size = parsed["die_size"]

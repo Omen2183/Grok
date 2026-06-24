@@ -1,103 +1,72 @@
 ---
 name: dnd-combat-assistant
-description: Use during combat encounters to track initiative, HP, conditions, and turn order. Triggers include start combat, initiative, next turn, damage to, add condition, end combat. Provides clean text-based combat tracking optimized for mobile play. Works with any campaign.
+description: Combat encounter tracker for initiative, HP, healing, conditions, concentration, death saves, and turn order. Triggers include start combat, roll initiative, next turn, damage to [target], heal [target], apply condition, end combat. Mobile-first text combat for any D&D campaign. Syncs HP to central state on end-combat.
 ---
 
-# Dnd Combat Assistant
+# D&D Combat Assistant
 
-## Overview
-A reliable, mobile-optimized combat tracker that removes bookkeeping friction during fights. It handles initiative, hit points, conditions, turn order, and state synchronization so the game stays focused on tactics, narrative, and player decisions rather than manual tracking. This skill integrates tightly with the central state layer for long-term coherence.
+## When to Use
+- Starting or running an active encounter
+- Tracking initiative, HP, temp HP, conditions, concentration
+- Applying damage/healing with before → after confirmation
+- Ending combat and syncing player HP to campaign state
 
-## When to Activate
-- "Start combat" or "Roll initiative"
-- "Next turn"
-- "[Player] takes 12 damage"
-- "Add Frightened to the bandit"
-- "Show combat status"
-- "End combat"
+**Do not use when:** Out of combat (use character-manager), rules questions (rules-reference), or loot rolls (loot-generator).
 
-## Core Capabilities
-- Track initiative order with names and current HP
-- Apply damage and healing
-- Track conditions
-- Advance turns cleanly
-- Display combat status in a clear, readable format
-- Support both player characters and NPCs/monsters
+## Quick Start (Mobile)
+1. Say **"Start combat — goblin ambush"** to init and add combatants.
+2. On your turn: **"I hit the goblin for 9"** → damage applied, HP shown.
+3. Say **"Next turn"** until done, then **"End combat, 150 XP"**.
 
-**New Python Backend**: Uses `scripts/combat_tracker.py` + shared `dnd_state_utils` for reliable JSON state, automatic player/companion HP sync, and persistence across turns/sessions.
+## Capabilities (Honest Matrix)
+| Capability | Status | Notes |
+|------------|--------|-------|
+| Init & add combatants | ✅ Implemented | Player, companion, monster flags |
+| Initiative & turn order | ✅ Implemented | `next-turn`, `status` |
+| Damage & healing | ✅ Implemented | Syncs player/companion HP via dnd-utils |
+| Temp HP, conditions, concentration | ✅ Implemented | Duration rounds supported |
+| Death saves | ✅ Implemented | Success/failure tracking |
+| End combat + XP hook | ✅ Implemented | Clears combat file, records outcome |
+| Mass combat resolver | ✅ Implemented | Abstract kingdom-scale battles |
+| Auto-roll monster initiative | ⚠️ Partial | Manual `--initiative` required on add |
+| Visual battle maps | ❌ Prompt-only | Text tracker only |
 
-## Recommended Behavior
-- **Combat Start**: Ask for or accept initiative rolls and establish clear order.
-- **During Combat**: Clearly indicate whose turn it is. Track HP and conditions accurately.
-- **Damage & Effects**: Confirm changes and update state immediately.
-- **End of Combat**: Provide a brief summary and reset the tracker.
-- **Output Style**: Keep responses concise and mobile-friendly by default. Use clear formatting for status updates.
+## Tools & Scripts
+```bash
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py init "My Campaign" --encounter "Goblin Ambush"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py add "My Campaign" --name "Aria" --hp 32 --initiative 18 --player
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py add "My Campaign" --name "Goblin 1" --hp 7 --initiative 12 --group-size 3
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py damage "My Campaign" --target "Goblin 1" --amount 9
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py heal "My Campaign" --target "Aria" --amount 8
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py next-turn "My Campaign"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py status "My Campaign"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py apply-condition "My Campaign" --target "Aria" --condition "Poisoned" --duration-rounds 3
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py end-combat "My Campaign" --xp 150
+```
 
-**Success Criteria**
-- Initiative order and current turn are always clear.
-- HP and conditions are accurately tracked.
-- Major outcomes (deaths, loot, alliances) are handed off to persistent-dm at combat end.
+## Behavior
+- Lead with whose turn it is and target HP after each change.
+- Confirm: *"Goblin 1: 7 → 0 HP (down)."*
+- End scenes with **What do you do?** between player turns.
+- On `end-combat`, sync PC HP to `player_character.json`.
 
-## State Handling & Integration (Improved — Persistent Combat State)
-This skill now maintains **persistent combat state** during encounters using a temporary file for reliability across messages.
+## State & Files
+| File | R/W | Contents |
+|------|-----|----------|
+| `combat/current_combat.json` | R/W | Combatants, round, turn index, log |
+| `state/player_character.json` | W | HP sync on end-combat |
+| `state/important_companion.json` | W | Companion HP sync |
 
-**Combat State File**:
-- Path: `/home/workdir/artifacts/dnd-campaigns/[campaign-name]/combat/combat_state.json`
-- Contents: initiative order, current HP for all participants, active conditions, turn counter, and notes.
-- **Strongly Recommended**: Use the new Python backend:
-- `python3 /home/workdir/.grok/skills/dnd-combat-assistant/scripts/combat_tracker.py ...` for all tracking
-- `python3 /home/workdir/.grok/skills/dnd-utils/scripts/dnd_state_utils.py clear-combat "Name"` after fights end
-- The tracker automatically syncs player & companion HP back to main campaign state.
+## Integration
+- **Uses:** dnd-utils (`update_player_hp`, `record_combat_outcome`)
+- **Called by:** persistent-dm, voice-assistant (damage/healing phrases)
+- **Pairs with:** dice-engine (attack rolls), loot-generator (post-fight rewards)
 
-**State Protocol (Follow Strictly)**:
-1. **Combat Start** ("Start combat", "Roll initiative"):
-   - Use `save_combat_state()` (or manually ensure the file exists) to initialize a clean combat state.
-   - Collect or roll initiative (delegate to `dnd-dice-engine`).
-   - Build the full combat state dict and save it using the helper.
-   - Display clean, mobile-friendly initiative order + current status.
-
-2. **During Combat** (every update):
-   - Load current state with `load_combat_state(campaign_name)`.
-   - Apply the requested change (damage, healing, condition, next turn, etc.).
-   - Immediately save the updated state using `save_combat_state()`.
-   - Confirm the change and show updated relevant status (especially whose turn it is).
-
-3. **Combat End** ("End combat"):
-   - Display final summary (who survived, key events, loot, conditions).
-   - Use `clear_combat_state(campaign_name)` to remove the temporary combat file.
-   - **Strongly recommended**: Automatically record the combat outcome using one of:
-     - `record_combat_outcome()` (simple)
-     - `smart_record_event()` (intelligent classification + auto-tagging)
-   - Pass all mechanically important outcomes to `dnd-persistent-dm` so they are recorded in long-term state (and auto-synced to SQLite if enabled).
-   - Example:
-     ```python
-     record_combat_outcome("Campaign", "Victory against shadow cultists",
-                           enemies_defeated=["High Priest"], importance="normal")
-     ```
-
-**Minimal Fallback if Combat State File Missing**
-
-If `/combat/combat_state.json` does not exist when combat starts:
-- Create a fresh combat state file.
-- Initialize with the current participants and rolled initiative.
-- Note in the response: “New combat tracker started.”
-- At combat end, still attempt to hand off major outcomes to `dnd-persistent-dm`.
-
-**Large Combats (25+ participants)** — Improved Support:
-- Use `add_combatant(..., group_size=N)` or `add_combatant_group()` to track large numbers of similar creatures.
-- **Smart Group Damage**: Applying damage to groups automatically kills members and reduces `group_size` as HP thresholds are crossed.
-- Status shows live group size (e.g. "Goblin Archers x7").
-- At combat end, use `smart_record_event()` with scale descriptions for good logging.
-- Best practice: Track key individuals normally + use groups for minions.
+## iOS / Voice Notes
+- Keep combat blocks ≤6 lines: turn → HP snapshot → prompt.
+- Voice: *"Goblin takes 8 damage"* parsed by voice-assistant → `damage` command.
 
 ## Example Flow
-You: "Start combat with the shadow cultists. I rolled 18 on initiative."
-→ Skill builds order and shows current status.
-
-You: "Next turn"
-→ Skill advances and shows whose turn it is.
-
-You: "The cultist takes 14 damage"
-→ Skill updates HP and notes if anyone drops.
-
-This skill removes the friction of manual tracking during mobile sessions.
+→ `init` → `add` PC + monsters → `status` shows order
+→ Player attacks → dice-engine roll → `damage --amount 11`
+→ *"Goblin 1 down. Round 2 — your turn. **What do you do?**"*

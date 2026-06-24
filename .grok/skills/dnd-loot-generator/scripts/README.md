@@ -1,15 +1,11 @@
-# Loot Generator Python Backend (Planned)
+# dnd-loot-generator scripts
 
-This directory will contain `procedural_loot.py` and supporting tables.
+`procedural_loot.py` — weighted loot generation with campaign ledger.
 
-## Goals
-- Weighted random loot generation scaled by party level / CR
-- Thematically appropriate items for shadow/veil or custom campaign themes (example)
-- Persistent loot ledger (what has already been found)
-- Magic item balance checks
-- Easy integration with dnd_state_utils for current location/level context
+```bash
+python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py generate "Campaign" --cr 3
+python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py hoard "Campaign"
+python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py ledger "Campaign"
+```
 
-## Current Status
-Scaffolding created. Core dnd_state_utils is available for context (location, level, etc.).
-
-Next implementation pass will add the actual generator script.
+Party level is read from `state/player_character.json` when `--level` is omitted.

@@ -12,7 +12,8 @@ import dnd_state_utils as state  # noqa: E402
 
 @pytest.fixture
 def temp_campaign(tmp_path, monkeypatch):
-    monkeypatch.setattr(state, "get_campaigns_root", lambda: tmp_path)
+    import paths
+    monkeypatch.setattr(paths, "get_campaigns_root", lambda: tmp_path)
     return "Test Campaign"
 
 
