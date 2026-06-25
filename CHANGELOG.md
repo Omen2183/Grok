@@ -1,5 +1,23 @@
 # Changelog
 
+## 3.3.0 — Comprehensive dice engine expansion
+
+### Added
+- **dnd-dice-engine** `dice_roller.py` v3.3.0:
+  - True multi-pool expressions (`1d8+1d6+5`, signed terms)
+  - Fudge dice (`4dF`, -1/0/+1)
+  - Per-pool keep/exploding (`2d6kh3!`)
+  - Reroll-below (`--reroll-below`) for GWF-style mechanics
+  - `apply_damage_modifiers` — resistance, vulnerability, immunity, flat reduction
+  - `roll_crit` / `crit` CLI — double damage dice on crits
+  - `count_successes` / `count-successes` CLI — target-number systems
+  - `modify-damage` CLI
+- 8 new dice engine tests (multi-pool, fudge, crit, damage modifiers)
+
+### Changed
+- `parse_dice_notation` returns legacy single-pool shape for simple notation (backward compatible)
+- `DICE_BACKEND_VERSION = 3.3.0`
+
 ## 3.2.1 — Documentation sweep + Grok iOS integration hardening
 
 ### Added

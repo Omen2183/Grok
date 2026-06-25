@@ -25,8 +25,10 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
     "dnd-dice-engine": [
         ["initiative", "0"],
         ["roll", "1d20"],
+        ["roll", "1d8+1d6+3"],
         ["parse", "4d6kh3"],
         ["check", "3", "--dc", "15"],
+        ["crit", "2d6+3"],
     ],
     "dnd-downtime-manager": [
         ["status", "AuditCampaign"],

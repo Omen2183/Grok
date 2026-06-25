@@ -25,19 +25,29 @@ description: Reliable Python dice roller for all D&D actions. Triggers include r
 | Percentile (d100) | ✅ Implemented | Tens + ones dice |
 | d3 (homebrew) | ✅ Implemented | ceil(d6/2) |
 | Keep highest/lowest (kh/kl) | ✅ Implemented | e.g. `4d6kh3` |
-| Exploding dice | ✅ Implemented | `--exploding` flag |
+| Exploding dice | ✅ Implemented | `--exploding` flag + per-pool `!` |
+| Multi-pool damage | ✅ Implemented | e.g. `1d8+1d6+5` |
+| Fudge dice (dF) | ✅ Implemented | -1/0/+1 pools |
+| Critical hit doubling | ✅ Implemented | `crit` command |
+| Resistance / vulnerability | ✅ Implemented | `--resistance`, `modify-damage` |
+| Success counting | ✅ Implemented | `count-successes` for target-number systems |
 | Campaign roll logging | ✅ Implemented | `--campaign` → `logs/rolls.json` |
 | Secret DM rolls | ⚠️ Partial | Grok narrates result; no hidden-channel API |
 | 3d physical dice animation | ❌ Prompt-only | Text/JSON output only |
 
 ## Tools & Scripts
-Primary script: `dice_roller.py` — commands: `roll`, `initiative`, `parse`, `percentile`, `check`, `attack`, `save`, `history`
+Primary script: `dice_roller.py` — commands: `roll`, `initiative`, `parse`, `percentile`, `check`, `attack`, `save`, `history`, `crit`, `count-successes`, `modify-damage`
 
 ```bash
 # General notation (legacy positional also works: dice_roller.py "1d20+5")
 python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 1d20+7 --advantage --campaign "My Campaign"
 python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 4d6kh3 --campaign "My Campaign"
 python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 2d6+4 --exploding
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 1d8+1d6+5 --campaign "My Campaign"
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 4dF
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py crit 1d8+1d6+4 --multiplier 2
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py count-successes 8d10 --target 8
+python .grok/skills/dnd-dice-engine/scripts/dice_roller.py modify-damage 14 --resistance
 
 # 5e-specific rolls
 python .grok/skills/dnd-dice-engine/scripts/dice_roller.py check 5 --advantage --dc 15 --campaign "My Campaign"

@@ -27,7 +27,7 @@ UTILS_LIBRARY_ONLY = {
 
 # dice_roller registers check/attack/save via loop variable
 EXTRA_COMMANDS: dict[str, set[str]] = {
-    "dnd-dice-engine": {"check", "attack", "save"},
+    "dnd-dice-engine": {"check", "attack", "save", "crit", "count-successes", "modify-damage"},
 }
 
 # generate_monster uses argparse without subcommands
