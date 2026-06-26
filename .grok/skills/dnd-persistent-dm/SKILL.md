@@ -161,6 +161,7 @@ Named playbooks: `new-campaign`, `start-combat`, `end-combat`, `session-end`, `k
 | Voice input | dnd-voice-assistant → back here |
 
 ## iOS / Voice Notes
+- Grok iOS cloud: skills at `.grok/skills/`, campaigns at `artifacts/dnd-campaigns/` under the workdir — all resolved by `paths.py` automatically.
 - Scannable beats: location line → scene → prompt
 - Don't expose raw JSON or script paths to the player
 - Confirm campaign init, mode switches, and session end

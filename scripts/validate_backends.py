@@ -70,6 +70,7 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
     "dnd-session-scribe": [["auto-recap", "AuditCampaign"]],
     "dnd-utils": [
         ["campaigns-root"],
+        ["runtime-context"],
         ["validate", "AuditCampaign"],
         ["dashboard", "AuditCampaign"],
         ["analytics", "AuditCampaign", "--report", "tags"],

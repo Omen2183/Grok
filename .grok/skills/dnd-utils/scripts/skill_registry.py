@@ -10,7 +10,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-SKILLS_ROOT = Path(__file__).resolve().parent.parent.parent
+from paths import get_skills_root, resolve_skill_script
+
+SKILLS_ROOT = get_skills_root()
 
 # skill_id -> metadata
 SKILLS: Dict[str, Dict[str, Any]] = {
@@ -381,7 +383,7 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
 
 
 def script_path(relative: str) -> Path:
-    return SKILLS_ROOT / relative
+    return resolve_skill_script(relative)
 
 
 def get_skill(skill_id: str) -> Dict[str, Any]:

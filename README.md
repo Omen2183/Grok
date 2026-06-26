@@ -79,6 +79,8 @@ python scripts/validate_orchestration.py
 python scripts/validate_backends.py
 python scripts/validate_skill_docs.py
 python scripts/registry_sync.py --check
+python scripts/validate_runtime.py       # Grok iOS / PC path conventions
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py runtime-context
 ```
 
 ## Example Commands

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from event_system import record_combat_event, record_event, search_events
-from paths import get_campaign_path, get_campaigns_root
+from paths import get_campaign_path, get_campaigns_root, get_runtime_context
 
 DEFAULT_WORLD_STATE: Dict[str, Any] = {
     "campaign_name": "",
@@ -293,6 +293,7 @@ def validate_campaign(campaign_name: str) -> Dict[str, Any]:
 
 
 def audit_campaign(campaign_name: str) -> Dict[str, Any]:
+    get_campaigns_root(create=True)
     root = get_campaign_path(campaign_name)
     issues: List[str] = []
     recommendations: List[str] = []
@@ -571,6 +572,7 @@ def main() -> None:
     p_search.add_argument("--limit", type=int, default=10)
 
     p_root = sub.add_parser("campaigns-root")
+    p_runtime = sub.add_parser("runtime-context", help="Grok iOS / PC path diagnostics")
 
     p_kingdom = sub.add_parser("kingdom-summary")
     p_kingdom.add_argument("campaign")
@@ -666,6 +668,8 @@ def main() -> None:
         )
     elif args.cmd == "campaigns-root":
         result = {"campaigns_root": str(get_campaigns_root())}
+    elif args.cmd == "runtime-context":
+        result = get_runtime_context()
     elif args.cmd == "kingdom-summary":
         result = {"summary": get_kingdom_summary(args.campaign), "state": get_kingdom_state(args.campaign)}
     elif args.cmd == "queue-project":

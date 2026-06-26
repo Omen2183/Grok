@@ -1,5 +1,19 @@
 # Changelog
 
+## 5.1.0 — Grok iOS native file structure parity
+
+### Added
+- `paths.py` runtime layer: `get_skills_root`, `get_grok_home`, `get_workspace_root`, `format_python_cli`, `python_cli_argv`, `get_runtime_context`
+- CLI `runtime-context` on `dnd_state_utils.py` for iOS/PC diagnostics
+- `scripts/validate_runtime.py` — scans for hardcoded cloud paths
+- 10 path resolution tests in `test_paths.py`
+
+### Changed
+- Campaign root creates on first `init`; honors `GROK_WORKSPACE_ROOT`, `GROK_CAMPAIGNS_ROOT`, iOS `/home/workdir/`
+- `skill_orchestrator` uses absolute script paths + correct workspace cwd
+- `voice_utils` suggested commands use `format_python_cli()` (works in repo + global install)
+- `_PRODUCTION_CONVENTIONS.md`, `AGENTS.md`, `PLAYERS.md` document Grok iOS layout
+
 ## 5.0.0 — Table-grade suite polish + Randomizer v5
 
 ### Added

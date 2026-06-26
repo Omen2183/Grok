@@ -13,6 +13,7 @@ from bootstrap import ensure_utils_importable
 
 ensure_utils_importable()
 
+from paths import get_workspace_root, python_cli_argv  # noqa: E402
 from skill_registry import (  # noqa: E402
     PLAYBOOKS,
     SKILLS_ROOT,
@@ -20,8 +21,6 @@ from skill_registry import (  # noqa: E402
     resolve_intent,
     script_path,
 )
-
-REPO_ROOT = SKILLS_ROOT.parent.parent
 
 
 def enrich_route(campaign: str, route: Dict[str, Any]) -> Dict[str, Any]:
@@ -40,11 +39,10 @@ def enrich_route(campaign: str, route: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _run_cli(script_rel: str, campaign: str, command: str, extra_args: Optional[List[str]] = None) -> Dict[str, Any]:
-    script = script_path(script_rel)
-    cmd = [sys.executable, str(script), command, campaign]
+    cmd = python_cli_argv(script_rel, command, campaign)
     if extra_args:
         cmd.extend(extra_args)
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO_ROOT))
+    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(get_workspace_root()))
     stdout = proc.stdout.strip()
     try:
         payload = json.loads(stdout) if stdout else {}

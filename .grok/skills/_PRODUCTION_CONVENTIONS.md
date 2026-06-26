@@ -1,15 +1,37 @@
 # Production Conventions (All D&D Skills)
 
-## Campaign data location
-Resolved automatically by `dnd-utils/scripts/paths.py`:
-- `DND_CAMPAIGNS_ROOT` env var (if set — preferred on Grok iOS if auto-detect fails)
-- `GROK_ARTIFACTS_ROOT` / `GROK_USER_DATA` / `GROK_HOME` (host-provided roots)
-- `~/.grok/artifacts/dnd-campaigns/` (Windows/macOS local, Grok iOS when sandboxed)
-- `/home/workdir/artifacts/dnd-campaigns/` (Grok cloud)
+## Grok file layout (iOS + PC)
+
+| Location | Grok iOS cloud | Grok Build repo | Global PC install |
+|----------|----------------|-----------------|-------------------|
+| Skills | `/home/workdir/.grok/skills/` | `<repo>/.grok/skills/` | `~/.grok/skills/` |
+| Campaign data | `/home/workdir/artifacts/dnd-campaigns/` | auto via `paths.py` | `~/.grok/artifacts/dnd-campaigns/` |
+| Workspace cwd | `/home/workdir` (`GROK_WORKSPACE_ROOT`) | repo root | current project cwd |
+
+**Never hardcode paths.** Use `paths.py` helpers:
+- `get_skills_root()` — where dnd-* skills live
+- `get_grok_home()` — `GROK_HOME` or parent of `.grok/skills`
+- `get_workspace_root()` — subprocess cwd + repo-relative CLI hints
+- `get_campaigns_root()` — persistent campaign JSON
+- `format_python_cli()` / `python_cli_argv()` — portable script invocation
+- `get_runtime_context()` — diagnostics (`dnd_state_utils.py runtime-context`)
+
+### Campaign data resolution order
+1. `DND_CAMPAIGNS_ROOT` (explicit override)
+2. `GROK_CAMPAIGNS_ROOT`
+3. `GROK_ARTIFACTS_ROOT/dnd-campaigns`
+4. `GROK_USER_DATA/artifacts/dnd-campaigns`
+5. `GROK_WORKSPACE_ROOT/artifacts/dnd-campaigns` (Grok iOS workdir — preferred over GROK_HOME)
+6. `GROK_HOME/artifacts/dnd-campaigns`
+7. `/home/workdir/artifacts/dnd-campaigns` (Grok iOS cloud fallback)
+8. `~/.grok/artifacts/dnd-campaigns/` (default; created on first `init`)
 
 ## Script invocation
 ```bash
+# Repo / Grok iOS workdir (preferred when .grok/skills exists in workspace):
 python .grok/skills/<skill>/scripts/<script>.py <command> ...
+
+# Global install or when workspace has no .grok — use format_python_cli() for absolute paths
 ```
 
 ## Skill coordination (10/10 requirement)

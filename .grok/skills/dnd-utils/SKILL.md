@@ -39,6 +39,7 @@ description: Shared Python backend for all D&D skills — campaign init, state, 
 | Lore FTS5 index | ✅ Implemented | `lore_index.py` — rebuild + semantic search |
 | Multiclass / spell slots | ✅ Implemented | `class_progression.py` — prereqs, slot tables, restore |
 | Faction simulation engine | ✅ Implemented | `faction_engine.py` — goals, influence, diplomacy graph |
+| Grok iOS / PC path resolution | ✅ Implemented | `paths.py` — skills, workspace, campaigns; `runtime-context` CLI |
 
 ## Tools & Scripts
 ```bash
@@ -52,6 +53,7 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py audit "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py session-summary "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py record-event "My Campaign" "Party entered the crypt" --tags exploration
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py campaigns-root
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py runtime-context
 python .grok/skills/dnd-utils/scripts/skill_registry.py list
 python .grok/skills/dnd-utils/scripts/skill_registry.py resolve damage --campaign "My Campaign"
 python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan "My Campaign" "next turn"
@@ -116,6 +118,8 @@ Playbooks (v4.0.0): `new-campaign`, `start-combat`, `grid-combat`, `end-combat`,
 - **No direct player narration** — use persistent-dm or narration_cli for player-facing text
 
 ## iOS / Voice Notes
+- Campaign paths auto-resolve on Grok iOS cloud (`/home/workdir/artifacts/dnd-campaigns/`) and PC — no manual setup.
+- Run `runtime-context` if a session cannot find campaign files; set `DND_CAMPAIGNS_ROOT` only as last resort.
 - Status replies should be ≤8 lines; lead with location + HP.
 - Voice sessions still use utils indirectly via persistent-dm routing.
 

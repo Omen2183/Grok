@@ -38,7 +38,7 @@ Replies stay short. Mechanical changes are spoken aloud.
 
 ## What persists between sessions
 
-Your campaign lives at `~/.grok/artifacts/dnd-campaigns/[Campaign Name]/` (auto-resolved on Grok cloud).
+Your campaign data is stored automatically — no path setup on Grok iOS or PC. The suite resolves the correct folder per device (Grok cloud workdir, repo `.grok/artifacts/`, or `~/.grok/artifacts/dnd-campaigns/`).
 
 | Saved data | Purpose |
 |------------|---------|

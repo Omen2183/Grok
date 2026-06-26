@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-util
 from bootstrap import ensure_utils_importable
 
 ensure_utils_importable()
+from paths import get_skills_root  # noqa: E402
 
 from class_progression import (  # noqa: E402
     build_multiclass_plan,
@@ -68,7 +69,7 @@ from dungeon_generator import generate_dungeon_floor  # noqa: E402
 
 RANDOMIZER_VERSION = "5.0.0"
 
-SKILLS_ROOT = Path(__file__).resolve().parent.parent.parent
+SKILLS_ROOT = get_skills_root()
 RULES_SCRIPTS = SKILLS_ROOT / "dnd-rules-reference" / "scripts"
 NPC_SCRIPTS = SKILLS_ROOT / "dnd-npc-personality-weaver" / "scripts"
 QUEST_SCRIPTS = SKILLS_ROOT / "dnd-quest-tracker" / "scripts"

@@ -110,6 +110,15 @@ def _utils_path() -> Path:
     return Path(__file__).resolve().parent.parent.parent / "dnd-utils" / "scripts"
 
 
+def _format_cli(script_rel: str, *args: str) -> str:
+    utils = _utils_path()
+    if str(utils) not in sys.path:
+        sys.path.insert(0, str(utils))
+    from paths import format_python_cli  # noqa: E402
+
+    return format_python_cli(script_rel, *args)
+
+
 def route_voice_request(text: str, *, campaign: Optional[str] = None) -> Dict[str, Any]:
     intent = detect_intent(text) or "narrative"
     damage = parse_damage_phrase(text)
@@ -165,8 +174,7 @@ def route_voice_request(text: str, *, campaign: Optional[str] = None) -> Dict[st
             route["version"] = VOICE_BACKEND_VERSION
         except Exception as exc:
             route["coordination_hint"] = (
-                "Enrich via: python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan "
-                f"{campaign} \"{text[:80]}\""
+                f"Enrich via: {_format_cli('dnd-utils/scripts/skill_orchestrator.py', 'plan', campaign, text[:80])}"
             )
             route["enrich_error"] = str(exc)
     return route
@@ -180,18 +188,32 @@ def build_execution_plan(campaign: str, text: str) -> Dict[str, Any]:
     if route.get("damage"):
         target, amount = route["damage"]
         commands.append(
-            f"python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py damage "
-            f"\"{campaign}\" --target \"{target}\" --amount {amount}"
+            _format_cli(
+                "dnd-combat-assistant/scripts/combat_tracker.py",
+                "damage",
+                campaign,
+                "--target",
+                target,
+                "--amount",
+                str(amount),
+            )
         )
     elif route.get("healing"):
         target, amount = route["healing"]
         commands.append(
-            f"python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py heal "
-            f"\"{campaign}\" --target \"{target}\" --amount {amount}"
+            _format_cli(
+                "dnd-combat-assistant/scripts/combat_tracker.py",
+                "heal",
+                campaign,
+                "--target",
+                target,
+                "--amount",
+                str(amount),
+            )
         )
     elif delegation.get("script") and delegation.get("command"):
         commands.append(
-            f"python .grok/skills/{delegation['script']} {delegation['command']} \"{campaign}\""
+            _format_cli(delegation["script"], delegation["command"], campaign)
         )
     route["suggested_commands"] = commands
     return route
