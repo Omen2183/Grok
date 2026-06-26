@@ -78,3 +78,31 @@ def test_apply_world(campaign):
 
     world = get_world_state(campaign)
     assert world.get("current_location")
+
+
+def test_travel_day(campaign):
+    from randomizer import travel_day  # noqa: E402
+
+    day = travel_day(campaign, seed=11)
+    assert "weather" in day
+    assert "complication" in day
+
+
+def test_mobile_summary():
+    from randomizer import mobile_summary  # noqa: E402
+
+    result = mobile_summary("feat", seed=12)
+    assert result["summary"].startswith("Random feat:")
+
+
+def test_new_tables():
+    tables = list_tables()
+    for name in ("trinket", "wild_magic", "trap", "social_scene", "shop_stock"):
+        assert name in tables["builtin"]
+
+
+def test_srd_feat():
+    from randomizer import random_feat  # noqa: E402
+
+    result = random_feat(seed=99)
+    assert result.get("feat") or result.get("detail")

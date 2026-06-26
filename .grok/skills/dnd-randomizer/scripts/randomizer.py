@@ -16,7 +16,11 @@ from bootstrap import ensure_utils_importable
 
 ensure_utils_importable()
 
-from class_progression import build_multiclass_plan, calculate_spell_slots  # noqa: E402
+from class_progression import (  # noqa: E402
+    build_multiclass_plan,
+    calculate_spell_slots,
+    validate_multiclass,
+)
 from dnd_state_utils import (  # noqa: E402
     get_kingdom_state,
     get_world_state,
@@ -33,9 +37,13 @@ from randomizer_data import (  # noqa: E402
     BACKGROUNDS,
     CLASSES,
     FEATS,
+    NAME_PREFIXES,
+    NAME_SUFFIXES,
     PERSON_FIRST,
     PERSON_LAST,
+    PERSONALITY_TRAITS,
     RACES,
+    SPEECH_PATTERNS,
     SPELLS_BY_LEVEL,
     WORLD_DOMAINS,
     RANDOMIZER_DATA_VERSION,
@@ -49,7 +57,13 @@ from randomizer_engine import (  # noqa: E402
     ENGINE_VERSION,
 )
 
-RANDOMIZER_VERSION = "4.1.0"
+RANDOMIZER_VERSION = "4.2.0"
+
+SKILLS_ROOT = Path(__file__).resolve().parent.parent.parent
+RULES_SCRIPTS = SKILLS_ROOT / "dnd-rules-reference" / "scripts"
+NPC_SCRIPTS = SKILLS_ROOT / "dnd-npc-personality-weaver" / "scripts"
+QUEST_SCRIPTS = SKILLS_ROOT / "dnd-quest-tracker" / "scripts"
+CHAR_SCRIPTS = SKILLS_ROOT / "dnd-character-manager" / "scripts"
 
 
 def _rng(seed: Optional[int] = None) -> random.Random:
@@ -67,7 +81,7 @@ def _roll_stats(rng: random.Random) -> Dict[str, int]:
 def random_name(*, name_type: str = "person", seed: Optional[int] = None) -> Dict[str, Any]:
     rng = _rng(seed)
     if name_type == "place":
-        name = f"{rng.choice(PERSON_FIRST)}{rng.choice(['vale', 'ford', 'haven', 'spire'])}"
+        name = f"{rng.choice(NAME_PREFIXES)}{rng.choice(NAME_SUFFIXES)}".title()
     elif name_type == "tavern":
         name = f"The {rng.choice(['Prancing', 'Gilded', 'Weary', 'Broken', 'Laughing'])} {rng.choice(['Stag', 'Dragon', 'Mug', 'Crown', 'Rat'])}"
     else:
@@ -111,13 +125,24 @@ def random_character(
 
     primary = rng.choice(CLASSES)
     classes = [{"name": primary, "level": level}]
+    multiclass_valid = True
     if multiclass and level >= 2:
-        second = rng.choice([c for c in CLASSES if c != primary])
-        split = rng.randint(1, level - 1)
-        classes = [
-            {"name": primary, "level": level - split},
-            {"name": second, "level": split},
-        ]
+        candidates = [c for c in CLASSES if c != primary]
+        rng.shuffle(candidates)
+        second = primary
+        for cand in candidates:
+            check = validate_multiclass(stats, [{"name": primary, "level": max(1, level - 1)}], cand)
+            if check.get("valid"):
+                second = cand
+                break
+        if second != primary:
+            split = rng.randint(1, level - 1)
+            classes = [
+                {"name": primary, "level": level - split},
+                {"name": second, "level": split},
+            ]
+        else:
+            multiclass_valid = False
 
     feats = []
     if level >= 4 and rng.random() < 0.5:
@@ -149,7 +174,11 @@ def random_character(
         "homebrew": {"randomized": True},
     }
     char["build_plan"] = build_multiclass_plan(classes)
-    return {"character": char, "version": RANDOMIZER_VERSION}
+    return {
+        "character": char,
+        "multiclass_valid": multiclass_valid,
+        "version": RANDOMIZER_VERSION,
+    }
 
 
 def random_npc(*, seed: Optional[int] = None, campaign_name: Optional[str] = None) -> Dict[str, Any]:
@@ -165,9 +194,11 @@ def random_npc(*, seed: Optional[int] = None, campaign_name: Optional[str] = Non
             "role": role,
             "race": rng.choice(RACES),
             "alignment": rng.choice(ALIGNMENTS),
-            "trait": rng.choice(["secretive", "boisterous", "melancholy", "paranoid", "charming"]),
+            "personality": rng.choice(PERSONALITY_TRAITS),
+            "speech": rng.choice(SPEECH_PATTERNS),
             "motivation": rng.choice(["profit", "revenge", "redemption", "knowledge", "power"]),
             "quirk": rng.choice(["never sits", "quotes poetry", "afraid of birds", "collects teeth"]),
+            "secret": rng.choice(["owes a crime lord", "is a disguised noble", "hunts a lost sibling", "none yet"]),
         },
         "version": RANDOMIZER_VERSION,
     }
@@ -175,8 +206,13 @@ def random_npc(*, seed: Optional[int] = None, campaign_name: Optional[str] = Non
 
 def random_world(*, seed: Optional[int] = None, campaign_name: Optional[str] = None) -> Dict[str, Any]:
     rng = _rng(seed)
-    domain = rng.choice(WORLD_DOMAINS)
-    location = f"{rng.choice(['North', 'South', 'East', 'West'])}ern {domain}"
+    existing_world = get_world_state(campaign_name) if campaign_name else {}
+    existing_kingdom = get_kingdom_state(campaign_name) if campaign_name else {}
+    domain = existing_kingdom.get("domain_name") or rng.choice(WORLD_DOMAINS)
+    if existing_world.get("current_location"):
+        location = existing_world["current_location"]
+    else:
+        location = f"{rng.choice(['North', 'South', 'East', 'West'])}ern {domain}"
 
     def _tbl(name: str) -> str:
         if campaign_name:
@@ -194,16 +230,21 @@ def random_world(*, seed: Optional[int] = None, campaign_name: Optional[str] = N
         "threat": _tbl("world_threat"),
         "hook": _tbl("quest_hook"),
         "in_game_time": rng.choice(["dawn", "midday", "dusk", "midnight"]),
-        "mode": rng.choice(["tabletop", "sandbox", "kingdom"]),
+        "mode": existing_world.get("mode") or rng.choice(["tabletop", "sandbox", "kingdom"]),
         "notes": "Random world seed from dnd-randomizer",
     }
-    factions = {
-        rng.choice(["locals", "merchants", "militia", "cult", "nobles"]): {
-            "influence": rng.randint(1, 30),
-            "attitude": rng.choice(["friendly", "neutral", "hostile", "wary"]),
-            "goals": [rng.choice(["expand_trade", "secure_borders", "seek_alliance"])],
+    if existing_world.get("weather") and rng.random() < 0.4:
+        world["weather"] = existing_world["weather"]
+    if existing_kingdom.get("factions"):
+        factions = existing_kingdom["factions"]
+    else:
+        factions = {
+            rng.choice(["locals", "merchants", "militia", "cult", "nobles"]): {
+                "influence": rng.randint(1, 30),
+                "attitude": rng.choice(["friendly", "neutral", "hostile", "wary"]),
+                "goals": [rng.choice(["expand_trade", "secure_borders", "seek_alliance"])],
+            }
         }
-    }
     return {
         "world": world,
         "kingdom": {
@@ -244,15 +285,55 @@ def random_encounter(*, party_level: int = 3, seed: Optional[int] = None) -> Dic
     }
 
 
+def _srd_feats() -> List[str]:
+    if str(RULES_SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(RULES_SCRIPTS))
+    try:
+        from srd_data import FEATS as SRD_FEATS  # noqa: E402
+
+        return list(SRD_FEATS.keys())
+    except ImportError:
+        return FEATS
+
+
+def _srd_spells() -> Dict[int, List[str]]:
+    if str(RULES_SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(RULES_SCRIPTS))
+    try:
+        from srd_data import SPELLS  # noqa: E402
+
+        by_level: Dict[int, List[str]] = {}
+        for key, data in SPELLS.items():
+            lvl = data.get("level", 0)
+            by_level.setdefault(lvl, []).append(data.get("name", key))
+        return by_level
+    except ImportError:
+        return SPELLS_BY_LEVEL
+
+
 def random_feat(*, seed: Optional[int] = None) -> Dict[str, Any]:
     rng = _rng(seed)
-    return {"feat": rng.choice(FEATS), "version": RANDOMIZER_VERSION}
+    pool = _srd_feats()
+    feat_key = rng.choice(pool)
+    if str(RULES_SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(RULES_SCRIPTS))
+    try:
+        from srd_data import lookup_feat  # noqa: E402
+
+        detail = lookup_feat(feat_key)
+        if detail.get("found"):
+            return {"feat": detail.get("name", feat_key), "detail": detail, "version": RANDOMIZER_VERSION}
+    except ImportError:
+        pass
+    return {"feat": feat_key, "version": RANDOMIZER_VERSION}
 
 
 def random_spell(*, max_level: int = 3, seed: Optional[int] = None) -> Dict[str, Any]:
     rng = _rng(seed)
-    level = rng.randint(0, min(max_level, 3))
-    spell = rng.choice(SPELLS_BY_LEVEL.get(level, SPELLS_BY_LEVEL[0]))
+    spells_by_level = _srd_spells()
+    level = rng.randint(0, min(max_level, 9))
+    pool = spells_by_level.get(level) or spells_by_level.get(0, ["Cantrip"])
+    spell = rng.choice(pool)
     return {"spell": spell, "level": level, "version": RANDOMIZER_VERSION}
 
 
@@ -309,6 +390,116 @@ def apply_world(campaign_name: str, *, seed: Optional[int] = None) -> Dict[str, 
     update_kingdom_state(campaign_name, gen["kingdom"])
     record_event(campaign_name, f"Random world applied: {gen['world']['domain_name']}", tags=["randomizer", "world"])
     return {"world": gen["world"], "kingdom": gen["kingdom"], "version": RANDOMIZER_VERSION}
+
+
+def apply_npc(campaign_name: str, *, seed: Optional[int] = None) -> Dict[str, Any]:
+    gen = random_npc(campaign_name=campaign_name, seed=seed)
+    npc = gen["npc"]
+    if str(NPC_SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(NPC_SCRIPTS))
+    from npc_manager import create_npc  # noqa: E402
+
+    record = create_npc(campaign_name, {
+        "name": npc["name"],
+        "personality": npc.get("personality", ""),
+        "speech": npc.get("speech", ""),
+        "motivation": npc.get("motivation", ""),
+        "quirk": npc.get("quirk", ""),
+        "secret": npc.get("secret", ""),
+        "notes": f"Role: {npc.get('role')}; Race: {npc.get('race')}; Alignment: {npc.get('alignment')}",
+    })
+    return {"applied": True, "npc": record, "version": RANDOMIZER_VERSION}
+
+
+def apply_quest(campaign_name: str, *, seed: Optional[int] = None) -> Dict[str, Any]:
+    gen = random_quest(campaign_name=campaign_name, seed=seed)
+    quest = gen["quest"]
+    if str(QUEST_SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(QUEST_SCRIPTS))
+    from quest_tracker import add_quest  # noqa: E402
+
+    saved = add_quest(
+        campaign_name,
+        quest["title"],
+        summary=quest["hook"],
+        reward=quest.get("reward_hint", ""),
+    )
+    return {"applied": True, "quest": saved, "version": RANDOMIZER_VERSION}
+
+
+def add_random_loot(campaign_name: str, *, level: int = 5, seed: Optional[int] = None) -> Dict[str, Any]:
+    item = random_item(level=level, campaign_name=campaign_name, seed=seed)["item"]
+    if str(CHAR_SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(CHAR_SCRIPTS))
+    from character_manager import update_inventory  # noqa: E402
+
+    result = update_inventory(campaign_name, "add", {"name": item.get("name", "Mystery item"), "type": "loot"})
+    record_event(campaign_name, f"Random loot added: {item.get('name')}", tags=["randomizer", "loot"])
+    return {"item": item, "inventory": result, "version": RANDOMIZER_VERSION}
+
+
+def travel_day(campaign_name: str, *, seed: Optional[int] = None) -> Dict[str, Any]:
+    rng = _rng(seed)
+    s = lambda: rng.randint(0, 999999)
+    return {
+        "weather": roll_table("weather", campaign_name=campaign_name, count=1, seed=s()),
+        "complication": roll_table("travel_complication", campaign_name=campaign_name, count=1, seed=s()),
+        "terrain": roll_table("terrain", campaign_name=campaign_name, count=1, seed=s()),
+        "social_scene": roll_table("social_scene", campaign_name=campaign_name, count=1, seed=s()),
+        "version": RANDOMIZER_VERSION,
+    }
+
+
+def mobile_summary(
+    kind: str,
+    *,
+    campaign_name: Optional[str] = None,
+    seed: Optional[int] = None,
+    level: int = 3,
+) -> Dict[str, Any]:
+    """One-line mobile/voice-friendly random result."""
+    generators = {
+        "item": lambda: random_item(level=level, campaign_name=campaign_name, seed=seed),
+        "character": lambda: random_character(level=level, seed=seed),
+        "npc": lambda: random_npc(campaign_name=campaign_name, seed=seed),
+        "world": lambda: random_world(campaign_name=campaign_name, seed=seed),
+        "encounter": lambda: random_encounter(party_level=level, seed=seed),
+        "quest": lambda: random_quest(campaign_name=campaign_name, seed=seed),
+        "feat": lambda: random_feat(seed=seed),
+        "spell": lambda: random_spell(seed=seed),
+        "trinket": lambda: roll_table("trinket", campaign_name=campaign_name, count=1, seed=seed),
+        "trap": lambda: roll_table("trap", campaign_name=campaign_name, count=1, seed=seed),
+        "wild_magic": lambda: roll_table("wild_magic", count=1, seed=seed),
+    }
+    if kind not in generators:
+        return {"error": f"Unknown kind: {kind}", "available": sorted(generators.keys())}
+
+    data = generators[kind]()
+    line = ""
+    if kind == "item":
+        line = f"Random item: {data['item'].get('name')}"
+    elif kind == "character":
+        c = data["character"]
+        line = f"{c['name']} — L{c['level']} {c['race']} {'/'.join(x['name'] for x in c['classes'])}"
+    elif kind == "npc":
+        n = data["npc"]
+        line = f"{n['name']} ({n['role']}) — {n.get('personality', '')}"
+    elif kind == "world":
+        w = data["world"]
+        line = f"{w['current_location']}: {w['weather']}, threat — {w['threat']}"
+    elif kind == "encounter":
+        foes = ", ".join(f"{f['count']}x {f['name']}" for f in data["foes"][:3])
+        line = f"Encounter on {data['terrain']}: {foes}"
+    elif kind == "quest":
+        line = f"Quest hook: {data['quest']['hook']}"
+    elif kind == "feat":
+        line = f"Random feat: {data['feat']}"
+    elif kind == "spell":
+        line = f"Random spell (L{data['level']}): {data['spell']}"
+    elif kind in ("trinket", "trap", "wild_magic"):
+        line = data["results"][0]["name"] if data.get("results") else str(data)
+
+    return {"kind": kind, "summary": line, "detail": data, "version": RANDOMIZER_VERSION}
 
 
 def main() -> None:
@@ -386,6 +577,29 @@ def main() -> None:
     p_add.add_argument("name")
     p_add.add_argument("--weight", type=int, default=1)
 
+    p_apply_n = sub.add_parser("apply-npc")
+    p_apply_n.add_argument("campaign")
+    p_apply_n.add_argument("--seed", type=int)
+
+    p_apply_q = sub.add_parser("apply-quest")
+    p_apply_q.add_argument("campaign")
+    p_apply_q.add_argument("--seed", type=int)
+
+    p_loot = sub.add_parser("add-random-loot")
+    p_loot.add_argument("campaign")
+    p_loot.add_argument("--level", type=int, default=5)
+    p_loot.add_argument("--seed", type=int)
+
+    p_travel = sub.add_parser("travel-day")
+    p_travel.add_argument("campaign")
+    p_travel.add_argument("--seed", type=int)
+
+    p_mobile = sub.add_parser("mobile-summary")
+    p_mobile.add_argument("kind")
+    p_mobile.add_argument("campaign", nargs="?")
+    p_mobile.add_argument("--level", type=int, default=3)
+    p_mobile.add_argument("--seed", type=int)
+
     args = parser.parse_args()
 
     if args.cmd == "list-tables":
@@ -426,6 +640,18 @@ def main() -> None:
         result = ledger_summary(args.campaign, limit=args.limit)
     elif args.cmd == "add-table-entry":
         result = add_custom_entry(args.campaign, args.table, args.name, weight=args.weight)
+    elif args.cmd == "apply-npc":
+        result = apply_npc(args.campaign, seed=args.seed)
+    elif args.cmd == "apply-quest":
+        result = apply_quest(args.campaign, seed=args.seed)
+    elif args.cmd == "add-random-loot":
+        result = add_random_loot(args.campaign, level=args.level, seed=args.seed)
+    elif args.cmd == "travel-day":
+        result = travel_day(args.campaign, seed=args.seed)
+    elif args.cmd == "mobile-summary":
+        result = mobile_summary(
+            args.kind, campaign_name=args.campaign, seed=args.seed, level=args.level
+        )
     else:
         result = {"error": "unknown command"}
 

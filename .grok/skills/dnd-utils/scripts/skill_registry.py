@@ -348,8 +348,15 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
         {"skill": "dnd-randomizer", "command": "apply-world", "notes": "Confirm with player first"},
         {"skill": "dnd-randomizer", "command": "apply-character", "args": ["--level", "3"]},
         {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"]},
-        {"skill": "dnd-randomizer", "command": "random-quest"},
+        {"skill": "dnd-randomizer", "command": "apply-quest"},
+        {"skill": "dnd-randomizer", "command": "apply-npc"},
         {"skill": "dnd-rumor-event-generator", "command": "rumors", "args": ["--count", "2"]},
+    ],
+    "random-session": [
+        {"skill": "dnd-randomizer", "command": "travel-day"},
+        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"]},
+        {"skill": "dnd-randomizer", "command": "mobile-summary", "args": ["item"]},
+        {"skill": "dnd-randomizer", "command": "random-quest"},
     ],
     "downtime": [
         {"skill": "dnd-downtime-manager", "command": "long-rest"},

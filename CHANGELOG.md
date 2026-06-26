@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.2.0 — Randomizer v2: persistence, voice, tables, mobile
+
+### Added
+- 5 new tables: `trinket`, `wild_magic`, `trap`, `social_scene`, `shop_stock`
+- CLIs: `apply-npc`, `apply-quest`, `add-random-loot`, `travel-day`, `mobile-summary`
+- SRD integration for `random-feat` / `random-spell` via `srd_data.py`
+- Campaign-context world generation (preserves location/mode/factions when set)
+- Multiclass prereq validation on random characters
+- Voice routing for surprise/random phrases in `voice_utils.py`
+- Playbook `random-session` (non-destructive travel + encounter + loot + quest)
+
+### Changed
+- `chaos-campaign` playbook now applies random NPC + quest
+- Place names use `NAME_PREFIXES` / `NAME_SUFFIXES`
+- NPC random gen includes personality, speech, secret fields
+
 ## 4.1.0 — Unified Randomizer skill (skill #17)
 
 ### Added

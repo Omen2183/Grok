@@ -1,6 +1,6 @@
 ---
 name: dnd-randomizer
-description: Unified D&D randomization for any campaign need — weighted tables, random items, full characters (race, class, feats, spells, stats), NPCs, encounters, quests, worlds, and total-chaos packages. v4.1.0 production. Triggers include randomize, random item, random character, random world, roll table, surprise me, chaos campaign, random feat, random spell, random everything. Delegates balanced loot to loot-generator when player wants CR-scaled rewards; this skill owns pure randomness and table rolls.
+description: Unified D&D randomization for any campaign need — weighted tables, random items, full characters (race, class, feats, spells, stats), NPCs, encounters, quests, worlds, and total-chaos packages. v4.2.0 production. Triggers include randomize, random item, random character, random world, roll table, surprise me, chaos campaign, random feat, random spell, random everything. Delegates balanced loot to loot-generator when player wants CR-scaled rewards; this skill owns pure randomness and table rolls.
 ---
 
 # D&D Randomizer
@@ -41,7 +41,14 @@ description: Unified D&D randomization for any campaign need — weighted tables
 | Apply to campaign state | ✅ Implemented | `apply-character`, `apply-world` (destructive — confirm) |
 | Custom homebrew tables | ✅ Implemented | `add-table-entry` → `custom_random_tables.json` |
 | Roll ledger | ✅ Implemented | `randomizer_ledger.json` per campaign |
-| List all tables | ✅ Implemented | `list-tables` |
+| List all tables | ✅ Implemented | `list-tables` (15 builtin tables) |
+| Persist random NPC / quest | ✅ Implemented | `apply-npc`, `apply-quest` |
+| Add random loot to inventory | ✅ Implemented | `add-random-loot` |
+| Travel day batch rolls | ✅ Implemented | `travel-day` |
+| Mobile/voice one-liner | ✅ Implemented | `mobile-summary` |
+| SRD feat/spell pools | ✅ Implemented | Pulls from `srd_data.py` when available |
+| Campaign-context worlds | ✅ Implemented | Preserves location/mode/factions when set |
+| Wild magic / traps / trinkets | ✅ Implemented | Dedicated tables |
 
 ## Tools & Scripts
 Primary: `randomizer.py` — Library: `randomizer_engine.py`, `randomizer_data.py`

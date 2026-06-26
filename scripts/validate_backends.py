@@ -89,6 +89,8 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
         ["roll-table", "weather"],
         ["random-item", "--level", "3"],
         ["random-character", "--level", "1"],
+        ["mobile-summary", "item", "--seed", "1"],
+        ["travel-day", "AuditCampaign", "--seed", "2"],
         ["random-everything", "--level", "2", "--seed", "42"],
     ],
 }
@@ -230,6 +232,10 @@ def validate() -> dict:
                         script = skill_dir / "scripts" / "vtt_export.py"
                     else:
                         script = skill_dir / "scripts" / "character_manager.py"
+                elif skill == "dnd-randomizer" and cmd_argv[0] in (
+                    "apply-npc", "apply-quest", "add-random-loot", "travel-day", "mobile-summary"
+                ):
+                    script = skill_dir / "scripts" / "randomizer.py"
                 elif skill == "dnd-lore-archivist" and cmd_argv[0] in ("search", "rebuild-index"):
                     script = skill_dir / "scripts" / "lore_archivist.py"
                 elif skill == "dnd-rules-reference" and cmd_argv[0] in ("spell", "feat", "search-spells", "search-feats"):

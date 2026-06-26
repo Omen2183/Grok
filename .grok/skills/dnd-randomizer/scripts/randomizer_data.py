@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-RANDOMIZER_DATA_VERSION = "4.1.0"
+RANDOMIZER_DATA_VERSION = "4.2.0"
 
 RACES = [
     "Human", "Elf", "Dwarf", "Halfling", "Dragonborn", "Gnome", "Half-Elf",
@@ -115,6 +115,65 @@ PERSON_FIRST = ["Aldric", "Bryn", "Cael", "Dara", "Eira", "Finn", "Garrick", "Hi
 PERSON_LAST = ["Blackwood", "Ironfoot", "Stormborn", "Ashvale", "Brightshield", "Deepdelver",
                "Grimhart", "Mistwalker", "Thornfield", "Wolfcrest"]
 
+TRINKETS = [
+    "A monocle that fogs in the presence of lies",
+    "A copper coin with a hole through the king's face",
+    "A dried four-leaf clover in a tiny glass vial",
+    "A wooden whistle that only dogs can hear",
+    "A chess piece carved from bone",
+    "A love letter never delivered",
+    "A pressed flower from an unknown species",
+    "A key with no matching lock",
+]
+
+WILD_MAGIC_SURGES = [
+    "All creatures within 30 ft regain 1d6 HP",
+    "Caster teleports 60 ft to an unoccupied space",
+    "Flammable objects within 10 ft ignite",
+    "Caster grows a long beard of feathers",
+    "Illusory butterflies swarm the area for 1 minute",
+    "Gravity reverses briefly — DEX save or fall upward 20 ft",
+    "Everyone hears faint music for 1 round",
+    "Caster's skin turns a random vivid color for 1 hour",
+]
+
+TRAPS = [
+    "Pressure plate triggers poison darts (DEX save DC 13)",
+    "Tripwire releases a swinging log (DEX save DC 12)",
+    "False floor drops into a 10-ft pit",
+    "Glyph of Warding — 3d8 damage on failed save",
+    "Magnetized corridor pulls metal armor",
+    "Sleep gas vents from carved gargoyle mouths",
+]
+
+SOCIAL_SCENES = [
+    "Rowdy dice game in a corner booth",
+    "Traveling troupe auditioning for a patron",
+    "Heated auction of questionable artifacts",
+    "Veterans swapping war stories by the hearth",
+    "A nervous courier seeking brave escorts",
+    "Local nobles arguing over boundary stones",
+]
+
+SHOP_STOCK = [
+    {"name": "Rope (50 ft)", "weight": 15, "value_gp": 1},
+    {"name": "Lantern oil (3 flasks)", "weight": 12, "value_gp": 3},
+    {"name": "Iron pot", "weight": 8, "value_gp": 2},
+    {"name": "Holy water", "weight": 10, "value_gp": 25},
+    {"name": "Climber's kit", "weight": 7, "value_gp": 25},
+    {"name": "Exotic spices", "weight": 6, "value_gp": 15},
+]
+
+PERSONALITY_TRAITS = [
+    "speaks in riddles", "never breaks eye contact", "laughs at inappropriate times",
+    "collects rumors obsessively", "refuses to sit with back to a door",
+]
+
+SPEECH_PATTERNS = [
+    "formal and archaic", "clipped military cadence", "sing-song merchant patter",
+    "whispers everything", "quotes scripture constantly",
+]
+
 BUILTIN_TABLES: Dict[str, List[Dict[str, Any]]] = {
     "weather": [{"name": w, "weight": 1} for w in WEATHER],
     "terrain": [{"name": t, "weight": 1} for t in TERRAIN],
@@ -126,6 +185,11 @@ BUILTIN_TABLES: Dict[str, List[Dict[str, Any]]] = {
     "magic_item": MAGIC_ITEMS,
     "world_threat": [{"name": t, "weight": 1} for t in WORLD_THREATS],
     "government": [{"name": g, "weight": 1} for g in GOVERNMENT_TYPES],
+    "trinket": [{"name": t, "weight": 1} for t in TRINKETS],
+    "wild_magic": [{"name": w, "weight": 1} for w in WILD_MAGIC_SURGES],
+    "trap": [{"name": t, "weight": 1} for t in TRAPS],
+    "social_scene": [{"name": s, "weight": 1} for s in SOCIAL_SCENES],
+    "shop_stock": SHOP_STOCK,
 }
 
 # Feats pool (subset — full lookup via rules-reference srd_data when available)

@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-VOICE_BACKEND_VERSION = "3.2.0"
+VOICE_BACKEND_VERSION = "4.2.0"
 
 VOICE_TRIGGERS = (
     "voice mode",
@@ -35,6 +35,11 @@ AMBIGUOUS_PATTERNS = (
     (re.compile(r"\b(short rest|long rest|take a rest)\b", re.I), "rest"),
     (re.compile(r"\b(active quests|quest list|what quests)\b", re.I), "quest_list"),
     (re.compile(r"\b(track quest|new quest|add quest)\b", re.I), "add_quest"),
+    (re.compile(r"\b(surprise me|random everything|chaos campaign|totally random)\b", re.I), "random"),
+    (re.compile(r"\b(random item|random loot|drop (a )?random)\b", re.I), "random_item"),
+    (re.compile(r"\b(random character|random pc|roll up a character)\b", re.I), "random_character"),
+    (re.compile(r"\b(random npc|random villager|who's in town)\b", re.I), "random_npc"),
+    (re.compile(r"\b(roll table|travel complication|random weather)\b", re.I), "random_table"),
 )
 
 
@@ -51,7 +56,7 @@ def detect_intent(text: str) -> Optional[str]:
 
 
 def needs_confirmation(intent: str, text: str) -> bool:
-    destructive = {"end_session", "level_up", "attune", "init_campaign"}
+    destructive = {"end_session", "level_up", "attune", "init_campaign", "random_apply"}
     if intent in destructive:
         return True
     if re.search(r"\b(all|everyone|wipe|reset)\b", text, re.I):
@@ -128,6 +133,11 @@ def route_voice_request(text: str, *, campaign: Optional[str] = None) -> Dict[st
         "add_quest": "dnd-quest-tracker",
         "attune": "dnd-character-manager",
         "init_campaign": "dnd-persistent-dm",
+        "random": "dnd-randomizer",
+        "random_item": "dnd-randomizer",
+        "random_character": "dnd-randomizer",
+        "random_npc": "dnd-randomizer",
+        "random_table": "dnd-randomizer",
     }
 
     if damage:

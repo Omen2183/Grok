@@ -1,6 +1,6 @@
 [project]
 name = "grok-dnd-skills"
-version = "4.1.0"
+version = "4.2.0"
 description = "Persistent D&D campaign skills for Grok Build"
 readme = "README.md"
 requires-python = ">=3.10"

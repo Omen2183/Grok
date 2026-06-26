@@ -60,4 +60,4 @@ def test_voice_execution_plan(campaign):
     plan = build_execution_plan(campaign, "Goblin takes 8 damage")
     assert plan["primary_skill"] == "dnd-combat-assistant"
     assert plan["suggested_commands"]
-    assert VOICE_BACKEND_VERSION.startswith("3.")
+    assert VOICE_BACKEND_VERSION.startswith(("3.", "4."))

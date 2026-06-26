@@ -12,7 +12,7 @@ from paths import get_campaign_path
 
 from randomizer_data import BUILTIN_TABLES, RANDOMIZER_DATA_VERSION
 
-ENGINE_VERSION = "4.1.0"
+ENGINE_VERSION = "4.2.0"
 
 
 def _ledger_path(campaign_name: str) -> Path:
