@@ -38,6 +38,9 @@ Get-ChildItem $SourceSkills -Directory | ForEach-Object {
     $skillFile = Join-Path $_.FullName "SKILL.md"
     if (Test-Path $skillFile) {
         $dest = Join-Path $DestSkills $_.Name
+        if (Test-Path $dest) {
+            Remove-Item -Recurse -Force $dest
+        }
         Copy-Item -Recurse -Force $_.FullName $dest
         Write-Ok $_.Name
         $count++

@@ -27,6 +27,7 @@ count=0
 for skill_dir in "$SOURCE_SKILLS"/*/; do
   skill_name="$(basename "$skill_dir")"
   if [[ -f "$skill_dir/SKILL.md" ]]; then
+    rm -rf "$DEST_SKILLS/$skill_name"
     cp -R "$skill_dir" "$DEST_SKILLS/$skill_name"
     echo "  OK $skill_name"
     ((count++)) || true
