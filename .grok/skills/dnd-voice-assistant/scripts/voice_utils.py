@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-VOICE_BACKEND_VERSION = "4.2.0"
+VOICE_BACKEND_VERSION = "5.0.0"
 
 VOICE_TRIGGERS = (
     "voice mode",
@@ -40,6 +40,9 @@ AMBIGUOUS_PATTERNS = (
     (re.compile(r"\b(random character|random pc|roll up a character)\b", re.I), "random_character"),
     (re.compile(r"\b(random npc|random villager|who's in town)\b", re.I), "random_npc"),
     (re.compile(r"\b(roll table|travel complication|random weather)\b", re.I), "random_table"),
+    (re.compile(r"\b(random party|roll up a party|generate (a )?party)\b", re.I), "random_party"),
+    (re.compile(r"\b(random dungeon|dungeon floor|procedural dungeon)\b", re.I), "random_dungeon"),
+    (re.compile(r"\b(wild magic surge|wild magic table|arcane surge)\b", re.I), "wild_magic"),
 )
 
 
@@ -138,6 +141,9 @@ def route_voice_request(text: str, *, campaign: Optional[str] = None) -> Dict[st
         "random_character": "dnd-randomizer",
         "random_npc": "dnd-randomizer",
         "random_table": "dnd-randomizer",
+        "random_party": "dnd-randomizer",
+        "random_dungeon": "dnd-randomizer",
+        "wild_magic": "dnd-randomizer",
     }
 
     if damage:

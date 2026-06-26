@@ -12,7 +12,7 @@ from paths import get_campaign_path
 
 from randomizer_data import BUILTIN_TABLES, RANDOMIZER_DATA_VERSION
 
-ENGINE_VERSION = "4.2.0"
+ENGINE_VERSION = "5.0.0"
 
 
 def _ledger_path(campaign_name: str) -> Path:
@@ -143,5 +143,61 @@ def ledger_summary(campaign_name: str, *, limit: int = 20) -> Dict[str, Any]:
     return {
         "total": len(entries),
         "recent": entries[-limit:],
+        "version": ENGINE_VERSION,
+    }
+
+
+def export_custom_tables(
+    campaign_name: str,
+    *,
+    output_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    tables = load_custom_tables(campaign_name)
+    exported_to = None
+    if output_path:
+        out = Path(output_path)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(tables, indent=2), encoding="utf-8")
+        exported_to = str(out)
+    return {
+        "campaign": campaign_name,
+        "table_names": sorted(tables.keys()),
+        "entry_count": sum(len(entries) for entries in tables.values()),
+        "tables": tables,
+        "exported_to": exported_to,
+        "version": ENGINE_VERSION,
+    }
+
+
+def import_custom_tables(
+    campaign_name: str,
+    input_path: str,
+    *,
+    merge: bool = True,
+) -> Dict[str, Any]:
+    path = Path(input_path)
+    if not path.exists():
+        return {"error": f"File not found: {input_path}", "version": ENGINE_VERSION}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        return {"error": "Import file must be a JSON object of table_name -> entries", "version": ENGINE_VERSION}
+
+    if merge:
+        existing = load_custom_tables(campaign_name)
+        for table_name, entries in data.items():
+            if not isinstance(entries, list):
+                continue
+            existing.setdefault(table_name, []).extend(entries)
+        save_custom_tables(campaign_name, existing)
+        table_names = sorted(existing.keys())
+    else:
+        save_custom_tables(campaign_name, data)
+        table_names = sorted(data.keys())
+
+    return {
+        "campaign": campaign_name,
+        "merged": merge,
+        "imported_from": str(path),
+        "table_names": table_names,
         "version": ENGINE_VERSION,
     }

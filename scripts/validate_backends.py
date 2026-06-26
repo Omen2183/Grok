@@ -89,8 +89,12 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
         ["roll-table", "weather"],
         ["random-item", "--level", "3"],
         ["random-character", "--level", "1"],
-        ["mobile-summary", "item", "--seed", "1"],
-        ["travel-day", "AuditCampaign", "--seed", "2"],
+        ["random-party", "--size", "3", "--level", "2", "--seed", "1"],
+        ["random-dungeon", "--rooms", "3", "--party-level", "2", "--seed", "2"],
+        ["wild-magic-surge", "--seed", "3"],
+        ["list-cultures"],
+        ["mobile-summary", "party", "--level", "2", "--seed", "4"],
+        ["travel-day", "AuditCampaign", "--seed", "5"],
         ["random-everything", "--level", "2", "--seed", "42"],
     ],
 }
@@ -120,12 +124,19 @@ UTILS_LIBRARY_ONLY = {
     "faction_engine.py",
 }
 
-RANDOMIZER_LIBRARY_ONLY = {"randomizer_data.py", "randomizer_engine.py"}
+RANDOMIZER_LIBRARY_ONLY = {
+    "randomizer_data.py",
+    "randomizer_engine.py",
+    "name_cultures.py",
+    "equipment_generator.py",
+    "dungeon_generator.py",
+}
 
 RULES_LIBRARY_ONLY = {"rules_data.py", "srd_data.py"}
 
 SCRIPT_FOR_SKILL: dict[str, str] = {
     "dnd-content-forge": "dnd-content-forge/scripts/content_forge.py",
+    "dnd-randomizer": "dnd-randomizer/scripts/randomizer.py",
     "dnd-utils": "dnd-utils/scripts/dnd_state_utils.py",
 }
 

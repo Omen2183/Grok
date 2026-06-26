@@ -148,12 +148,13 @@ SKILLS: Dict[str, Dict[str, Any]] = {
         "triggers": [
             "randomize", "random item", "random character", "random world", "roll table",
             "surprise me", "chaos", "random feat", "random spell", "random everything",
-            "random npc", "random encounter", "random quest",
+            "random npc", "random encounter", "random quest", "random party", "random dungeon",
+            "wild magic surge", "balanced random", "export tables", "import tables",
         ],
-        "calls": ["dnd-utils", "class_progression"],
+        "calls": ["dnd-utils", "class_progression", "dnd-loot-generator", "dnd-content-forge"],
         "called_by": ["dnd-persistent-dm", "dnd-voice-assistant"],
         "after": ["dnd-character-manager", "dnd-npc-personality-weaver", "dnd-quest-tracker"],
-        "notes": "Pure chaos randomization; delegate balanced loot/encounters to loot-generator/content-forge",
+        "notes": "Chaos randomization with --balanced delegation; cultural names, class kits, dungeon floors",
     },
 }
 
@@ -296,6 +297,13 @@ INTENT_DELEGATIONS: Dict[str, Dict[str, Any]] = {
             "table": "roll-table",
             "feat": "random-feat",
             "spell": "random-spell",
+            "party": "random-party",
+            "dungeon": "random-dungeon",
+            "wild_magic": "wild-magic-surge",
+        },
+        "balanced_flags": {
+            "item": "--balanced",
+            "encounter": "--balanced",
         },
         "confirm": False,
         "destructive_apply": ["apply-character", "apply-world"],
@@ -354,9 +362,15 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
     ],
     "random-session": [
         {"skill": "dnd-randomizer", "command": "travel-day"},
+        {"skill": "dnd-randomizer", "command": "random-dungeon", "args": ["--party-level", "3"]},
         {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"]},
         {"skill": "dnd-randomizer", "command": "mobile-summary", "args": ["item"]},
         {"skill": "dnd-randomizer", "command": "random-quest"},
+    ],
+    "party-generator": [
+        {"skill": "dnd-randomizer", "command": "random-party", "args": ["--size", "4", "--level", "3"]},
+        {"skill": "dnd-randomizer", "command": "mobile-summary", "args": ["party", "--level", "3"]},
+        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"]},
     ],
     "downtime": [
         {"skill": "dnd-downtime-manager", "command": "long-rest"},

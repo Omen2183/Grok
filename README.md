@@ -1,6 +1,6 @@
-# Grok D&D Skills
+# Grok D&D Skills — v5.0.0
 
-A complete Grok Build skill pack for running persistent, high-quality D&D 5e campaigns — classic tabletop and kingdom/domain play.
+A complete Grok Build skill pack for running persistent, table-grade D&D 5e campaigns — classic tabletop and kingdom/domain play. Designed mobile-first for **Grok iOS** with full voice parity.
 
 ## What's Included
 
@@ -10,25 +10,25 @@ A complete Grok Build skill pack for running persistent, high-quality D&D 5e cam
 |-------|------|
 | `dnd-persistent-dm` | DM orchestrator (`persistent_dm.py`) |
 | `dnd-utils` | Campaign state, events, audits, narration CLI |
-| `dnd-combat-assistant` | Initiative, HP, conditions |
+| `dnd-combat-assistant` | Initiative, HP, conditions, tactical grid |
 | `dnd-dice-engine` | 5e dice rolling |
-| `dnd-character-manager` | Sheets, leveling, inventory, level-up suggestions |
+| `dnd-character-manager` | Sheets, leveling, inventory, VTT export |
 | `dnd-session-scribe` | Recaps, XP, auto-recap from events |
 | `dnd-loot-generator` | Procedural loot + ledger |
 | `dnd-content-forge` | Monsters, encounters, quests, factions |
 | `dnd-npc-personality-weaver` | NPC personality + persistence |
-| `dnd-lore-archivist` | Campaign lore memory |
-| `dnd-rules-reference` | Rules cheatsheet CLI + Grok rulings |
-| `dnd-rumor-event-generator` | World events and rumors |
-| `dnd-visual-weaver` | Consistent image prompts |
+| `dnd-lore-archivist` | FTS lore search + campaign memory |
+| `dnd-rules-reference` | Rules cheatsheet + SRD index |
+| `dnd-rumor-event-generator` | World events, faction sim, rumors |
+| `dnd-visual-weaver` | Consistent image prompts + battle maps |
 | `dnd-voice-assistant` | Voice routing and phrase parsing |
 | `dnd-downtime-manager` | Short/long rests, downtime logging |
 | `dnd-quest-tracker` | Active quests and session hooks |
-| `dnd-randomizer` | Unified chaos randomization — items, PCs, worlds, tables, everything |
+| `dnd-randomizer` | Unified chaos engine — parties, dungeons, cultures, wild magic |
 
 ## Quick Start
 
-**New players:** see [PLAYERS.md](PLAYERS.md) for how to start a campaign in Grok iOS with plain language.
+**New players:** see [PLAYERS.md](PLAYERS.md) for Grok iOS quickstart with plain language.
 
 ### Install skills into Grok Build
 
@@ -36,11 +36,9 @@ A complete Grok Build skill pack for running persistent, high-quality D&D 5e cam
 # From this repo
 .\install.ps1
 
-# Or install into a specific project
-.\install.ps1 -Target C:\path\to\your\project
+# Global install (all Grok projects)
+.\install.ps1 -Global
 ```
-
-This copies `.grok/skills/` into your user or project Grok directory.
 
 ### Start a campaign
 
@@ -52,18 +50,20 @@ Or initialize manually:
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py init "My Campaign"
 ```
 
-Campaign state is stored at:
+Campaign state: `%USERPROFILE%\.grok\artifacts\dnd-campaigns\[Campaign Name]\`
 
-- **Windows:** `%USERPROFILE%\.grok\artifacts\dnd-campaigns\[Campaign Name]\`
-- **Grok cloud:** `/home/workdir/artifacts/dnd-campaigns/[Campaign Name]/`
+## v5.0.0 Highlights
 
-Override with the `DND_CAMPAIGNS_ROOT` environment variable.
+- **Randomizer complete:** cultural names, class kits, party generator, dungeon floors, wild magic surge, `--balanced` delegation, table import/export
+- **Playbooks:** `party-generator`, enhanced `random-session`
+- **Voice 5.0:** party, dungeon, wild magic phrase routing
+- **Premium player docs:** [PLAYERS.md](PLAYERS.md) rewritten for Grok iOS
 
 ## Production Standards
 
 - **Grok iOS native:** mobile-first replies, honest capability matrices in each `SKILL.md`, voice routing via `dnd-voice-assistant`
 - **Shared state:** `dnd-utils/scripts/paths.py` resolves campaign folders on Windows, macOS, and Grok cloud
-- **110+ tests** + orchestration flow + full CLI smoke test (all 17 skills)
+- **125+ tests** + orchestration flow + full CLI smoke test (all 17 skills)
 - **skill_registry** + **skill_orchestrator** for cross-skill coordination
 - **GitHub Actions CI** on Python 3.11 and 3.12
 
@@ -72,46 +72,27 @@ See `.grok/skills/_PRODUCTION_CONVENTIONS.md` for agent conventions.
 ## Quality Gates
 
 ```powershell
-python -m pytest -q            # full test suite
-python scripts/smoke_test.py   # smoke test all 16 skill CLIs
-python scripts/validate_skills.py  # verify every skill has Python backend
-python scripts/validate_orchestration.py  # verify registry matches all 17 skills
-python scripts/validate_backends.py       # min CLI depth + smoke per skill
-python scripts/validate_skill_docs.py     # SKILL.md matches backends + iOS sections
-python scripts/registry_sync.py --check   # registry matches installed skills
-```
-
-## Development
-
-```powershell
-# Run all tests
 python -m pytest -q
-
-# Run a single skill's tests
-python -m pytest .grok/skills/dnd-combat-assistant/tests -v
-```
-
-## Repository Structure
-
-```
-.grok/skills/          # All 17 skills (SKILL.md + scripts/) — v4.1.0
-install.ps1            # Windows installer
-install.sh             # macOS/Linux installer
-pyproject.toml         # Dev dependencies
-AGENTS.md              # Agent instructions for this repo
+python scripts/smoke_test.py
+python scripts/validate_skills.py
+python scripts/validate_orchestration.py
+python scripts/validate_backends.py
+python scripts/validate_skill_docs.py
+python scripts/registry_sync.py --check
 ```
 
 ## Example Commands
 
 ```powershell
-# Check campaign status
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py status "My Campaign"
+# Random party + dungeon (v5)
+python .grok/skills/dnd-randomizer/scripts/randomizer.py random-party --size 4 --level 3
+python .grok/skills/dnd-randomizer/scripts/randomizer.py random-dungeon "My Campaign" --rooms 6
+
+# Balanced loot via randomizer
+python .grok/skills/dnd-randomizer/scripts/randomizer.py random-item "My Campaign" --balanced --level 5
 
 # Roll dice
 python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 1d20+5 --advantage
-
-# Generate loot
-python .grok/skills/dnd-loot-generator/scripts/procedural_loot.py generate "My Campaign" --cr 3
 
 # End a session
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "We cleared the mine." --xp 150
@@ -119,4 +100,4 @@ python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My
 
 ## License
 
-Private repository — for personal use.
+Private repository — for personal use. Not affiliated with Wizards of the Coast or Hasbro.

@@ -19,7 +19,7 @@ from randomizer import (  # noqa: E402
     random_item,
     random_name,
 )
-from randomizer_engine import list_tables, roll_table  # noqa: E402
+from randomizer_engine import add_custom_entry, export_custom_tables, import_custom_tables, list_tables, roll_table  # noqa: E402
 
 
 @pytest.fixture
@@ -106,3 +106,61 @@ def test_srd_feat():
 
     result = random_feat(seed=99)
     assert result.get("feat") or result.get("detail")
+
+
+def test_cultural_name():
+    from randomizer import random_name  # noqa: E402
+
+    result = random_name(name_type="person", culture="elven", seed=10)
+    assert result["culture"] == "elven"
+    assert " " in result["name"]
+
+
+def test_character_has_equipment():
+    result = random_character(level=1, seed=20)
+    char = result["character"]
+    assert char.get("gold_gp", 0) > 0
+    assert len(char["inventory"]) >= 3
+
+
+def test_random_party():
+    from randomizer import random_party  # noqa: E402
+
+    party = random_party(size=4, level=2, seed=30)
+    assert party["party_size"] == 4
+    assert len(party["party"]) == 4
+
+
+def test_random_dungeon():
+    from randomizer import random_dungeon  # noqa: E402
+
+    dungeon = random_dungeon(rooms=4, party_level=2, seed=40)
+    assert len(dungeon["dungeon"]["rooms"]) == 4
+
+
+def test_wild_magic_surge():
+    from randomizer import wild_magic_surge  # noqa: E402
+
+    surge = wild_magic_surge(seed=50)
+    assert surge["surge"]
+    assert surge["trigger"] == "spell_cast"
+
+
+def test_balanced_item(campaign):
+    item = random_item(level=3, campaign_name=campaign, balanced=True, seed=60)
+    assert item.get("balanced") is True
+    assert item.get("source") == "dnd-loot-generator"
+
+
+def test_import_export_tables(campaign, tmp_path):
+    from randomizer_engine import export_custom_tables, import_custom_tables  # noqa: E402
+
+    add_custom_entry(campaign, "homebrew", "Test entry", weight=2)
+    out = tmp_path / "tables.json"
+    exported = export_custom_tables(campaign, output_path=str(out))
+    assert exported["entry_count"] >= 1
+    assert out.exists()
+
+    import_custom_tables(campaign, str(out), merge=True)
+    tables = list_tables(campaign)
+    assert "homebrew" in tables["custom"]

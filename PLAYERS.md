@@ -1,96 +1,121 @@
-# Playing D&D with Grok
+# Your D&D Companion on Grok iOS
 
-A short guide for players and DMs using the Grok iOS app (or Grok Build) with this skill pack.
+*A table-grade toolkit for Dungeons & Dragons 5e — built for voice and text play on Grok.*
 
-## Start in 30 seconds
+Whether you are rolling your first d20 or running a kingdom across dozens of sessions, this suite handles the bookkeeping so you can focus on the story.
 
-1. Open **Grok** and say: **"Let's play D&D"** or **"DM mode — campaign Shadowmere"**
-2. Grok loads or creates your campaign automatically.
-3. Play naturally: explore, fight, rest, talk to NPCs. Grok handles dice, HP, loot, and session saves behind the scenes.
-4. End scenes with your action — Grok will ask **"What do you do?"**
+---
 
-### Voice play (Grok iOS)
+## Begin play in one breath
 
-Say **"Start voice D&D"**, then speak normally:
+Open **Grok** and say:
 
-- *"Roll stealth with advantage"*
-- *"Goblin takes 8 damage"*
-- *"We take a long rest"*
-- *"What quests do we have?"*
-- *"End session — we cleared the mine"*
+> **"Let's play D&D"**  
+> or  
+> **"DM mode — campaign Shadowmere"**
 
-Grok keeps replies short and confirms HP/XP changes out loud.
+Grok loads your campaign (or creates one), recalls where you left off, and opens the scene. End every beat with your choice — Grok closes with **"What do you do?"**
 
-## What Grok remembers
+### Voice mode
 
-Your campaign lives at:
+> **"Start voice D&D"**
 
-- **Windows / Mac:** `~/.grok/artifacts/dnd-campaigns/[Campaign Name]/`
-- **Grok cloud:** auto-resolved by the skills (no path setup needed)
+Then speak naturally:
 
-Each campaign stores:
+| Say this | Grok handles |
+|----------|--------------|
+| *"Roll stealth with advantage"* | Dice + narration |
+| *"Goblin takes 8 damage"* | Combat HP sync |
+| *"We take a long rest"* | Rest, slots, rumors |
+| *"Random party level three"* | Full party generator |
+| *"Wild magic surge"* | Surge table roll |
+| *"What quests are active?"* | Quest tracker |
+| *"End session — we cleared the mine"* | Recap, XP, save |
 
-| Data | What it tracks |
-|------|----------------|
-| Character sheet | HP, XP, inventory, conditions |
+Replies stay short. Mechanical changes are spoken aloud.
+
+---
+
+## What persists between sessions
+
+Your campaign lives at `~/.grok/artifacts/dnd-campaigns/[Campaign Name]/` (auto-resolved on Grok cloud).
+
+| Saved data | Purpose |
+|------------|---------|
+| Character sheet | HP, XP, inventory, spell slots, conditions |
 | World state | Location, time, tabletop vs kingdom mode |
-| Combat | Initiative and HP during fights |
-| Quests & hooks | Active objectives |
-| NPCs | Personalities and relationships |
-| Lore & recaps | What happened last time |
+| Combat tracker | Initiative, grid, HP mid-fight |
+| Quests & hooks | Active objectives and rewards |
+| NPCs | Personality, secrets, relationships |
+| Lore & recaps | Searchable campaign memory |
+| Loot & random ledgers | No duplicate treasure or table repeats |
 
-## Common things to say
+---
 
-| You say | Grok does |
-|---------|-----------|
-| "Show my character" | Reads your sheet |
-| "Start combat — goblin ambush" | Initiative tracker |
-| "I attack with advantage" | Rolls and applies damage |
-| "Generate loot CR 3" | Treasure + anti-duplicate ledger |
-| "What's the rumor mill?" | World hooks from campaign state |
-| "Wrap up the session" | Recap, XP, audit, save |
-| "Kingdom turn" | Advances domain projects + rumors |
-
-## Architecture (simple view)
+## The 17-skill toolkit
 
 ```mermaid
-flowchart LR
-    You[Player voice/text] --> Voice[dnd-voice-assistant]
+flowchart TB
+    You[You — voice or text] --> Voice[dnd-voice-assistant]
     Voice --> DM[dnd-persistent-dm]
     DM --> Registry[skill_registry]
-    Registry --> Skills[16 specialist skills]
-    Skills --> State[dnd-utils JSON state]
+    Registry --> Specialists[17 specialist skills]
+    Specialists --> State[dnd-utils persistent state]
 ```
 
-- **dnd-persistent-dm** — your DM; routes everything
-- **dnd-utils** — saves campaign data safely
-- **Specialists** — combat, dice, loot, NPCs, lore, rules, etc.
-- **Playbooks** — multi-step flows (session end, kingdom turn, end combat)
+| You want… | Say something like… |
+|-----------|---------------------|
+| Character & leveling | *"Show my sheet"* · *"Level up"* |
+| Combat | *"Start combat — goblin ambush"* · *"Next turn"* |
+| Dice | *"Attack with advantage"* · *"Roll perception"* |
+| Treasure | *"Generate loot CR 3"* · *"Random magic item"* |
+| World & rumors | *"What's the rumor mill?"* · *"Kingdom turn"* |
+| Chaos & tables | *"Surprise me"* · *"Random dungeon"* · *"Roll travel complication"* |
+| Rules | *"How does grappling work?"* |
+| Session end | *"Wrap up the session"* |
 
-## Tips for great play
+---
 
-- **Confirm big changes** — Grok will ask before ending a session or leveling up.
-- **Name your campaign** — makes resuming easy: *"Continue Shadowmere"*
-- **Kingdom mode** — say *"Switch to kingdom mode"* for domain management.
-- **Long campaigns** — init with SQLite for faster event search: Grok can enable this on new campaigns.
+## Play modes
 
-## For tinkerers
+**Tabletop (default)** — classic adventure: explore, fight, rest, roleplay.
+
+**Kingdom mode** — domain management: projects, factions, world events. Say *"Switch to kingdom mode"* or *"Kingdom turn"*.
+
+**Chaos one-shot** — Say *"Chaos campaign"* or *"Surprise me with everything"* for a random world, PC, hook, and encounter. Grok confirms before overwriting your sheet.
+
+---
+
+## Tips from the DM's screen
+
+1. **Name your campaign** — *"Continue Shadowmere"* resumes instantly.
+2. **Confirm big moves** — level-ups, session end, and `apply-character` always ask first.
+3. **Balanced vs chaos** — *"Balanced loot"* uses CR scaling; *"random item"* is pure surprise.
+4. **Long campaigns** — new campaigns can enable SQLite for faster lore search.
+5. **Voice clarity** — name targets clearly: *"Aria heals Thorin for 9."*
+
+---
+
+## For DMs running at the table
+
+- **Travel days:** *"Roll a travel day"* — weather, complication, terrain, social scene in one batch.
+- **Dungeon crawl:** *"Random dungeon floor"* — rooms, traps, foes, exits.
+- **Party generator:** *"Roll up a party of four at level 5"* — cultural names, class kits, stats.
+- **Wild magic:** *"Wild magic surge"* after sorcerer surge or DM whim.
+- **Custom tables:** homebrew entries persist per campaign; export/import for sharing.
+
+---
+
+## Install & verify (optional)
 
 Repo: [github.com/Omen2183/Grok](https://github.com/Omen2183/Grok)
 
 ```powershell
-# Install skills
 .\install.ps1 -Global
-
-# Campaign dashboard
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py dashboard "My Campaign"
-
-# Analytics
-python .grok/skills/dnd-utils/scripts/dnd_state_utils.py analytics "My Campaign" --report tags
-
-# Health checks
-python scripts/smoke_test.py
 python -m pytest -q
 ```
 
-See `README.md` and `AGENTS.md` for developer details.
+See `README.md` for developer docs.
+
+*Built for Grok iOS. Compatible with homebrew and official 5e tone — not affiliated with Wizards of the Coast or Hasbro.*

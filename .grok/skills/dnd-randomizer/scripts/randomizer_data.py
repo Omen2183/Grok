@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-RANDOMIZER_DATA_VERSION = "4.2.0"
+RANDOMIZER_DATA_VERSION = "5.0.0"
 
 RACES = [
     "Human", "Elf", "Dwarf", "Halfling", "Dragonborn", "Gnome", "Half-Elf",

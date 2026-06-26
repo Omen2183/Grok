@@ -37,6 +37,9 @@ Every skill must delegate through the canonical registry — never improvise cro
 | `session-end` | auto-recap → end-session → quest list → enhanced audit |
 | `kingdom-turn` | advance projects → rumors → world event → kingdom summary |
 | `downtime` | long rest → rumors → quest list |
+| `chaos-campaign` | apply-world → apply-character → encounter → quest → NPC → rumors |
+| `random-session` | travel-day → dungeon → encounter → item → quest |
+| `party-generator` | random-party → mobile-summary → encounter |
 
 ```bash
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" session-end

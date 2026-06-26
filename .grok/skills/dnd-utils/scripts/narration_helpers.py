@@ -46,7 +46,8 @@ def suggest_next_actions(campaign_name: str, *, mode: Optional[str] = None) -> L
         "Explore the current location",
         "Talk to a nearby NPC",
         "Check character sheet or inventory",
-        "Roll for something specific",
+        "Roll a travel complication or weather table",
+        "Ask for a random encounter or dungeon floor",
     ]
 
 

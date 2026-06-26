@@ -1,5 +1,21 @@
 # Changelog
 
+## 5.0.0 — Table-grade suite polish + Randomizer v5
+
+### Added
+- **Randomizer v5:** cultural names (`name_cultures.py`), class starting kits (`equipment_generator.py`), procedural dungeon floors (`dungeon_generator.py`)
+- CLIs: `random-party`, `random-dungeon`, `wild-magic-surge`, `list-cultures`, `export-tables`, `import-tables`
+- `--balanced` on `random-item` / `random-encounter` delegates to loot-generator / content-forge
+- Playbook `party-generator`; `random-session` includes dungeon step
+- Voice routing: random party, dungeon, wild magic surge phrases
+- Premium [PLAYERS.md](PLAYERS.md) rewrite for Grok iOS
+
+### Changed
+- `random-character` / `random-npc` use race-aware cultural naming + class equipment + gold
+- Suite version → 5.0.0; `VOICE_BACKEND_VERSION` → 5.0.0
+- `narration_helpers` suggestions include randomizer hooks
+- 8 new randomizer tests; validate_backends smoke expanded
+
 ## 4.2.0 — Randomizer v2: persistence, voice, tables, mobile
 
 ### Added
