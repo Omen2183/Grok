@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.1.0 — Unified Randomizer skill (skill #17)
+
+### Added
+- **`dnd-randomizer`** — unified chaos randomization hub
+  - `randomizer.py` — tables, items, characters, NPCs, worlds, encounters, quests, feats, spells, `random-everything`, `apply-*`
+  - `randomizer_engine.py` — weighted rolls, ledger, custom homebrew tables
+  - `randomizer_data.py` — races, classes, feats, items, weather, terrain, hooks, names
+- Registry intent `random`, playbook `chaos-campaign`
+- `dnd-randomizer/tests/test_randomizer.py`
+
+### Changed
+- Suite expanded to **17 skills**; `skill_registry.py`, `validate_backends.py`, README updated
+
 ## 4.0.0 — 10/10 gap closure: lore FTS, grid combat, SRD index, VTT export, factions, multiclass
 
 ### Added

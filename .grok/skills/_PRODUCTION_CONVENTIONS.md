@@ -50,7 +50,7 @@ python .grok/skills/dnd-utils/scripts/skill_registry.py resolve damage --campaig
 - **Session end** always chains: session-scribe → quest-tracker hooks → utils audit
 - **Kingdom turns** always chain: utils projects → rumor-generator → optional lore-archivist
 
-## SKILL.md requirements (all 16 skills)
+## SKILL.md requirements (all 17 skills)
 Each `SKILL.md` must include:
 1. **Capabilities (Honest Matrix)** — only ✅ for implemented CLI behavior
 2. **Tools & Scripts** — every subcommand from `scripts/*.py` with examples

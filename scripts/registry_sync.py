@@ -27,6 +27,7 @@ LIBRARY_ONLY = {
     "narration_helpers.py", "sqlite_layer.py", "sync_bridge.py", "xp_tables.py",
     "rules_data.py", "srd_data.py", "campaign_dashboard.py", "campaign_analytics.py",
     "lore_index.py", "class_progression.py", "faction_engine.py",
+    "randomizer_data.py", "randomizer_engine.py",
 }
 
 

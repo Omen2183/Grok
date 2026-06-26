@@ -23,6 +23,7 @@ SKILLS: Dict[str, Dict[str, Any]] = {
             "dnd-session-scribe", "dnd-loot-generator", "dnd-content-forge", "dnd-npc-personality-weaver",
             "dnd-lore-archivist", "dnd-rules-reference", "dnd-rumor-event-generator",
             "dnd-visual-weaver", "dnd-voice-assistant", "dnd-downtime-manager", "dnd-quest-tracker",
+            "dnd-randomizer",
         ],
     },
     "dnd-utils": {
@@ -140,6 +141,19 @@ SKILLS: Dict[str, Dict[str, Any]] = {
         "triggers": ["add quest", "active quests", "complete quest", "hook"],
         "calls": ["dnd-utils"],
         "called_by": ["dnd-persistent-dm", "dnd-session-scribe", "dnd-content-forge"],
+    },
+    "dnd-randomizer": {
+        "role": "randomizer",
+        "script": "dnd-randomizer/scripts/randomizer.py",
+        "triggers": [
+            "randomize", "random item", "random character", "random world", "roll table",
+            "surprise me", "chaos", "random feat", "random spell", "random everything",
+            "random npc", "random encounter", "random quest",
+        ],
+        "calls": ["dnd-utils", "class_progression"],
+        "called_by": ["dnd-persistent-dm", "dnd-voice-assistant"],
+        "after": ["dnd-character-manager", "dnd-npc-personality-weaver", "dnd-quest-tracker"],
+        "notes": "Pure chaos randomization; delegate balanced loot/encounters to loot-generator/content-forge",
     },
 }
 
@@ -268,6 +282,24 @@ INTENT_DELEGATIONS: Dict[str, Dict[str, Any]] = {
         "command": "weave-prompt",
         "confirm": False,
     },
+    "random": {
+        "primary_skill": "dnd-randomizer",
+        "script": "dnd-randomizer/scripts/randomizer.py",
+        "command": "random-everything",
+        "alt_commands": {
+            "item": "random-item",
+            "character": "random-character",
+            "world": "random-world",
+            "npc": "random-npc",
+            "encounter": "random-encounter",
+            "quest": "random-quest",
+            "table": "roll-table",
+            "feat": "random-feat",
+            "spell": "random-spell",
+        },
+        "confirm": False,
+        "destructive_apply": ["apply-character", "apply-world"],
+    },
 }
 
 # Named multi-step playbooks for persistent-dm
@@ -311,6 +343,13 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
         {"skill": "dnd-character-manager", "command": "foundry", "notes": "vtt_export.py"},
         {"skill": "dnd-character-manager", "command": "roll20", "notes": "vtt_export.py"},
         {"skill": "dnd-character-manager", "command": "combat-foundry", "notes": "vtt_export.py"},
+    ],
+    "chaos-campaign": [
+        {"skill": "dnd-randomizer", "command": "apply-world", "notes": "Confirm with player first"},
+        {"skill": "dnd-randomizer", "command": "apply-character", "args": ["--level", "3"]},
+        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"]},
+        {"skill": "dnd-randomizer", "command": "random-quest"},
+        {"skill": "dnd-rumor-event-generator", "command": "rumors", "args": ["--count", "2"]},
     ],
     "downtime": [
         {"skill": "dnd-downtime-manager", "command": "long-rest"},

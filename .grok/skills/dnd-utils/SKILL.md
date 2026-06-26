@@ -105,7 +105,7 @@ Playbooks (v4.0.0): `new-campaign`, `start-combat`, `grid-combat`, `end-combat`,
 ## Skill Coordination
 | Layer | Role |
 |-------|------|
-| Registry | `skill_registry.py` — canonical map for all 16 skills |
+| Registry | `skill_registry.py` — canonical map for all 17 skills |
 | Orchestrator | `skill_orchestrator.py` — `plan`, `execute`, `playbook` |
 | Mobile (iOS) | `narration_cli.py` — `mobile-status`, `opening`, `hp-change` for short replies |
 | sync_bridge | Library module — combat-assistant ↔ character-manager HP sync |

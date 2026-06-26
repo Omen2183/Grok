@@ -4,7 +4,7 @@ A complete Grok Build skill pack for running persistent, high-quality D&D 5e cam
 
 ## What's Included
 
-16 interconnected skills — **every skill has a Python CLI backend**:
+17 interconnected skills — **every skill has a Python CLI backend**:
 
 | Skill | Role |
 |-------|------|
@@ -24,6 +24,7 @@ A complete Grok Build skill pack for running persistent, high-quality D&D 5e cam
 | `dnd-voice-assistant` | Voice routing and phrase parsing |
 | `dnd-downtime-manager` | Short/long rests, downtime logging |
 | `dnd-quest-tracker` | Active quests and session hooks |
+| `dnd-randomizer` | Unified chaos randomization — items, PCs, worlds, tables, everything |
 
 ## Quick Start
 
@@ -62,7 +63,7 @@ Override with the `DND_CAMPAIGNS_ROOT` environment variable.
 
 - **Grok iOS native:** mobile-first replies, honest capability matrices in each `SKILL.md`, voice routing via `dnd-voice-assistant`
 - **Shared state:** `dnd-utils/scripts/paths.py` resolves campaign folders on Windows, macOS, and Grok cloud
-- **100+ tests** + orchestration flow + full CLI smoke test (all 16 skills)
+- **110+ tests** + orchestration flow + full CLI smoke test (all 17 skills)
 - **skill_registry** + **skill_orchestrator** for cross-skill coordination
 - **GitHub Actions CI** on Python 3.11 and 3.12
 
@@ -74,7 +75,7 @@ See `.grok/skills/_PRODUCTION_CONVENTIONS.md` for agent conventions.
 python -m pytest -q            # full test suite
 python scripts/smoke_test.py   # smoke test all 16 skill CLIs
 python scripts/validate_skills.py  # verify every skill has Python backend
-python scripts/validate_orchestration.py  # verify registry matches all 16 skills
+python scripts/validate_orchestration.py  # verify registry matches all 17 skills
 python scripts/validate_backends.py       # min CLI depth + smoke per skill
 python scripts/validate_skill_docs.py     # SKILL.md matches backends + iOS sections
 python scripts/registry_sync.py --check   # registry matches installed skills
@@ -93,7 +94,7 @@ python -m pytest .grok/skills/dnd-combat-assistant/tests -v
 ## Repository Structure
 
 ```
-.grok/skills/          # All 16 skills (SKILL.md + scripts/) — v4.0.0
+.grok/skills/          # All 17 skills (SKILL.md + scripts/) — v4.1.0
 install.ps1            # Windows installer
 install.sh             # macOS/Linux installer
 pyproject.toml         # Dev dependencies

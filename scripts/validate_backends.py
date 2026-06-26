@@ -84,6 +84,13 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
         ["plan", "AuditCampaign", "Goblin takes 5 damage"],
         ["detect-voice", "start voice dnd"],
     ],
+    "dnd-randomizer": [
+        ["list-tables"],
+        ["roll-table", "weather"],
+        ["random-item", "--level", "3"],
+        ["random-character", "--level", "1"],
+        ["random-everything", "--level", "2", "--seed", "42"],
+    ],
 }
 
 UTILS_CLI_SCRIPTS = [
@@ -110,6 +117,8 @@ UTILS_LIBRARY_ONLY = {
     "class_progression.py",
     "faction_engine.py",
 }
+
+RANDOMIZER_LIBRARY_ONLY = {"randomizer_data.py", "randomizer_engine.py"}
 
 RULES_LIBRARY_ONLY = {"rules_data.py", "srd_data.py"}
 
@@ -181,6 +190,8 @@ def validate() -> dict:
                     library_only = RULES_LIBRARY_ONLY if skill == "dnd-rules-reference" else set()
                     if skill == "dnd-utils":
                         library_only = UTILS_LIBRARY_ONLY
+                    if skill == "dnd-randomizer":
+                        library_only = RANDOMIZER_LIBRARY_ONLY
                     if script.name not in library_only:
                         skill_issues.append(f"No CLI entry point: {script.name}")
                 else:

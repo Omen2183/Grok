@@ -14,7 +14,7 @@ from skill_registry import (
 
 def test_list_all_skills():
     skills = list_all_skills()
-    assert len(skills) == 16
+    assert len(skills) == 17
     assert "dnd-persistent-dm" in skills
     assert "dnd-quest-tracker" in skills
 
