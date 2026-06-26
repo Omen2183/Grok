@@ -38,9 +38,16 @@ def main() -> None:
     p_hp.add_argument("after", type=int)
     p_hp.add_argument("--type", default="damage")
 
+    p_dash = sub.add_parser("dashboard", help="Full campaign snapshot (mobile)")
+    p_dash.add_argument("campaign")
+
     args = parser.parse_args()
 
-    if args.cmd == "mobile-status":
+    if args.cmd == "dashboard":
+        from campaign_dashboard import build_campaign_dashboard
+        dash = build_campaign_dashboard(args.campaign)
+        result = {"dashboard": dash, "mobile_summary": dash.get("mobile_summary", "")}
+    elif args.cmd == "mobile-status":
         result = {"status": format_mobile_status(args.campaign)}
     elif args.cmd == "opening":
         result = proactive_opening(args.campaign)

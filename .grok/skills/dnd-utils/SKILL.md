@@ -32,6 +32,9 @@ description: Shared Python backend for all D&D skills — campaign init, state, 
 | Campaign audit | ✅ Implemented | `audit`, `validate`, `enhanced-audit` |
 | Narration helpers | ✅ Implemented | `format_mobile_status`, `suggest_next_actions` |
 | SQLite analytics layer | ✅ Implemented | `sqlite_layer.py`; enable via `init --enable-sqlite` |
+| Campaign dashboard | ✅ Implemented | `campaign_dashboard.py` — world, PC, combat, quests, kingdom snapshot |
+| Campaign analytics | ✅ Implemented | `campaign_analytics.py` — tags, timeline, NPC mentions, SQLite sync |
+| Event archive (scale) | ✅ Implemented | `archive-events` moves overflow to `logs/events_archive.json` |
 | Combat ↔ character sync bridge | ✅ Implemented | `sync_bridge.py` — HP, healing, death saves |
 
 ## Tools & Scripts
@@ -62,6 +65,12 @@ python .grok/skills/dnd-utils/scripts/narration_cli.py mobile-status "My Campaig
 python .grok/skills/dnd-utils/scripts/narration_cli.py opening "My Campaign"
 python .grok/skills/dnd-utils/scripts/narration_cli.py suggest "My Campaign"
 python .grok/skills/dnd-utils/scripts/narration_cli.py hp-change "My Campaign" --before 32 --after 24
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py dashboard "My Campaign"
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py analytics "My Campaign" --report summary
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py analytics "My Campaign" --report tags
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py analytics "My Campaign" --report sync-sqlite
+python .grok/skills/dnd-utils/scripts/dnd_state_utils.py archive-events "My Campaign" --keep 500
+python .grok/skills/dnd-utils/scripts/narration_cli.py dashboard "My Campaign"
 ```
 
 Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`, `xp_tables.py`, `errors.py`.

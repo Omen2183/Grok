@@ -57,7 +57,12 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
         ["ledger", "AuditCampaign"],
     ],
     "dnd-session-scribe": [["auto-recap", "AuditCampaign"]],
-    "dnd-utils": [["campaigns-root"], ["validate", "AuditCampaign"]],
+    "dnd-utils": [
+        ["campaigns-root"],
+        ["validate", "AuditCampaign"],
+        ["dashboard", "AuditCampaign"],
+        ["analytics", "AuditCampaign", "--report", "tags"],
+    ],
     "dnd-visual-weaver": [
         ["weave-prompt", "AuditCampaign", "test scene"],
         ["status", "AuditCampaign"],
@@ -87,6 +92,8 @@ UTILS_LIBRARY_ONLY = {
     "sqlite_layer.py",
     "sync_bridge.py",
     "xp_tables.py",
+    "campaign_dashboard.py",
+    "campaign_analytics.py",
 }
 
 RULES_LIBRARY_ONLY = {"rules_data.py"}

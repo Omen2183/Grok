@@ -33,7 +33,10 @@ def main() -> int:
         run([py, str(SKILLS / "dnd-utils/scripts/skill_registry.py"), "resolve", "loot", "--campaign", campaign], env)
         run([py, str(SKILLS / "dnd-utils/scripts/skill_orchestrator.py"), "plan", campaign, "next turn"], env)
         run([py, str(SKILLS / "dnd-utils/scripts/dnd_state_utils.py"), "validate", campaign], env)
+        run([py, str(SKILLS / "dnd-utils/scripts/dnd_state_utils.py"), "dashboard", campaign], env)
+        run([py, str(SKILLS / "dnd-utils/scripts/dnd_state_utils.py"), "analytics", campaign, "--report", "tags"], env)
         run([py, str(SKILLS / "dnd-utils/scripts/narration_cli.py"), "mobile-status", campaign], env)
+        run([py, str(SKILLS / "dnd-utils/scripts/narration_cli.py"), "dashboard", campaign], env)
 
         # Core play backends
         run([py, str(SKILLS / "dnd-dice-engine/scripts/dice_roller.py"), "1d20", "--campaign", campaign], env)

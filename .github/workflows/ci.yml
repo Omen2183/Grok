@@ -24,3 +24,4 @@ jobs:
       - run: python scripts/validate_orchestration.py
       - run: python scripts/validate_backends.py
       - run: python scripts/validate_skill_docs.py
+      - run: python scripts/registry_sync.py --check

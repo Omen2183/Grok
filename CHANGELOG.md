@@ -1,5 +1,24 @@
 # Changelog
 
+## 3.4.0 — Dashboard, analytics, registry sync, E2E playbooks, PLAYERS.md
+
+### Added
+- `campaign_dashboard.py` — unified campaign snapshot + mobile summary
+- `campaign_analytics.py` — tag counts, session timeline, NPC mention frequency, SQLite backfill, event archiving
+- `dnd_state_utils` CLIs: `dashboard`, `analytics`, `archive-events`
+- `narration_cli dashboard` — mobile-friendly full snapshot
+- `scripts/registry_sync.py` — discover skills, validate registry, `--check` CI gate, `--fix-scripts`
+- `tests/test_playbook_session_end.py` — E2E `session-end` playbook
+- `tests/test_campaign_dashboard.py` — dashboard + analytics + archive tests
+- **PLAYERS.md** — human-facing quickstart for Grok iOS players/DMs
+
+### Changed
+- CI runs `registry_sync.py --check`
+- Smoke test covers dashboard + analytics
+- `dnd-utils` SKILL.md documents new CLIs and capabilities matrix rows
+- `init --force` resets `events.json` and `rolls.json` for a clean slate
+- Test fixture sets `DND_CAMPAIGNS_ROOT` so playbook subprocesses share isolated state
+
 ## 3.3.0 — Comprehensive dice engine expansion
 
 ### Added

@@ -17,6 +17,8 @@ import dnd_state_utils as state  # noqa: E402
 
 @pytest.fixture
 def campaign_root(tmp_path, monkeypatch):
+    """Isolate campaign state; env var ensures subprocess CLIs use the same root."""
+    monkeypatch.setenv("DND_CAMPAIGNS_ROOT", str(tmp_path))
     monkeypatch.setattr(paths, "get_campaigns_root", lambda: tmp_path)
     return tmp_path
 

@@ -127,8 +127,12 @@ def init_campaign(
         )
 
     rolls_log = root / "logs" / "rolls.json"
-    if not rolls_log.exists():
+    if force or not rolls_log.exists():
         rolls_log.write_text("[]", encoding="utf-8")
+
+    events_log = root / "logs" / "events.json"
+    if force:
+        events_log.write_text("[]", encoding="utf-8")
 
     if enable_sqlite:
         (root / "state" / "sqlite_enabled.flag").write_text("1", encoding="utf-8")
@@ -585,6 +589,24 @@ def main() -> None:
     p_sql.add_argument("--tag")
     p_sql.add_argument("--limit", type=int, default=20)
 
+    p_dash = sub.add_parser("dashboard", help="Unified campaign snapshot")
+    p_dash.add_argument("campaign")
+    p_dash.add_argument("--audit", action="store_true")
+
+    p_analytics = sub.add_parser("analytics", help="Campaign analytics reports")
+    p_analytics.add_argument("campaign")
+    p_analytics.add_argument(
+        "--report",
+        choices=["summary", "tags", "timeline", "npcs", "sync-sqlite", "archive"],
+        default="summary",
+    )
+    p_analytics.add_argument("--limit", type=int, default=20)
+    p_analytics.add_argument("--keep-events", type=int, default=500)
+
+    p_archive = sub.add_parser("archive-events", help="Archive overflow events.json entries")
+    p_archive.add_argument("campaign")
+    p_archive.add_argument("--keep", type=int, default=500)
+
     args = parser.parse_args()
 
     if args.cmd == "init":
@@ -663,6 +685,20 @@ def main() -> None:
                 }
         except Exception as exc:
             result = {"enabled": False, "error": str(exc)}
+    elif args.cmd == "dashboard":
+        from campaign_dashboard import build_campaign_dashboard
+        result = build_campaign_dashboard(args.campaign, include_audit=args.audit)
+    elif args.cmd == "analytics":
+        from campaign_analytics import run_analytics
+        result = run_analytics(
+            args.campaign,
+            report=args.report,
+            limit=args.limit,
+            keep_events=args.keep_events,
+        )
+    elif args.cmd == "archive-events":
+        from campaign_analytics import archive_old_events
+        result = archive_old_events(args.campaign, keep=args.keep)
     else:
         result = {"error": "Unknown command"}
 

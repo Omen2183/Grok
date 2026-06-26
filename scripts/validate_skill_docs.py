@@ -23,6 +23,7 @@ REQUIRED_SECTIONS = (
 UTILS_LIBRARY_ONLY = {
     "bootstrap.py", "paths.py", "errors.py", "event_system.py", "kingdom_sim.py",
     "narration_helpers.py", "sqlite_layer.py", "sync_bridge.py", "xp_tables.py",
+    "campaign_dashboard.py", "campaign_analytics.py",
 }
 
 # dice_roller registers check/attack/save via loop variable
