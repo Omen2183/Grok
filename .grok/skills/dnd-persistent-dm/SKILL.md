@@ -1,6 +1,6 @@
 ---
 name: dnd-persistent-dm
-description: Play or continue any D&D campaign with Grok as DM. v3.2.0 production orchestrator with skill_registry coordination. Native Grok iOS entry point for text and voice play. Triggers include play D&D, DM mode, continue campaign, kingdom mode, end session, what's happening. Routes all 17 skills via persistent_dm.py + skill_orchestrator.py playbooks. Persistent JSON state per campaign.
+description: Play or continue any D&D campaign with Grok as DM. v5.1.0 production orchestrator with skill_registry coordination. Native Grok iOS entry point for text and voice play. Triggers include play D&D, DM mode, continue campaign, kingdom mode, end session, what's happening. Routes all 17 skills via persistent_dm.py + skill_orchestrator.py playbooks. Persistent JSON state per campaign.
 ---
 
 # D&D Persistent DM
@@ -34,7 +34,7 @@ description: Play or continue any D&D campaign with Grok as DM. v3.2.0 productio
 | Voice play | ✅ Implemented | Route through voice-assistant first |
 | Orchestrator script | ✅ Implemented | `persistent_dm.py` — route, execute, playbook, registry |
 | Cross-skill coordination | ✅ Implemented | `skill_registry.py` + `skill_orchestrator.py` |
-| Named playbooks | ✅ Implemented | session-end, kingdom-turn, end-combat, downtime |
+| Named playbooks | ✅ Implemented | 11 playbooks incl. chaos-campaign, random-session, party-generator |
 
 ## Tools & Scripts
 ```bash
@@ -138,7 +138,7 @@ This skill is the **DM hub** for all 17 skills. Every cross-skill call flows thr
 | Voice (iOS) | `voice_utils.py` | Voice entry → `plan` → hub or specialist |
 | sync_bridge | import via combat-assistant | PC HP/death saves ↔ character sheet |
 
-Named playbooks: `new-campaign`, `start-combat`, `end-combat`, `session-end`, `kingdom-turn`, `downtime`.
+Named playbooks: `new-campaign`, `start-combat`, `end-combat`, `session-end`, `kingdom-turn`, `downtime`, `chaos-campaign`, `random-session`, `party-generator`, `grid-combat`, `vtt-export`.
 
 ## Integration
 | Trigger | Delegate to |

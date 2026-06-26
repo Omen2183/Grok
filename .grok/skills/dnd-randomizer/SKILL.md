@@ -1,6 +1,6 @@
 ---
 name: dnd-randomizer
-description: Unified D&D randomization for any campaign need — weighted tables, random items, full characters (race, class, feats, spells, stats, class kits), NPCs, parties, encounters, dungeons, quests, worlds, wild magic surges, and total-chaos packages. v5.0.0 production. Triggers include randomize, random item, random character, random party, random dungeon, wild magic surge, roll table, surprise me, chaos campaign, balanced random. Delegates CR-scaled loot/encounters via --balanced; owns pure randomness and table rolls.
+description: Unified D&D randomization for any campaign need — weighted tables, random items, full characters (race, class, feats, spells, stats, class kits), NPCs, parties, encounters, dungeons, quests, worlds, wild magic surges, and total-chaos packages. v5.1.0 production. Triggers include randomize, random item, random character, random party, random dungeon, wild magic surge, roll table, surprise me, chaos campaign, balanced random. Delegates CR-scaled loot/encounters via --balanced; owns pure randomness and table rolls.
 ---
 
 # D&D Randomizer

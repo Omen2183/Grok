@@ -1,6 +1,6 @@
 ---
 name: dnd-voice-assistant
-description: Voice execution layer for the D&D skills suite. v3.2.0 production. Triggers include voice mode, play by voice, DM voice, start voice D&D, continue voice campaign. Routes utterances through skill_orchestrator plan/execute to persistent-dm, combat-assistant, dice-engine, downtime-manager, and session-scribe. Parses damage/healing phrases, confirms destructive actions, and formats listenable short replies. Full mechanical parity with text play on Grok iOS.
+description: Voice execution layer for the D&D skills suite. v5.1.0 production. Triggers include voice mode, play by voice, DM voice, start voice D&D, continue voice campaign. Routes utterances through skill_orchestrator plan/execute to persistent-dm, combat-assistant, dice-engine, downtime-manager, and session-scribe. Parses damage/healing phrases, confirms destructive actions, and formats listenable short replies. Full mechanical parity with text play on Grok iOS.
 ---
 
 # D&D Voice Assistant

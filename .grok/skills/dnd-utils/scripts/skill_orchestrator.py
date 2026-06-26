@@ -16,11 +16,14 @@ ensure_utils_importable()
 from paths import get_workspace_root, python_cli_argv  # noqa: E402
 from skill_registry import (  # noqa: E402
     PLAYBOOKS,
+    SKILLS,
     SKILLS_ROOT,
     get_playbook,
     resolve_intent,
     script_path,
 )
+
+ORCHESTRATOR_VERSION = "5.1.1"
 
 
 def enrich_route(campaign: str, route: Dict[str, Any]) -> Dict[str, Any]:
@@ -38,10 +41,46 @@ def enrich_route(campaign: str, route: Dict[str, Any]) -> Dict[str, Any]:
     return enriched
 
 
-def _run_cli(script_rel: str, campaign: str, command: str, extra_args: Optional[List[str]] = None) -> Dict[str, Any]:
-    cmd = python_cli_argv(script_rel, command, campaign)
-    if extra_args:
-        cmd.extend(extra_args)
+def _script_for_skill(skill_id: str, command: str) -> Optional[str]:
+    if skill_id == "dnd-character-manager" and command in ("foundry", "roll20", "combat-foundry"):
+        return "dnd-character-manager/scripts/vtt_export.py"
+    return SKILLS.get(skill_id, {}).get("script")
+
+
+def _build_playbook_argv(
+    script_rel: str,
+    campaign: str,
+    command: str,
+    extra_args: Optional[List[str]] = None,
+    *,
+    pass_campaign: bool = True,
+    campaign_after_args: bool = False,
+) -> List[str]:
+    extra = list(extra_args or [])
+    if not pass_campaign:
+        return python_cli_argv(script_rel, command, *extra)
+    if campaign_after_args:
+        return python_cli_argv(script_rel, command, *extra, campaign)
+    return python_cli_argv(script_rel, command, campaign, *extra)
+
+
+def _run_cli(
+    script_rel: str,
+    campaign: str,
+    command: str,
+    extra_args: Optional[List[str]] = None,
+    *,
+    step: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    meta = step or {}
+    cmd = _build_playbook_argv(
+        script_rel,
+        campaign,
+        command,
+        extra_args,
+        pass_campaign=meta.get("pass_campaign", True),
+        campaign_after_args=meta.get("campaign_after_args", False),
+    )
     proc = subprocess.run(cmd, capture_output=True, text=True, cwd=str(get_workspace_root()))
     stdout = proc.stdout.strip()
     try:
@@ -100,17 +139,6 @@ def run_playbook(campaign: str, name: str, *, stop_on_error: bool = True) -> Dic
     """Run a named multi-skill playbook sequentially."""
     steps = get_playbook(name)
     results: List[Dict[str, Any]] = []
-    skill_scripts = {
-        "dnd-persistent-dm": "dnd-persistent-dm/scripts/persistent_dm.py",
-        "dnd-utils": "dnd-utils/scripts/dnd_state_utils.py",
-        "dnd-combat-assistant": "dnd-combat-assistant/scripts/combat_tracker.py",
-        "dnd-session-scribe": "dnd-session-scribe/scripts/session_scribe.py",
-        "dnd-loot-generator": "dnd-loot-generator/scripts/procedural_loot.py",
-        "dnd-rumor-event-generator": "dnd-rumor-event-generator/scripts/rumor_generator.py",
-        "dnd-downtime-manager": "dnd-downtime-manager/scripts/downtime_manager.py",
-        "dnd-quest-tracker": "dnd-quest-tracker/scripts/quest_tracker.py",
-        "dnd-character-manager": "dnd-character-manager/scripts/character_manager.py",
-    }
 
     for step in steps:
         skill = step["skill"]
@@ -118,17 +146,12 @@ def run_playbook(campaign: str, name: str, *, stop_on_error: bool = True) -> Dic
         if command in ("initiative", "sync") or step.get("notes") and "Roll" in step.get("notes", ""):
             results.append({"step": step, "status": "skipped", "reason": step.get("notes", "manual step")})
             continue
-        script = skill_scripts.get(skill)
+        script = _script_for_skill(skill, command)
         if not script:
             results.append({"step": step, "status": "skipped", "reason": f"No auto script for {skill}"})
             continue
         extra = step.get("args", [])
-        if command == "enhanced-audit":
-            exec_result = _run_cli(script, campaign, "enhanced-audit")
-        elif command == "init" and skill == "dnd-persistent-dm":
-            exec_result = _run_cli(script, campaign, "init", extra)
-        else:
-            exec_result = _run_cli(script, campaign, command, extra)
+        exec_result = _run_cli(script, campaign, command, extra, step=step)
         results.append({"step": step, "status": "ok" if exec_result["ok"] else "failed", "execution": exec_result})
         if stop_on_error and not exec_result["ok"]:
             break

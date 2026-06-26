@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.1.1 — Pre-iOS deployment polish
+
+### Fixed
+- Playbook orchestrator: randomizer steps use correct CLI arg order (`pass_campaign`, `campaign_after_args`)
+- `party-generator` / `random-session` playbooks auto-run via registry (no skipped randomizer steps)
+- `validate_skill_docs` hardcoded path warning in dnd-utils SKILL.md
+
+### Changed
+- Orchestrator resolves scripts from `skill_registry.SKILLS` (all 17 skills)
+- Playbook lists updated in persistent-dm + dnd-utils SKILL.md
+- PLAYERS.md pre-flight checklist for Grok iOS + Ara review
+
 ## 5.1.0 — Grok iOS native file structure parity
 
 ### Added

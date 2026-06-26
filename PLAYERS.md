@@ -106,6 +106,14 @@ flowchart TB
 
 ---
 
+## Add to Grok on your phone (pre-flight)
+
+1. **Get the skills on device** — clone/sync [github.com/Omen2183/Grok](https://github.com/Omen2183/Grok) so `.grok/skills/` (all 17 `dnd-*` folders) is in your Grok workspace, or copy them to user skills if your Grok iOS build supports that.
+2. **No path config needed** — campaign data is created automatically on first *"Let's play D&D"*.
+3. **Smoke check** (optional, if you have shell access): `runtime-context` should show `platform: grok_ios_cloud` or `grok_global_user` and a valid `campaigns_root`.
+4. **Start play** — *"Let's play D&D — campaign Shadowmere"* or *"Start voice D&D"*.
+5. **For Ara / review** — repo is at v5.1.x; 133+ tests, all validators green; honest ⚠️ rows in SKILL.md are intentional (Grok narrates what scripts don't automate).
+
 ## Install & verify (optional)
 
 Repo: [github.com/Omen2183/Grok](https://github.com/Omen2183/Grok)

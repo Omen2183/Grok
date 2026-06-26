@@ -357,7 +357,7 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
     "chaos-campaign": [
         {"skill": "dnd-randomizer", "command": "apply-world", "notes": "Confirm with player first"},
         {"skill": "dnd-randomizer", "command": "apply-character", "args": ["--level", "3"]},
-        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"]},
+        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"], "pass_campaign": False},
         {"skill": "dnd-randomizer", "command": "apply-quest"},
         {"skill": "dnd-randomizer", "command": "apply-npc"},
         {"skill": "dnd-rumor-event-generator", "command": "rumors", "args": ["--count", "2"]},
@@ -365,14 +365,14 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
     "random-session": [
         {"skill": "dnd-randomizer", "command": "travel-day"},
         {"skill": "dnd-randomizer", "command": "random-dungeon", "args": ["--party-level", "3"]},
-        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"]},
-        {"skill": "dnd-randomizer", "command": "mobile-summary", "args": ["item"]},
+        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"], "pass_campaign": False},
+        {"skill": "dnd-randomizer", "command": "mobile-summary", "args": ["item"], "campaign_after_args": True},
         {"skill": "dnd-randomizer", "command": "random-quest"},
     ],
     "party-generator": [
-        {"skill": "dnd-randomizer", "command": "random-party", "args": ["--size", "4", "--level", "3"]},
-        {"skill": "dnd-randomizer", "command": "mobile-summary", "args": ["party", "--level", "3"]},
-        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"]},
+        {"skill": "dnd-randomizer", "command": "random-party", "args": ["--size", "4", "--level", "3"], "pass_campaign": False},
+        {"skill": "dnd-randomizer", "command": "mobile-summary", "args": ["party", "--level", "3"], "campaign_after_args": True},
+        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"], "pass_campaign": False},
     ],
     "downtime": [
         {"skill": "dnd-downtime-manager", "command": "long-rest"},

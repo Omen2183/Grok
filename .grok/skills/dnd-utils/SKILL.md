@@ -82,7 +82,7 @@ python .grok/skills/dnd-utils/scripts/narration_cli.py dashboard "My Campaign"
 
 Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`, `lore_index.py`, `class_progression.py`, `faction_engine.py`, `xp_tables.py`, `errors.py`.
 
-Playbooks (v4.0.0): `new-campaign`, `start-combat`, `grid-combat`, `end-combat`, `session-end`, `kingdom-turn`, `vtt-export`, `downtime`
+Playbooks (v5.1.0): `new-campaign`, `start-combat`, `grid-combat`, `end-combat`, `session-end`, `kingdom-turn`, `vtt-export`, `downtime`, `chaos-campaign`, `random-session`, `party-generator`
 
 ## Behavior
 - Resolve campaign root via `paths.py` (`DND_CAMPAIGNS_ROOT` → `~/.grok/artifacts/dnd-campaigns/`).
@@ -118,7 +118,7 @@ Playbooks (v4.0.0): `new-campaign`, `start-combat`, `grid-combat`, `end-combat`,
 - **No direct player narration** — use persistent-dm or narration_cli for player-facing text
 
 ## iOS / Voice Notes
-- Campaign paths auto-resolve on Grok iOS cloud (`/home/workdir/artifacts/dnd-campaigns/`) and PC — no manual setup.
+- Campaign paths auto-resolve on Grok iOS cloud and PC via `paths.py` — no manual setup.
 - Run `runtime-context` if a session cannot find campaign files; set `DND_CAMPAIGNS_ROOT` only as last resort.
 - Status replies should be ≤8 lines; lead with location + HP.
 - Voice sessions still use utils indirectly via persistent-dm routing.
