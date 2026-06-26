@@ -1,6 +1,6 @@
 ---
 name: dnd-character-manager
-description: Player character sheet management — summary, level-up, inventory, attunement, death saves, export. v2.0.0 production. Triggers include level up, character sheet, add item, attune, death save, export character, companion status. Integrates with dnd-utils state and combat-assistant HP sync via sync_bridge. Supports 5e + homebrew feats and multiclass.
+description: Player character sheet management — summary, level-up, inventory, attunement, death saves, spell slots, multiclass, VTT export. v4.0.0 production. Triggers include level up, character sheet, add item, attune, death save, export character, companion status. Integrates with dnd-utils state and combat-assistant HP sync via sync_bridge. Supports 5e + homebrew feats and multiclass.
 ---
 
 # D&D Character Manager
@@ -30,7 +30,9 @@ description: Player character sheet management — summary, level-up, inventory,
 | Level-up suggestions | ✅ Implemented | `suggest-level-up` CLI |
 | Companion tracking | ✅ Implemented | `companion add/list/get/remove` |
 | Post-combat sheet sync | ✅ Implemented | `sync` reconciles combat → sheet |
-| Full multiclass builder UI | ❌ Prompt-only | Grok guides; use `--class` per level |
+| Spell slot tracking | ✅ Implemented | `spell-slots` — use/restore via `class_progression.py` |
+| Multiclass builder | ✅ Implemented | `validate-multiclass`, `build-plan` |
+| VTT export | ✅ Implemented | `vtt_export.py` — Foundry, Roll20, combat-foundry |
 
 ## Tools & Scripts
 ```bash
@@ -44,9 +46,17 @@ python .grok/skills/dnd-character-manager/scripts/character_manager.py suggest-l
 python .grok/skills/dnd-character-manager/scripts/character_manager.py companion "My Campaign" add --name "Wolf" --hp 11
 python .grok/skills/dnd-character-manager/scripts/character_manager.py companion "My Campaign" list
 python .grok/skills/dnd-character-manager/scripts/character_manager.py sync "My Campaign"
+python .grok/skills/dnd-character-manager/scripts/character_manager.py spell-slots "My Campaign"
+python .grok/skills/dnd-character-manager/scripts/character_manager.py spell-slots "My Campaign" --use 3
+python .grok/skills/dnd-character-manager/scripts/character_manager.py spell-slots "My Campaign" --restore
+python .grok/skills/dnd-character-manager/scripts/character_manager.py validate-multiclass "My Campaign" Wizard
+python .grok/skills/dnd-character-manager/scripts/character_manager.py build-plan "My Campaign"
+python .grok/skills/dnd-character-manager/scripts/vtt_export.py foundry "My Campaign"
+python .grok/skills/dnd-character-manager/scripts/vtt_export.py roll20 "My Campaign"
+python .grok/skills/dnd-character-manager/scripts/vtt_export.py combat-foundry "My Campaign"
 ```
 
-Primary script: `character_manager.py` — commands: `summary`, `level-up`, `inventory`, `death-save`, `export`, `suggest-level-up`, `companion`, `sync`
+Primary scripts: `character_manager.py` (`summary`, `level-up`, `inventory`, `death-save`, `export`, `suggest-level-up`, `companion`, `sync`, `spell-slots`, `validate-multiclass`, `build-plan`), `vtt_export.py` (Foundry/Roll20).
 
 **Level-up note:** Always pass `--class` when adding a class level (e.g. `--class Wizard` for a multiclass dip). Omitting it levels the primary class only.
 

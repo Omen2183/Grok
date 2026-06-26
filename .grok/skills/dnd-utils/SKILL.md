@@ -1,6 +1,6 @@
 ---
 name: dnd-utils
-description: Shared Python backend for all D&D skills — campaign init, state, events, kingdom sim, plus skill_registry and skill_orchestrator for cross-skill coordination. v3.0.0 production foundation. Not player-facing; all skills route through registry for delegation. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
+description: Shared Python backend for all D&D skills — campaign init, state, events, kingdom sim, lore index, class progression, faction engine, plus skill_registry and skill_orchestrator for cross-skill coordination. v4.0.0 production foundation. Not player-facing; all skills route through registry for delegation. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
 ---
 
 # D&D Utils
@@ -36,6 +36,9 @@ description: Shared Python backend for all D&D skills — campaign init, state, 
 | Campaign analytics | ✅ Implemented | `campaign_analytics.py` — tags, timeline, NPC mentions, SQLite sync |
 | Event archive (scale) | ✅ Implemented | `archive-events` moves overflow to `logs/events_archive.json` |
 | Combat ↔ character sync bridge | ✅ Implemented | `sync_bridge.py` — HP, healing, death saves |
+| Lore FTS5 index | ✅ Implemented | `lore_index.py` — rebuild + semantic search |
+| Multiclass / spell slots | ✅ Implemented | `class_progression.py` — prereqs, slot tables, restore |
+| Faction simulation engine | ✅ Implemented | `faction_engine.py` — goals, influence, diplomacy graph |
 
 ## Tools & Scripts
 ```bash
@@ -53,6 +56,8 @@ python .grok/skills/dnd-utils/scripts/skill_registry.py list
 python .grok/skills/dnd-utils/scripts/skill_registry.py resolve damage --campaign "My Campaign"
 python .grok/skills/dnd-utils/scripts/skill_orchestrator.py plan "My Campaign" "next turn"
 python .grok/skills/dnd-utils/scripts/skill_orchestrator.py playbook "My Campaign" kingdom-turn
+python .grok/skills/dnd-utils/scripts/skill_orchestrator.py playbook "My Campaign" grid-combat
+python .grok/skills/dnd-utils/scripts/skill_orchestrator.py playbook "My Campaign" vtt-export
 python .grok/skills/dnd-utils/scripts/skill_orchestrator.py execute "My Campaign" damage --target Goblin --amount 8
 python .grok/skills/dnd-utils/scripts/skill_registry.py coordination damage --campaign "My Campaign"
 python .grok/skills/dnd-utils/scripts/skill_registry.py graph
@@ -73,7 +78,9 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py archive-events "My Camp
 python .grok/skills/dnd-utils/scripts/narration_cli.py dashboard "My Campaign"
 ```
 
-Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`, `xp_tables.py`, `errors.py`.
+Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`, `lore_index.py`, `class_progression.py`, `faction_engine.py`, `xp_tables.py`, `errors.py`.
+
+Playbooks (v4.0.0): `new-campaign`, `start-combat`, `grid-combat`, `end-combat`, `session-end`, `kingdom-turn`, `vtt-export`, `downtime`
 
 ## Behavior
 - Resolve campaign root via `paths.py` (`DND_CAMPAIGNS_ROOT` → `~/.grok/artifacts/dnd-campaigns/`).

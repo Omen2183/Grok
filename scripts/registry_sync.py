@@ -25,7 +25,8 @@ SCRIPT_FOR_SKILL: Dict[str, str] = {
 LIBRARY_ONLY = {
     "bootstrap.py", "paths.py", "errors.py", "event_system.py", "kingdom_sim.py",
     "narration_helpers.py", "sqlite_layer.py", "sync_bridge.py", "xp_tables.py",
-    "rules_data.py", "campaign_dashboard.py", "campaign_analytics.py",
+    "rules_data.py", "srd_data.py", "campaign_dashboard.py", "campaign_analytics.py",
+    "lore_index.py", "class_progression.py", "faction_engine.py",
 }
 
 

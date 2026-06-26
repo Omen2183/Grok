@@ -12,8 +12,15 @@ from typing import Any, Dict, List, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-utils" / "scripts"))
 
 from rules_data import CHEATSHEET, CONDITION_ALIASES, TOPIC_ALIASES  # noqa: E402
+from srd_data import (  # noqa: E402
+    SRD_DATA_VERSION,
+    lookup_feat,
+    lookup_spell,
+    search_feats,
+    search_spells,
+)
 
-RULES_BACKEND_VERSION = "3.2.0"
+RULES_BACKEND_VERSION = "4.0.0"
 
 
 def list_topics(*, tag: Optional[str] = None) -> List[str]:
@@ -94,6 +101,20 @@ def main() -> None:
     p_home = sub.add_parser("homebrew")
     p_home.add_argument("campaign")
 
+    p_spell = sub.add_parser("spell", help="Lookup SRD spell")
+    p_spell.add_argument("name")
+
+    p_feat = sub.add_parser("feat", help="Lookup SRD feat")
+    p_feat.add_argument("name")
+
+    p_spells = sub.add_parser("search-spells")
+    p_spells.add_argument("query")
+    p_spells.add_argument("--limit", type=int, default=10)
+
+    p_feats = sub.add_parser("search-feats")
+    p_feats.add_argument("query")
+    p_feats.add_argument("--limit", type=int, default=10)
+
     args = parser.parse_args()
     if args.cmd == "list":
         result: Any = {"topics": list_topics(), "version": RULES_BACKEND_VERSION}
@@ -107,6 +128,14 @@ def main() -> None:
         result = lookup_condition(args.name)
     elif args.cmd == "homebrew":
         result = campaign_homebrew_notes(args.campaign)
+    elif args.cmd == "spell":
+        result = lookup_spell(args.name)
+    elif args.cmd == "feat":
+        result = lookup_feat(args.name)
+    elif args.cmd == "search-spells":
+        result = {"query": args.query, "results": search_spells(args.query, limit=args.limit), "version": SRD_DATA_VERSION}
+    elif args.cmd == "search-feats":
+        result = {"query": args.query, "results": search_feats(args.query, limit=args.limit), "version": SRD_DATA_VERSION}
     else:
         result = {"error": "Unknown command"}
     print(json.dumps(result, indent=2))

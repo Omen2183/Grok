@@ -1,6 +1,6 @@
 ---
 name: dnd-combat-assistant
-description: Combat encounter tracker for initiative, HP, healing, conditions, concentration, death saves, and turn order. v2.0.0 production. Triggers include start combat, roll initiative, next turn, damage to [target], heal [target], apply condition, end combat. Mobile-first text combat for any D&D campaign. Syncs HP and death saves to character sheet via sync_bridge.
+description: Combat encounter tracker for initiative, HP, healing, conditions, concentration, death saves, and turn order. v4.0.0 production. Triggers include start combat, roll initiative, next turn, damage to [target], heal [target], apply condition, end combat. Mobile-first text combat for any D&D campaign. Syncs HP and death saves to character sheet via sync_bridge.
 ---
 
 # D&D Combat Assistant
@@ -31,8 +31,9 @@ description: Combat encounter tracker for initiative, HP, healing, conditions, c
 | HP sync on damage/heal | ✅ Implemented | `sync_bridge` for player PC |
 | End combat + XP hook | ✅ Implemented | Clears combat file, records outcome |
 | Mass combat resolver | ✅ Implemented | Abstract kingdom-scale battles |
+| Grid tactical combat | ✅ Implemented | `grid_combat.py` — positions, movement, AoE, cover |
 | Auto-roll monster initiative | ⚠️ Partial | Manual `--initiative` required on add |
-| Visual battle maps | ❌ Prompt-only | Text tracker only |
+| Visual battle maps | ✅ Implemented | Grid state + visual-weaver `weave-map` prompts |
 
 ## Tools & Scripts
 ```bash
@@ -53,9 +54,16 @@ python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py tick-conditio
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py remove "My Campaign" --target "Goblin 1"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py resolve-mass-combat "My Campaign" --attacker "Kingdom forces" --defender "Bandits" --scale medium
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py end-combat "My Campaign" --xp 150
+python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py init-grid "My Campaign" --width 20 --height 20 --terrain forest
+python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py place "My Campaign" "Aria" 10 8 --size medium
+python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py move "My Campaign" "Aria" 12 8 --speed 30
+python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py distance "My Campaign" "Aria" "Goblin 1"
+python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py aoe "My Campaign" 12 8 15
+python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py add-obstacle "My Campaign" 11 7 --cover half --label "tree"
+python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py summary "My Campaign"
 ```
 
-Primary script: `combat_tracker.py` — all commands listed above.
+Primary scripts: `combat_tracker.py` (initiative/HP/conditions), `grid_combat.py` (tactical grid).
 
 ## Behavior
 - Lead with whose turn it is and target HP after each change.

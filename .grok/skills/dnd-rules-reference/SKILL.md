@@ -1,6 +1,6 @@
 ---
 name: dnd-rules-reference
-description: Accurate 5e rules clarification including homebrew considerations. v3.2.0 production. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Backend rules_cheatsheet.py with 25+ topics; Grok knowledge for edge cases.
+description: Accurate 5e rules clarification including homebrew considerations and SRD spell/feat index. v4.0.0 production. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Backend rules_cheatsheet.py with 25+ topics; Grok knowledge for edge cases.
 ---
 
 # D&D Rules Reference
@@ -25,14 +25,15 @@ description: Accurate 5e rules clarification including homebrew considerations. 
 | Condition reference | ✅ Implemented | `condition` command |
 | Topic listing | ✅ Implemented | `list`, `topics` |
 | Homebrew-aware rulings | ✅ Implemented | `homebrew` reads campaign notes |
+| SRD spell lookup | ✅ Implemented | `spell`, `search-spells` via `srd_data.py` |
+| SRD feat lookup | ✅ Implemented | `feat`, `search-feats` via `srd_data.py` |
 | Full 5e explanations (edge cases) | ⚠️ Partial | Grok knowledge beyond cheatsheet |
-| Spell/feat lookup by name | ⚠️ Partial | LLM recall; verify for niche content |
-| Full automated rules engine | ❌ Not implemented | No complete SRD database |
-| Official source page links | ❌ Prompt-only | Summarize in chat |
+| Full PHB rules engine | ⚠️ Partial | SRD OGL subset only; verify niche/homebrew |
+| Official PHB page references | ❌ Platform | Summarize in chat; no page links |
 
 ## Tools & Scripts
-Primary script: `rules_cheatsheet.py` — commands: `list`, `topics`, `lookup`, `search`, `condition`, `homebrew`  
-Supporting: `rules_data.py` (import-only topic database)
+Primary script: `rules_cheatsheet.py` — commands: `list`, `topics`, `lookup`, `search`, `condition`, `homebrew`, `spell`, `feat`, `search-spells`, `search-feats`  
+Supporting: `rules_data.py` (cheatsheet topics), `srd_data.py` (SRD spell/feat index)
 
 ```bash
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py list
@@ -41,6 +42,10 @@ python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py lookup conce
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py search grapple
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py condition prone
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py homebrew "My Campaign" custom-rest-rules
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py spell "fireball"
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py feat "alert"
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py search-spells heal --limit 5
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py search-feats magic --limit 5
 ```
 
 ## Behavior

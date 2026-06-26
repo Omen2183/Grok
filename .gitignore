@@ -1,24 +1,26 @@
-# Python
 __pycache__/
 *.py[cod]
-*.egg-info/
+*$py.class
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+*.egg-info/
+dist/
+build/
 .venv/
 venv/
 
-# Campaign data (keep local, don't commit play state)
-artifacts/
+# Stale export artifacts — canonical source is .grok/skills/
+dnd-skills-source/
+grok-dnd-skills-export/
+*.zip
+*.tar.gz
 
-# OS / editor
+# Local campaign data (never commit player state)
+.grok/artifacts/
+
+# Editor / OS
 .DS_Store
 Thumbs.db
 *.swp
-.vscode/
-.idea/
-
-# Archives (source lives in .grok/skills/)
-dnd-skills-source/
-grok-dnd-skills-export/
-grok-dnd-skills-export.zip
+*.tmp

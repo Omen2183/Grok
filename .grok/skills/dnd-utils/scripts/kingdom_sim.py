@@ -92,4 +92,8 @@ def advance_kingdom_turn_simulation(campaign_name: str) -> Dict[str, Any]:
     military = kingdom.get("military", {})
     if military:
         results["military"] = {"units": military}
+    from faction_engine import simulate_faction_round
+
+    if kingdom.get("factions"):
+        results["factions"] = simulate_faction_round(campaign_name)
     return results

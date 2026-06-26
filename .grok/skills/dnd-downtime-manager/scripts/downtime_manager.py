@@ -18,10 +18,11 @@ from bootstrap import ensure_utils_importable
 ensure_utils_importable()
 
 from dnd_state_utils import get_player_character, load_json, save_json  # noqa: E402
+from class_progression import restore_spell_slots_on_long_rest  # noqa: E402
 from event_system import record_event  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
 
-DOWNTIME_BACKEND_VERSION = "3.2.0"
+DOWNTIME_BACKEND_VERSION = "4.0.0"
 
 CLASS_HIT_DIE = {
     "barbarian": 12,
@@ -129,6 +130,14 @@ def long_rest(campaign_name: str) -> Dict[str, Any]:
     if char.get("status") in ("Dying", "Dead", "Stable (0 HP)"):
         char["status"] = "Alive"
     char["conditions"] = [c for c in char.get("conditions", []) if c not in ("Exhaustion",)]
+    restored_slots = restore_spell_slots_on_long_rest(char.get("classes", []))
+    if restored_slots.get("slots"):
+        char["spell_slots"] = {
+            "max": restored_slots["slots"],
+            "used": restored_slots["slots_used"],
+            "pact_magic": restored_slots.get("pact_magic"),
+            "pact_slots_used": restored_slots.get("pact_slots_used", 0),
+        }
     save_json(_char_path(campaign_name), char)
 
     record_event(campaign_name, "Long rest completed", importance="normal", tags=["rest", "long-rest"])
@@ -138,6 +147,7 @@ def long_rest(campaign_name: str) -> Dict[str, Any]:
         "status": char.get("status"),
         "hit_dice_recovered": recovered_hd,
         "hit_dice": hd,
+        "spell_slots": char.get("spell_slots"),
     }
 
 

@@ -14,7 +14,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-util
 
 from dnd_state_utils import get_kingdom_state, get_world_state, load_json, save_json  # noqa: E402
 from event_system import record_event, search_events  # noqa: E402
+from lore_index import LORE_INDEX_VERSION, rebuild_lore_index, search_lore  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
+
+LORE_BACKEND_VERSION = "4.0.0"
 
 
 def lore_path(campaign_name: str) -> Path:
@@ -30,8 +33,12 @@ def append_lore(campaign_name: str, entry: str, *, tag: str = "lore") -> Dict[st
         path.write_text(path.read_text(encoding="utf-8") + block, encoding="utf-8")
     else:
         path.write_text(f"# Lore Summary — {campaign_name}{block}", encoding="utf-8")
-    record_event(campaign_name, entry[:200], tags=[tag, "lore"])
-    return {"saved": str(path), "entry": entry}
+    event = record_event(campaign_name, entry[:200], tags=[tag, "lore"])
+    try:
+        rebuild_lore_index(campaign_name)
+    except Exception:
+        pass
+    return {"saved": str(path), "entry": entry, "indexed": True, "event": event}
 
 
 def get_lore_summary(campaign_name: str) -> str:
@@ -67,8 +74,9 @@ def list_session_recaps(campaign_name: str, *, limit: int = 10) -> Dict[str, Any
 
 
 def query_lore(campaign_name: str, keyword: str, *, limit: int = 10) -> Dict[str, Any]:
+    fts = search_lore(campaign_name, keyword, limit=limit)
     events = search_events(campaign_name, tag="lore", limit=50)
-    matches = [
+    keyword_matches = [
         e for e in events
         if keyword.lower() in e.get("description", "").lower()
     ][:limit]
@@ -76,10 +84,13 @@ def query_lore(campaign_name: str, keyword: str, *, limit: int = 10) -> Dict[str
     kingdom = get_kingdom_state(campaign_name)
     return {
         "keyword": keyword,
-        "matches": matches,
+        "fts_results": fts.get("results", []),
+        "engine": fts.get("engine", "fts5"),
+        "matches": keyword_matches,
         "location": world.get("current_location"),
         "factions": kingdom.get("factions", {}),
         "lore_excerpt": get_lore_summary(campaign_name)[:800],
+        "version": LORE_BACKEND_VERSION,
     }
 
 
@@ -105,6 +116,15 @@ def main() -> None:
     p_recaps.add_argument("campaign")
     p_recaps.add_argument("--limit", type=int, default=5)
 
+    p_search = sub.add_parser("search", help="FTS5 semantic lore search")
+    p_search.add_argument("campaign")
+    p_search.add_argument("query")
+    p_search.add_argument("--limit", type=int, default=10)
+    p_search.add_argument("--type", dest="doc_type", default=None)
+
+    p_rebuild = sub.add_parser("rebuild-index", help="Reindex all lore sources")
+    p_rebuild.add_argument("campaign")
+
     args = parser.parse_args()
     if args.cmd == "append":
         result = append_lore(args.campaign, args.entry)
@@ -116,6 +136,10 @@ def main() -> None:
         result = list_npc_profiles(args.campaign)
     elif args.cmd == "list-recaps":
         result = list_session_recaps(args.campaign, limit=args.limit)
+    elif args.cmd == "search":
+        result = search_lore(args.campaign, args.query, limit=args.limit, doc_type=args.doc_type)
+    elif args.cmd == "rebuild-index":
+        result = rebuild_lore_index(args.campaign)
     else:
         result = {"error": "unknown command"}
     print(json.dumps(result, indent=2))

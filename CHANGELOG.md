@@ -1,5 +1,33 @@
 # Changelog
 
+## 4.0.0 — 10/10 gap closure: lore FTS, grid combat, SRD index, VTT export, factions, multiclass
+
+### Added
+- `lore_index.py` — FTS5 semantic lore search (events, recaps, NPCs, lore_summary)
+- `class_progression.py` — multiclass prereqs, spell slot tables, build validation
+- `faction_engine.py` — faction goals, diplomacy graph, simulation rounds
+- `srd_data.py` — SRD spell/feat index (15 spells, 12 feats)
+- `grid_combat.py` — tactical grid (place, move, distance, AoE, obstacles)
+- `vtt_export.py` — Foundry + Roll20 character/combat JSON export
+- `lore_archivist` CLIs: `search`, `rebuild-index`
+- `rules_cheatsheet` CLIs: `spell`, `feat`, `search-spells`, `search-feats`
+- `character_manager` CLIs: `spell-slots`, `validate-multiclass`, `build-plan`
+- `rumor_generator` CLIs: `faction-sim`, `diplomacy-graph`
+- `visual_prompt_library` CLI: `weave-map` (battle map from grid state)
+- Playbooks: `grid-combat`, `vtt-export`; `kingdom-turn` includes faction sim
+- `tests/test_v4_features.py` — lore, grid, SRD, VTT, faction, multiclass tests
+- `.gitignore` — excludes `__pycache__`, stale exports, campaign artifacts
+
+### Removed
+- `dnd-skills-source/`, `grok-dnd-skills-export/`, archive zips/tarballs (stale duplicates)
+
+### Changed
+- `pyproject.toml` version → 4.0.0
+- Long rest restores spell slots via `class_progression`
+- `query_lore` uses FTS5 results alongside keyword fallback
+- Level-up recalculates spell slots for casters
+- All affected SKILL.md capability matrices updated to ✅
+
 ## 3.4.0 — Dashboard, analytics, registry sync, E2E playbooks, PLAYERS.md
 
 ### Added

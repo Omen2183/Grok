@@ -1,6 +1,6 @@
 ---
 name: dnd-visual-weaver
-description: Build consistent image-generation prompts from live campaign state, visual canon, and companion references. v3.2.0 production. Triggers include show me, generate art, what does this look like, image of, visual for this scene, character portrait, kingdom map style. Maintains visual consistency across PCs, companions, and locations.
+description: Build consistent image-generation prompts from live campaign state, visual canon, and companion references. v4.0.0 production. Triggers include show me, generate art, what does this look like, image of, visual for this scene, character portrait, kingdom map style. Maintains visual consistency across PCs, companions, and locations.
 ---
 
 # D&D Visual Weaver
@@ -27,11 +27,12 @@ description: Build consistent image-generation prompts from live campaign state,
 | Companion appearance pull | ✅ Implemented | From `important_companion.json` |
 | Kingdom mode framing | ✅ Implemented | Settlement-scale shot hints |
 | Wounded-state visual cues | ✅ Implemented | Low HP adds battle-worn note |
+| Battle map prompts | ✅ Implemented | `weave-map` from grid combat state |
 | Image generation | ⚠️ Partial | Grok iOS image tool; script outputs prompt only |
-| 3D models / maps | ❌ Prompt-only | Prompt text only |
+| 3D models | ❌ Platform | Prompt text only; no 3D asset export |
 
 ## Tools & Scripts
-Primary script: `visual_prompt_library.py` — commands: `weave-prompt`, `weave-kingdom`, `save-canon`, `append-canon`, `status`
+Primary script: `visual_prompt_library.py` — commands: `weave-prompt`, `weave-kingdom`, `weave-map`, `save-canon`, `append-canon`, `status`
 
 ```bash
 python .grok/skills/dnd-visual-weaver/scripts/visual_prompt_library.py weave-prompt "My Campaign" "Aria confronts the warlord" --style "dark fantasy oil painting" --shot "dramatic low angle"
@@ -39,6 +40,7 @@ python .grok/skills/dnd-visual-weaver/scripts/visual_prompt_library.py weave-kin
 python .grok/skills/dnd-visual-weaver/scripts/visual_prompt_library.py status "My Campaign"
 python .grok/skills/dnd-visual-weaver/scripts/visual_prompt_library.py save-canon "My Campaign" "Aria: silver hair, green cloak."
 python .grok/skills/dnd-visual-weaver/scripts/visual_prompt_library.py append-canon "My Campaign" "Warlord" "Scarred jaw, black plate" --category generated
+python .grok/skills/dnd-visual-weaver/scripts/visual_prompt_library.py weave-map "My Campaign" --style "top-down tactical battle map, grid squares, forest terrain"
 ```
 
 ## Behavior

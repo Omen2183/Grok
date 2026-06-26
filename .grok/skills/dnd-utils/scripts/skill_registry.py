@@ -279,8 +279,14 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
     ],
     "start-combat": [
         {"skill": "dnd-combat-assistant", "command": "init", "args": ["--encounter", "Encounter"]},
+        {"skill": "dnd-combat-assistant", "command": "init-grid", "args": ["--width", "20", "--height", "20"], "notes": "grid_combat.py"},
         {"skill": "dnd-dice-engine", "command": "initiative", "args": ["0"], "notes": "Repeat per combatant with DEX mod, then combat add"},
         {"skill": "dnd-combat-assistant", "command": "summary"},
+    ],
+    "grid-combat": [
+        {"skill": "dnd-combat-assistant", "command": "init-grid"},
+        {"skill": "dnd-combat-assistant", "command": "grid-summary"},
+        {"skill": "dnd-visual-weaver", "command": "weave-map"},
     ],
     "end-combat": [
         {"skill": "dnd-combat-assistant", "command": "end-combat"},
@@ -296,9 +302,15 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
     ],
     "kingdom-turn": [
         {"skill": "dnd-utils", "command": "advance-projects"},
+        {"skill": "dnd-rumor-event-generator", "command": "faction-sim"},
         {"skill": "dnd-rumor-event-generator", "command": "rumors", "args": ["--count", "3"]},
         {"skill": "dnd-rumor-event-generator", "command": "world-event"},
         {"skill": "dnd-utils", "command": "kingdom-summary"},
+    ],
+    "vtt-export": [
+        {"skill": "dnd-character-manager", "command": "foundry", "notes": "vtt_export.py"},
+        {"skill": "dnd-character-manager", "command": "roll20", "notes": "vtt_export.py"},
+        {"skill": "dnd-character-manager", "command": "combat-foundry", "notes": "vtt_export.py"},
     ],
     "downtime": [
         {"skill": "dnd-downtime-manager", "command": "long-rest"},

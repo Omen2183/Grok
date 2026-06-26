@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent / "dnd-utils" / "scripts
 from dnd_state_utils import get_player_character, get_world_state, load_json  # noqa: E402  # type: ignore
 from paths import get_campaign_path  # noqa: E402
 
-VISUAL_BACKEND_VERSION = "3.2.0"
+VISUAL_BACKEND_VERSION = "4.0.0"
 
 
 def load_visual_canon(campaign_name: str) -> str:
@@ -145,6 +145,61 @@ def update_visual_canon_after_generation(
     return {"updated": str(path), "subject": subject, "category": category}
 
 
+def weave_battle_map_prompt(
+    campaign_name: str,
+    *,
+    style: str = "top-down tactical battle map, grid squares, fantasy terrain",
+) -> Dict[str, Any]:
+    """Build image prompt from active grid combat state."""
+    import json
+
+    combat_path = get_campaign_path(campaign_name) / "combat" / "current_combat.json"
+    world = get_world_state(campaign_name)
+    grid_info = ""
+    tokens = []
+    if combat_path.exists():
+        combat = json.loads(combat_path.read_text(encoding="utf-8"))
+        grid = combat.get("grid")
+        if grid:
+            grid_info = (
+                f"{grid['width']}x{grid['height']} grid, "
+                f"{grid.get('cell_size_ft', 5)} ft squares, terrain: {grid.get('terrain', 'open')}"
+            )
+            tokens = [t["name"] for t in grid.get("tokens", {}).values()]
+        encounter = combat.get("encounter_name", "battle")
+    else:
+        encounter = "skirmish"
+
+    prompt_parts = [
+        style,
+        f"Tactical battle map for encounter: {encounter}",
+        f"Location: {world.get('current_location', 'unknown')}",
+    ]
+    if grid_info:
+        prompt_parts.append(f"Grid: {grid_info}")
+    if tokens:
+        prompt_parts.append(f"Combatants positioned: {', '.join(tokens[:8])}")
+    obstacles = []
+    if combat_path.exists():
+        combat = json.loads(combat_path.read_text(encoding="utf-8"))
+        obstacles = combat.get("grid", {}).get("obstacles", [])
+    if obstacles:
+        prompt_parts.append(f"Cover/obstacles at {len(obstacles)} positions")
+    canon = load_visual_canon(campaign_name)
+    if canon:
+        prompt_parts.append(f"Visual canon: {canon[:300]}")
+
+    prompt = ". ".join(prompt_parts)
+    return {
+        "prompt": prompt,
+        "encounter": encounter,
+        "has_grid": bool(grid_info),
+        "token_count": len(tokens),
+        "style": style,
+        "version": VISUAL_BACKEND_VERSION,
+    }
+
+
 def visual_status(campaign_name: str) -> Dict[str, Any]:
     """Summarize visual assets and canon state for a campaign."""
     world = get_world_state(campaign_name)
@@ -201,6 +256,10 @@ def main() -> None:
     p_status = sub.add_parser("status", help="Visual canon and companion status")
     p_status.add_argument("campaign")
 
+    p_map = sub.add_parser("weave-map", help="Battle map prompt from grid combat state")
+    p_map.add_argument("campaign")
+    p_map.add_argument("--style", default="top-down tactical battle map, grid squares, fantasy terrain")
+
     args = parser.parse_args()
 
     if args.cmd == "weave-prompt":
@@ -215,6 +274,8 @@ def main() -> None:
         )
     elif args.cmd == "status":
         result = visual_status(args.campaign)
+    elif args.cmd == "weave-map":
+        result = weave_battle_map_prompt(args.campaign, style=args.style)
     else:
         result = {"error": "Unknown command"}
 

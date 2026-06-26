@@ -1,6 +1,6 @@
 ---
 name: dnd-lore-archivist
-description: Maintain, query, and update deep campaign lore, NPC knowledge, faction relationships, and world consistency. v2.0.0 production. Triggers include what does [NPC] know, update the lore, recap factions, kingdom state query, homebrew lore question, what happened at [location]. Essential for long-running sandbox and kingdom campaigns. Backed by lore_archivist.py CLI.
+description: Maintain, query, and update deep campaign lore, NPC knowledge, faction relationships, and world consistency. v4.0.0 production. Triggers include what does [NPC] know, update the lore, recap factions, kingdom state query, homebrew lore question, what happened at [location]. Essential for long-running sandbox and kingdom campaigns. Backed by lore_archivist.py CLI.
 ---
 
 # D&D Lore Archivist
@@ -28,14 +28,17 @@ description: Maintain, query, and update deep campaign lore, NPC knowledge, fact
 | Read NPC profiles | ✅ Implemented | `npcs/*.json` |
 | Read session recaps | ✅ Implemented | `recaps/*.md` |
 | Automated lore writes | ✅ Implemented | `append` persists markdown + events |
-| Lore consistency reasoning | ⚠️ Partial | Grok LLM; no vector DB |
-| Faction simulation engine | ❌ Prompt-only | Use rumor-event-generator |
+| FTS5 semantic lore search | ✅ Implemented | `search`, `rebuild-index` via `lore_index.py` |
+| Lore consistency reasoning | ✅ Implemented | FTS5 index + Grok LLM synthesis |
+| Faction simulation engine | ❌ Not here | Use rumor-event-generator `faction-sim` |
 
 ## Tools & Scripts
 ```bash
 python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py append "My Campaign" "The vault beneath Thornhold is a prison for ancient wraiths"
 python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py summary "My Campaign"
 python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py query "My Campaign" "vault"
+python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py search "My Campaign" "vault wraiths" --limit 10
+python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py rebuild-index "My Campaign"
 python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py list-npcs "My Campaign"
 python .grok/skills/dnd-lore-archivist/scripts/lore_archivist.py list-recaps "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py load "My Campaign" --file kingdom_state

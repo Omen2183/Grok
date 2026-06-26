@@ -25,6 +25,12 @@ try:
     from bootstrap import ensure_utils_importable
     ensure_utils_importable()
     from dnd_state_utils import get_campaign_path, load_world_state, update_world_state
+    from class_progression import (
+        build_multiclass_plan,
+        calculate_spell_slots,
+        restore_spell_slots_on_long_rest,
+        validate_multiclass,
+    )
 except ImportError:
     from paths import get_campaign_path  # type: ignore
 
@@ -318,6 +324,14 @@ def level_up(
         "asi_available": bool(new_asi_levels)
     })
 
+    slots_info = calculate_spell_slots(char.get("classes", []))
+    if slots_info.get("slots"):
+        char["spell_slots"] = {
+            "max": slots_info["slots"],
+            "used": {k: 0 for k in slots_info["slots"]},
+            "pact_magic": slots_info.get("pact_magic"),
+        }
+
     save_character(campaign_name, char)
 
     if hp_roll_info:
@@ -325,7 +339,8 @@ def level_up(
             "status": "awaiting_hp_roll",
             "character": char,
             "roll_info": hp_roll_info,
-            "message": hp_roll_info["message"]
+            "message": hp_roll_info["message"],
+            "spell_slots": char.get("spell_slots"),
         }
 
     # Recalculate derived stats after leveling
@@ -727,6 +742,18 @@ def run_cli() -> None:
     p_sync = sub.add_parser("sync", help="Reconcile character status/death saves from combat state")
     p_sync.add_argument("campaign")
 
+    p_slots = sub.add_parser("spell-slots", help="Show or update spell slot usage")
+    p_slots.add_argument("campaign")
+    p_slots.add_argument("--use", type=int, default=None, help="Slot level to expend")
+    p_slots.add_argument("--restore", action="store_true", help="Restore all slots (long rest)")
+
+    p_mc = sub.add_parser("validate-multiclass")
+    p_mc.add_argument("campaign")
+    p_mc.add_argument("class_name")
+
+    p_plan = sub.add_parser("build-plan", help="Multiclass build summary with spell slots")
+    p_plan.add_argument("campaign")
+
     args = parser.parse_args()
 
     if args.cmd == "summary":
@@ -765,6 +792,53 @@ def run_cli() -> None:
     elif args.cmd == "sync":
         result = sync_character_status(args.campaign)
         print(json.dumps(result, indent=2))
+    elif args.cmd == "spell-slots":
+        result = manage_spell_slots(args.campaign, use_level=args.use, restore=args.restore)
+        print(json.dumps(result, indent=2))
+    elif args.cmd == "validate-multiclass":
+        char = load_character(args.campaign)
+        result = validate_multiclass(char.get("stats", {}), char.get("classes", []), args.class_name)
+        print(json.dumps(result, indent=2))
+    elif args.cmd == "build-plan":
+        char = load_character(args.campaign)
+        result = build_multiclass_plan(char.get("classes", []))
+        print(json.dumps(result, indent=2))
+
+
+def manage_spell_slots(
+    campaign_name: str,
+    *,
+    use_level: Optional[int] = None,
+    restore: bool = False,
+) -> Dict[str, Any]:
+    char = load_character(campaign_name)
+    classes = char.get("classes", [])
+    if restore:
+        restored = restore_spell_slots_on_long_rest(classes)
+        char["spell_slots"] = {
+            "max": restored["slots"],
+            "used": restored["slots_used"],
+            "pact_magic": restored.get("pact_magic"),
+            "pact_slots_used": restored.get("pact_slots_used", 0),
+        }
+        save_character(campaign_name, char)
+        return {"restored": True, "spell_slots": char["spell_slots"]}
+
+    slots_info = calculate_spell_slots(classes)
+    char.setdefault("spell_slots", {
+        "max": slots_info.get("slots", {}),
+        "used": {k: 0 for k in slots_info.get("slots", {})},
+        "pact_magic": slots_info.get("pact_magic"),
+    })
+    if use_level is not None:
+        key = str(use_level)
+        used = char["spell_slots"].setdefault("used", {})
+        max_slots = char["spell_slots"].get("max", {})
+        if key not in max_slots or used.get(key, 0) >= max_slots[key]:
+            return {"error": f"No slot level {use_level} available", "spell_slots": char["spell_slots"]}
+        used[key] = used.get(key, 0) + 1
+    save_character(campaign_name, char)
+    return {"spell_slots": char["spell_slots"], "caster_level": slots_info.get("caster_level", 0)}
 
 
 # ============================================================

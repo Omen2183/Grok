@@ -1,6 +1,6 @@
 ---
 name: dnd-rumor-event-generator
-description: Generate rumors, faction actions, random world events, and downtime developments to keep campaigns reactive. v3.2.0 production. Triggers include what's the rumor mill, random event, faction move, downtime activity, kingdom event, world reacts. Especially strong in kingdom mode and sandbox play. Backed by rumor_generator.py CLI with persistent ledger.
+description: Generate rumors, faction actions, random world events, and downtime developments to keep campaigns reactive. v4.0.0 production. Triggers include what's the rumor mill, random event, faction move, downtime activity, kingdom event, world reacts. Especially strong in kingdom mode and sandbox play. Backed by rumor_generator.py CLI with persistent ledger.
 ---
 
 # D&D Rumor & Event Generator
@@ -28,10 +28,11 @@ description: Generate rumors, faction actions, random world events, and downtime
 | Context-aware generation | ✅ Implemented | Reads `kingdom_state.json` + factions |
 | Kingdom/domain events | ✅ Implemented | Via `kingdom_sim` domain chains |
 | Persist generated events | ✅ Implemented | `record-event` + ledger (use `--no-persist` to skip) |
-| Long-horizon faction AI | ⚠️ Partial | Use kingdom_sim for cascading effects |
+| Faction simulation engine | ✅ Implemented | `faction-sim`, `diplomacy-graph` via `faction_engine.py` |
+| Long-horizon faction AI | ✅ Implemented | `faction-sim` rounds + `kingdom_sim` cascading effects |
 
 ## Tools & Scripts
-Primary script: `rumor_generator.py` — commands: `rumors`, `list`, `faction-move`, `world-event`, `ledger`
+Primary script: `rumor_generator.py` — commands: `rumors`, `list`, `faction-move`, `world-event`, `ledger`, `faction-sim`, `diplomacy-graph`
 
 ```bash
 python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py rumors "My Campaign" --count 3
@@ -40,6 +41,8 @@ python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py list "M
 python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py faction-move "My Campaign" --faction merchants --seed bandits
 python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py world-event "My Campaign" --seed unrest
 python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py ledger "My Campaign"
+python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py faction-sim "My Campaign"
+python .grok/skills/dnd-rumor-event-generator/scripts/rumor_generator.py diplomacy-graph "My Campaign"
 ```
 
 ## Behavior

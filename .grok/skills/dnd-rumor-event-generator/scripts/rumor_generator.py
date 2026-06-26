@@ -21,7 +21,7 @@ from dnd_state_utils import get_kingdom_state, get_world_state, load_json, save_
 from event_system import record_event, search_events  # noqa: E402
 from kingdom_sim import generate_domain_event_chain  # noqa: E402
 
-RUMOR_BACKEND_VERSION = "3.2.0"
+RUMOR_BACKEND_VERSION = "4.0.0"
 
 RUMOR_TEMPLATES = [
     "Whispers say {subject} was seen near {location}.",
@@ -180,6 +180,13 @@ def main() -> None:
     p_ledger.add_argument("campaign")
     p_ledger.add_argument("--limit", type=int, default=20)
 
+    p_fsim = sub.add_parser("faction-sim", help="Advance faction simulation round")
+    p_fsim.add_argument("campaign")
+    p_fsim.add_argument("--seed", type=int)
+
+    p_diplo = sub.add_parser("diplomacy-graph")
+    p_diplo.add_argument("campaign")
+
     args = parser.parse_args()
     if args.cmd == "rumors":
         result = generate_rumors(
@@ -193,6 +200,14 @@ def main() -> None:
         result = generate_world_event(args.campaign, seed=args.seed)
     elif args.cmd == "ledger":
         result = get_rumors_ledger(args.campaign, limit=args.limit)
+    elif args.cmd == "faction-sim":
+        from faction_engine import simulate_faction_round  # noqa: E402
+
+        result = simulate_faction_round(args.campaign, seed=args.seed)
+    elif args.cmd == "diplomacy-graph":
+        from faction_engine import diplomacy_graph  # noqa: E402
+
+        result = diplomacy_graph(args.campaign)
     else:
         result = {"error": "unknown command"}
     if isinstance(result, list):

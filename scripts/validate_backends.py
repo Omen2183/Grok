@@ -41,7 +41,11 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
         ["summary", "AuditCampaign"],
         ["tables"],
     ],
-    "dnd-lore-archivist": [["summary", "AuditCampaign"], ["list-npcs", "AuditCampaign"]],
+    "dnd-lore-archivist": [
+        ["summary", "AuditCampaign"],
+        ["search", "AuditCampaign", "vault"],
+        ["rebuild-index", "AuditCampaign"],
+    ],
     "dnd-npc-personality-weaver": [
         ["list", "AuditCampaign"],
         ["generate-personality", "Test NPC", "--role", "merchant"],
@@ -49,11 +53,18 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
     ],
     "dnd-persistent-dm": [["health", "AuditCampaign"], ["registry"]],
     "dnd-quest-tracker": [["list", "AuditCampaign"]],
-    "dnd-rules-reference": [["list"], ["search", "advantage"], ["condition", "prone"]],
+    "dnd-rules-reference": [
+        ["list"],
+        ["search", "advantage"],
+        ["condition", "prone"],
+        ["spell", "fireball"],
+        ["feat", "lucky"],
+    ],
     "dnd-rumor-event-generator": [
         ["rumors", "AuditCampaign", "--no-persist"],
         ["list", "AuditCampaign"],
         ["faction-move", "AuditCampaign"],
+        ["faction-sim", "AuditCampaign", "--seed", "1"],
         ["ledger", "AuditCampaign"],
     ],
     "dnd-session-scribe": [["auto-recap", "AuditCampaign"]],
@@ -65,6 +76,7 @@ SMOKE_COMMANDS: dict[str, list[list[str]]] = {
     ],
     "dnd-visual-weaver": [
         ["weave-prompt", "AuditCampaign", "test scene"],
+        ["weave-map", "AuditCampaign"],
         ["status", "AuditCampaign"],
     ],
     "dnd-voice-assistant": [
@@ -94,9 +106,12 @@ UTILS_LIBRARY_ONLY = {
     "xp_tables.py",
     "campaign_dashboard.py",
     "campaign_analytics.py",
+    "lore_index.py",
+    "class_progression.py",
+    "faction_engine.py",
 }
 
-RULES_LIBRARY_ONLY = {"rules_data.py"}
+RULES_LIBRARY_ONLY = {"rules_data.py", "srd_data.py"}
 
 SCRIPT_FOR_SKILL: dict[str, str] = {
     "dnd-content-forge": "dnd-content-forge/scripts/content_forge.py",
@@ -193,6 +208,21 @@ def validate() -> dict:
                     script = skill_dir / "scripts" / "dice_roller.py"
                 elif skill == "dnd-loot-generator" and cmd_argv[0] == "tables":
                     script = skill_dir / "scripts" / "procedural_loot.py"
+                elif skill == "dnd-combat-assistant" and cmd_argv[0] in (
+                    "init-grid", "place", "move", "distance", "aoe", "summary"
+                ):
+                    script = skill_dir / "scripts" / "grid_combat.py"
+                elif skill == "dnd-character-manager" and cmd_argv[0] in (
+                    "foundry", "roll20", "combat-foundry", "spell-slots", "validate-multiclass", "build-plan"
+                ):
+                    if cmd_argv[0] in ("foundry", "roll20", "combat-foundry"):
+                        script = skill_dir / "scripts" / "vtt_export.py"
+                    else:
+                        script = skill_dir / "scripts" / "character_manager.py"
+                elif skill == "dnd-lore-archivist" and cmd_argv[0] in ("search", "rebuild-index"):
+                    script = skill_dir / "scripts" / "lore_archivist.py"
+                elif skill == "dnd-rules-reference" and cmd_argv[0] in ("spell", "feat", "search-spells", "search-feats"):
+                    script = skill_dir / "scripts" / "rules_cheatsheet.py"
                 elif skill == "dnd-persistent-dm" and cmd_argv[0] == "registry":
                     script = skill_dir / "scripts" / "persistent_dm.py"
 

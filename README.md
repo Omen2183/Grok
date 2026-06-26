@@ -93,7 +93,7 @@ python -m pytest .grok/skills/dnd-combat-assistant/tests -v
 ## Repository Structure
 
 ```
-.grok/skills/          # All 14 skills (SKILL.md + scripts/)
+.grok/skills/          # All 16 skills (SKILL.md + scripts/) — v4.0.0
 install.ps1            # Windows installer
 install.sh             # macOS/Linux installer
 pyproject.toml         # Dev dependencies
