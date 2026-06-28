@@ -108,6 +108,7 @@ python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Camp
 
 # Suite production grade
 python scripts/suite_score.py
+python scripts/visual_demo.py
 ```
 
 ## License
