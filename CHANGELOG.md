@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.1.2 — Skills manager upstreamed from iOS export
+
+### Added
+- **dnd-skills-manager** meta-skill: `status`, `inventory`, `validate`, `smoke`, `sync-check`, git helpers
+- Hash-based `sync-check --against` for comparing repo vs iOS export folders
+- Tests in `dnd-skills-manager/tests/test_skills_manager.py`
+
+### Changed
+- `skills_manager.py` resolves repo `scripts/` via `paths.get_workspace_root()` (works in repo + global install)
+
 ## 5.1.1 — Pre-iOS deployment polish
 
 ### Fixed
