@@ -34,7 +34,7 @@ description: Play or continue any D&D campaign with Grok as DM. v5.1.0 productio
 | Voice play | ✅ Implemented | Route through voice-assistant first |
 | Orchestrator script | ✅ Implemented | `persistent_dm.py` — route, execute, playbook, registry |
 | Cross-skill coordination | ✅ Implemented | `skill_registry.py` + `skill_orchestrator.py` |
-| Named playbooks | ✅ Implemented | 11 playbooks incl. chaos-campaign, random-session, party-generator |
+| Named playbooks | ✅ Implemented | **16** registered in `skill_registry.PLAYBOOKS` (see Skill Coordination) |
 
 ## Tools & Scripts
 ```bash
@@ -46,6 +46,10 @@ python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py route "My Campaig
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py kingdom-turn "My Campaign"
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py execute "My Campaign" damage --target Goblin --amount 8
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" session-end
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" pre-session
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" quick-session
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" party-to-combat
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" campaign-health
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py registry dnd-combat-assistant
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py status "My Campaign"
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py health "My Campaign" --enhanced
@@ -104,10 +108,18 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py audit "My Campaign"
 
 ### Automation patterns (use playbooks when possible)
 - **New campaign:** `playbook new-campaign`
+- **Pre-session check:** `playbook pre-session` (campaign-health → resume → quests → last recap)
+- **Quick one-shot:** `playbook quick-session` (random party → fight → recap → end)
 - **Combat:** `playbook start-combat` → dice-engine rolls → `execute damage` → `playbook end-combat`
+- **Party straight to fight:** `playbook party-to-combat` (random party → seed-from-party → encounter)
+- **Tactical grid:** `playbook grid-combat` (init-grid → summary → weave-map)
 - **Session end:** `playbook session-end` (auto-recap → end-session → quests → audit)
 - **Kingdom:** `playbook kingdom-turn` or `kingdom-turn` command
 - **Downtime:** `playbook downtime`
+- **Chaos / random night:** `playbook chaos-campaign`, `random-session`, or `party-generator`
+- **VTT handoff:** `playbook vtt-export`
+- **Visual beat:** `playbook visual-scene` (whats-happening → weave-prompt)
+- **Health only:** `playbook campaign-health`
 - **Any utterance:** `route` → read `delegation` → `execute` or call skill CLI directly
 - **Always** resolve routing via `skill_registry.py` before improvising skill calls
 
@@ -138,7 +150,7 @@ This skill is the **DM hub** for all 17 skills. Every cross-skill call flows thr
 | Voice (iOS) | `voice_utils.py` | Voice entry → `plan` → hub or specialist |
 | sync_bridge | import via combat-assistant | PC HP/death saves ↔ character sheet |
 
-Named playbooks: `new-campaign`, `start-combat`, `end-combat`, `session-end`, `kingdom-turn`, `downtime`, `chaos-campaign`, `random-session`, `party-generator`, `grid-combat`, `vtt-export`.
+Named playbooks (**16**, `skill_registry.PLAYBOOKS`): `campaign-health`, `chaos-campaign`, `downtime`, `end-combat`, `grid-combat`, `kingdom-turn`, `new-campaign`, `party-generator`, `party-to-combat`, `pre-session`, `quick-session`, `random-session`, `session-end`, `start-combat`, `visual-scene`, `vtt-export`.
 
 ## Integration
 | Trigger | Delegate to |

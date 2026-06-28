@@ -93,7 +93,7 @@ python .grok/skills/dnd-utils/scripts/inventory_ledger.py list "My Campaign"
 
 Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`, `lore_index.py`, `class_progression.py`, `faction_engine.py`, `xp_tables.py`, `errors.py`.
 
-Playbooks (v5.3.0): `new-campaign`, `quick-session`, `pre-session`, `start-combat`, `party-to-combat`, `grid-combat`, `end-combat`, `session-end`, `kingdom-turn`, `vtt-export`, `downtime`, `chaos-campaign`, `random-session`, `party-generator`
+Playbooks (v5.3.0, **16**): `campaign-health`, `chaos-campaign`, `downtime`, `end-combat`, `grid-combat`, `kingdom-turn`, `new-campaign`, `party-generator`, `party-to-combat`, `pre-session`, `quick-session`, `random-session`, `session-end`, `start-combat`, `visual-scene`, `vtt-export`
 
 ## Behavior
 - Resolve campaign root via `paths.py` (`DND_CAMPAIGNS_ROOT` → `~/.grok/artifacts/dnd-campaigns/`).

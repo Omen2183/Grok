@@ -26,8 +26,14 @@ def test_resolve_damage_intent():
 
 
 def test_playbooks_exist():
+    assert len(PLAYBOOKS) == 16
     assert "session-end" in PLAYBOOKS
     assert "kingdom-turn" in PLAYBOOKS
+    assert "quick-session" in PLAYBOOKS
+    assert "pre-session" in PLAYBOOKS
+    assert "party-to-combat" in PLAYBOOKS
+    assert "visual-scene" in PLAYBOOKS
+    assert "campaign-health" in PLAYBOOKS
     steps = get_playbook("session-end")
     assert any(s["skill"] == "dnd-session-scribe" for s in steps)
 
