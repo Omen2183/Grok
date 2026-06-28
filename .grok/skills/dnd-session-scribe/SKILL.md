@@ -63,7 +63,7 @@ Primary script: `session_scribe.py` — commands: `award-xp`, `award-domain-xp`,
 |-------|------|
 | Registry | `end_session` intent → this skill (requires confirmation in voice) |
 | Orchestrator | `plan` chains `auto-recap` → `end-session` → quest list |
-| Playbooks | `session-end`: auto-recap → end-session → quest list → enhanced audit |
+| Playbooks | `session-end`: auto-recap → sync-quests → end-session → quest list → enhanced audit |
 | Voice (iOS) | Confirm before `end-session`; player speaks summary |
 
 ## Integration

@@ -338,6 +338,7 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
     ],
     "session-end": [
         {"skill": "dnd-session-scribe", "command": "auto-recap", "args": ["--save"]},
+        {"skill": "dnd-session-scribe", "command": "sync-quests"},
         {"skill": "dnd-session-scribe", "command": "end-session", "args": ["auto", "--auto"]},
         {"skill": "dnd-quest-tracker", "command": "list"},
         {"skill": "dnd-utils", "command": "enhanced-audit"},

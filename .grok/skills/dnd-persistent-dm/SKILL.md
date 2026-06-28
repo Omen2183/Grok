@@ -1,6 +1,6 @@
 ---
 name: dnd-persistent-dm
-description: Play or continue any D&D campaign with Grok as DM. v5.1.0 production orchestrator with skill_registry coordination. Native Grok iOS entry point for text and voice play. Triggers include play D&D, DM mode, continue campaign, kingdom mode, end session, what's happening. Routes all 17 skills via persistent_dm.py + skill_orchestrator.py playbooks. Persistent JSON state per campaign.
+description: Play or continue any D&D campaign with Grok as DM. v5.3.0 production orchestrator with skill_registry coordination. Native Grok iOS entry point for text and voice play. Triggers include play D&D, DM mode, continue campaign, kingdom mode, end session, what's happening. Routes 17 play skills via persistent_dm.py + skill_orchestrator.py (16 playbooks). Persistent JSON state per campaign.
 ---
 
 # D&D Persistent DM
@@ -34,7 +34,7 @@ description: Play or continue any D&D campaign with Grok as DM. v5.1.0 productio
 | Voice play | ✅ Implemented | Route through voice-assistant first |
 | Orchestrator script | ✅ Implemented | `persistent_dm.py` — route, execute, playbook, registry |
 | Cross-skill coordination | ✅ Implemented | `skill_registry.py` + `skill_orchestrator.py` |
-| Named playbooks | ✅ Implemented | **16** registered in `skill_registry.PLAYBOOKS` (see Skill Coordination) |
+| Named playbooks | ✅ Implemented | **16** in `skill_registry.PLAYBOOKS`; `session-end` includes `sync-quests` |
 
 ## Tools & Scripts
 ```bash

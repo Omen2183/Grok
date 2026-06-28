@@ -1,6 +1,6 @@
 ---
 name: dnd-lore-archivist
-description: Maintain, query, and update deep campaign lore, NPC knowledge, faction relationships, and world consistency. v4.0.0 production. Triggers include what does [NPC] know, update the lore, recap factions, kingdom state query, homebrew lore question, what happened at [location]. Essential for long-running sandbox and kingdom campaigns. Backed by lore_archivist.py CLI.
+description: Maintain, query, and update deep campaign lore, NPC knowledge, faction relationships, and world consistency. v5.3.0 production. Triggers include what does [NPC] know, update the lore, recap factions, kingdom state query, homebrew lore question, what happened at [location]. Essential for long-running sandbox and kingdom campaigns. Backed by lore_archivist.py CLI.
 ---
 
 # D&D Lore Archivist

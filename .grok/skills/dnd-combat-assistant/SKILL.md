@@ -1,6 +1,6 @@
 ---
 name: dnd-combat-assistant
-description: Combat encounter tracker for initiative, HP, healing, conditions, concentration, death saves, and turn order. v4.0.0 production. Triggers include start combat, roll initiative, next turn, damage to [target], heal [target], apply condition, end combat. Mobile-first text combat for any D&D campaign. Syncs HP and death saves to character sheet via sync_bridge.
+description: Combat encounter tracker for initiative, HP, healing, conditions, concentration, death saves, and turn order. v5.3.0 production. Triggers include start combat, roll initiative, next turn, damage to [target], heal [target], apply condition, end combat. Mobile-first text combat for any D&D campaign. Syncs HP and death saves to character sheet via sync_bridge.
 ---
 
 # D&D Combat Assistant

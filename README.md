@@ -1,30 +1,31 @@
-# Grok D&D Skills — v5.0.0
+# Grok D&D Skills — v5.3.0
 
 A complete Grok Build skill pack for running persistent, table-grade D&D 5e campaigns — classic tabletop and kingdom/domain play. Designed mobile-first for **Grok iOS** with full voice parity.
 
 ## What's Included
 
-17 interconnected skills — **every skill has a Python CLI backend**:
+**18 skills** (17 play skills + `dnd-skills-manager` meta-tooling) — every player-facing skill has a Python CLI backend:
 
 | Skill | Role |
 |-------|------|
-| `dnd-persistent-dm` | DM orchestrator (`persistent_dm.py`) |
-| `dnd-utils` | Campaign state, events, audits, narration CLI |
-| `dnd-combat-assistant` | Initiative, HP, conditions, tactical grid |
+| `dnd-persistent-dm` | DM orchestrator (`persistent_dm.py`) — **16 playbooks** |
+| `dnd-utils` | Campaign state, events, audits, narration CLI, registry |
+| `dnd-combat-assistant` | Initiative, HP, conditions, tactical grid, auto-initiative |
 | `dnd-dice-engine` | 5e dice rolling |
-| `dnd-character-manager` | Sheets, leveling, inventory, VTT export |
-| `dnd-session-scribe` | Recaps, XP, auto-recap from events |
+| `dnd-character-manager` | Sheets, leveling, inventory, multiclass, VTT export |
+| `dnd-session-scribe` | Recaps, XP, auto-recap, `sync-quests` |
 | `dnd-loot-generator` | Procedural loot + ledger |
 | `dnd-content-forge` | Monsters, encounters, quests, factions |
 | `dnd-npc-personality-weaver` | NPC personality + persistence |
 | `dnd-lore-archivist` | FTS lore search + campaign memory |
-| `dnd-rules-reference` | Rules cheatsheet + SRD index |
+| `dnd-rules-reference` | Rules cheatsheet + SRD + homebrew rulings |
 | `dnd-rumor-event-generator` | World events, faction sim, rumors |
 | `dnd-visual-weaver` | Consistent image prompts + battle maps |
-| `dnd-voice-assistant` | Voice routing and phrase parsing |
+| `dnd-voice-assistant` | Voice routing, compound phrases |
 | `dnd-downtime-manager` | Short/long rests, downtime logging |
 | `dnd-quest-tracker` | Active quests and session hooks |
 | `dnd-randomizer` | Unified chaos engine — parties, dungeons, cultures, wild magic |
+| `dnd-skills-manager` | Validate, smoke, score, drift-check (maintenance) |
 
 ## Quick Start
 
@@ -52,18 +53,23 @@ python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py init "My Campaign
 
 Campaign state: `%USERPROFILE%\.grok\artifacts\dnd-campaigns\[Campaign Name]\`
 
-## v5.0.0 Highlights
+## v5.3.0 Highlights
 
-- **Randomizer complete:** cultural names, class kits, party generator, dungeon floors, wild magic surge, `--balanced` delegation, table import/export
-- **Playbooks:** `party-generator`, enhanced `random-session`
-- **Voice 5.0:** party, dungeon, wild magic phrase routing
-- **Premium player docs:** [PLAYERS.md](PLAYERS.md) rewritten for Grok iOS
+- **10-point suite gate:** `python scripts/suite_score.py` — validators + 143 tests + smoke
+- **16 playbooks** including `quick-session`, `pre-session`, `party-to-combat`, `campaign-health`
+- **Session-end** auto-runs `sync-quests` before quest list
+- **Combat:** `--auto-initiative`, `seed-from-party`, `--dm-screen`
+- **Skills manager:** `score --json`, `sync-all`, drift-check vs iOS exports
+
+## Playbooks (16)
+
+`campaign-health`, `chaos-campaign`, `downtime`, `end-combat`, `grid-combat`, `kingdom-turn`, `new-campaign`, `party-generator`, `party-to-combat`, `pre-session`, `quick-session`, `random-session`, `session-end`, `start-combat`, `visual-scene`, `vtt-export`
 
 ## Production Standards
 
 - **Grok iOS native:** mobile-first replies, honest capability matrices in each `SKILL.md`, voice routing via `dnd-voice-assistant`
 - **Shared state:** `dnd-utils/scripts/paths.py` resolves campaign folders on Windows, macOS, and Grok cloud
-- **125+ tests** + orchestration flow + full CLI smoke test (all 17 skills)
+- **143 tests** + orchestration flow + full CLI smoke test
 - **skill_registry** + **skill_orchestrator** for cross-skill coordination
 - **GitHub Actions CI** on Python 3.11 and 3.12
 
@@ -72,32 +78,36 @@ See `.grok/skills/_PRODUCTION_CONVENTIONS.md` for agent conventions.
 ## Quality Gates
 
 ```powershell
-python -m pytest -q
-python scripts/smoke_test.py
-python scripts/validate_skills.py
-python scripts/validate_orchestration.py
-python scripts/validate_backends.py
-python scripts/validate_skill_docs.py
+python scripts/suite_score.py
+python .grok/skills/dnd-skills-manager/scripts/skills_manager.py sync-all
 python scripts/registry_sync.py --check
-python scripts/validate_runtime.py       # Grok iOS / PC path conventions
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py runtime-context
 ```
+
+### iOS deploy parity
+
+After updating skills on device, compare against this repo:
+
+```powershell
+python .grok/skills/dnd-skills-manager/scripts/skills_manager.py sync-check --against <path-to-ios-export/skills>
+```
+
+Target: `aligned: true` (zero drift) before calling the suite production-ready on iOS.
 
 ## Example Commands
 
 ```powershell
-# Random party + dungeon (v5)
-python .grok/skills/dnd-randomizer/scripts/randomizer.py random-party --size 4 --level 3
-python .grok/skills/dnd-randomizer/scripts/randomizer.py random-dungeon "My Campaign" --rooms 6
+# Pre-session health + resume
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" pre-session
 
-# Balanced loot via randomizer
-python .grok/skills/dnd-randomizer/scripts/randomizer.py random-item "My Campaign" --balanced --level 5
+# Quick one-shot session
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" quick-session
 
-# Roll dice
-python .grok/skills/dnd-dice-engine/scripts/dice_roller.py roll 1d20+5 --advantage
+# End session (sync-quests → end → quest list → audit)
+python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" session-end
 
-# End a session
-python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "We cleared the mine." --xp 150
+# Suite production grade
+python scripts/suite_score.py
 ```
 
 ## License

@@ -1,5 +1,23 @@
 # Changelog
 
+## 5.3.0 — Production gate, doc parity, session-end quest sync, system cleanup
+
+### Added
+- `scripts/suite_score.py` — 10-point production grade with per-dimension evidence
+- `scripts/cleanup-system.ps1` — safe Temp/skills cache cleanup (campaign data untouched)
+- Skills manager `score --json` for machine-readable piping
+- README v5.3.0: 18 skills, 16 playbooks, iOS sync-check instructions
+
+### Changed
+- `session-end` playbook runs `sync-quests` before `end-session` and quest list
+- persistent-dm + dnd-utils docs: all **16** playbooks listed (was 11)
+- quest-tracker: recap auto-sync marked ✅ Implemented via session-scribe
+- registry_sync excludes meta skills (`dnd-skills-manager`) like validate_orchestration
+
+### Fixed
+- validate_skill_docs / validate_backends library-only for `rules_homebrew.py`, `event_helpers.py`
+- SKILL.md CLI documentation gaps across 8 skills (v5.2 commands)
+
 ## 5.2.0 — Suite depth: quick play, health checks, voice compounds, homebrew rules
 
 ### Added

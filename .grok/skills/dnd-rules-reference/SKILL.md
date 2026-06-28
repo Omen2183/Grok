@@ -1,6 +1,6 @@
 ---
 name: dnd-rules-reference
-description: Accurate 5e rules clarification including homebrew considerations and SRD spell/feat index. v4.0.0 production. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Backend rules_cheatsheet.py with 25+ topics; Grok knowledge for edge cases.
+description: Accurate 5e rules clarification including homebrew considerations and SRD spell/feat index. v5.3.0 production. Triggers include how does [spell/ability] work, condition rules, advantage/disadvantage, concentration, cover, opportunity attacks, grapple, death saves, action economy. Backend rules_cheatsheet.py with 25+ topics; Grok knowledge for edge cases.
 ---
 
 # D&D Rules Reference

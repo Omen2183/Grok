@@ -1,6 +1,6 @@
 ---
 name: dnd-utils
-description: Shared Python backend for all D&D skills — campaign init, state, events, kingdom sim, lore index, class progression, faction engine, plus skill_registry and skill_orchestrator for cross-skill coordination. v4.0.0 production foundation. Not player-facing; all skills route through registry for delegation. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
+description: Shared Python backend for all D&D skills — campaign init, state, events, kingdom sim, lore index, class progression, faction engine, plus skill_registry and skill_orchestrator for cross-skill coordination. v5.3.0 production foundation. Not player-facing; all skills route through registry for delegation. Triggers include initialize campaign, update location, kingdom mode, queue project, advance projects, audit state, session summary, record event. Not player-facing; other skills invoke it internally. Supports 5e + homebrew campaigns.
 ---
 
 # D&D Utils

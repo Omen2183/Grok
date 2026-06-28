@@ -36,6 +36,7 @@ def test_playbooks_exist():
     assert "campaign-health" in PLAYBOOKS
     steps = get_playbook("session-end")
     assert any(s["skill"] == "dnd-session-scribe" for s in steps)
+    assert any(s.get("command") == "sync-quests" for s in steps)
 
 
 def test_coordination_summary():

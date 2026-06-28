@@ -1,6 +1,6 @@
 ---
 name: dnd-rumor-event-generator
-description: Generate rumors, faction actions, random world events, and downtime developments to keep campaigns reactive. v4.0.0 production. Triggers include what's the rumor mill, random event, faction move, downtime activity, kingdom event, world reacts. Especially strong in kingdom mode and sandbox play. Backed by rumor_generator.py CLI with persistent ledger.
+description: Generate rumors, faction actions, random world events, and downtime developments to keep campaigns reactive. v5.3.0 production. Triggers include what's the rumor mill, random event, faction move, downtime activity, kingdom event, world reacts. Especially strong in kingdom mode and sandbox play. Backed by rumor_generator.py CLI with persistent ledger.
 ---
 
 # D&D Rumor & Event Generator

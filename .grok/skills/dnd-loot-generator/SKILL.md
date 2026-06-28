@@ -1,6 +1,6 @@
 ---
 name: dnd-loot-generator
-description: Procedural treasure and magic item generation with party-level scaling and a persistent loot ledger to avoid duplicates. v3.2.0 production. Triggers include generate loot, treasure hoard, what's been found, magic item reward, post-combat loot. Supports 5e tone + homebrew campaigns.
+description: Procedural treasure and magic item generation with party-level scaling and a persistent loot ledger to avoid duplicates. v5.3.0 production. Triggers include generate loot, treasure hoard, what's been found, magic item reward, post-combat loot. Supports 5e tone + homebrew campaigns.
 ---
 
 # D&D Loot Generator

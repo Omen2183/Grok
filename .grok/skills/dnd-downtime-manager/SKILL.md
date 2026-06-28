@@ -1,6 +1,6 @@
 ---
 name: dnd-downtime-manager
-description: Short and long rests, hit dice spending, spell slot restore, and downtime activity logging for D&D campaigns. v4.0.0 production. Triggers include short rest, long rest, spend hit dice, downtime activity, rest status. Integrates with dnd-utils player state, rumor-event-generator after long rest, and voice-assistant rest routing.
+description: Short and long rests, hit dice spending, spell slot restore, and downtime activity logging for D&D campaigns. v5.3.0 production. Triggers include short rest, long rest, spend hit dice, downtime activity, rest status. Integrates with dnd-utils player state, rumor-event-generator after long rest, and voice-assistant rest routing.
 ---
 
 # D&D Downtime Manager

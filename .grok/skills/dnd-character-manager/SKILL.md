@@ -1,6 +1,6 @@
 ---
 name: dnd-character-manager
-description: Player character sheet management — summary, level-up, inventory, attunement, death saves, spell slots, multiclass, VTT export. v4.0.0 production. Triggers include level up, character sheet, add item, attune, death save, export character, companion status. Integrates with dnd-utils state and combat-assistant HP sync via sync_bridge. Supports 5e + homebrew feats and multiclass.
+description: Player character sheet management — summary, level-up, inventory, attunement, death saves, spell slots, multiclass, VTT export. v5.3.0 production. Triggers include level up, character sheet, add item, attune, death save, export character, companion status. Integrates with dnd-utils state and combat-assistant HP sync via sync_bridge. Supports 5e + homebrew feats and multiclass.
 ---
 
 # D&D Character Manager

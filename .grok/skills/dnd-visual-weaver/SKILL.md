@@ -1,6 +1,6 @@
 ---
 name: dnd-visual-weaver
-description: Build consistent image-generation prompts from live campaign state, visual canon, and companion references. v4.0.0 production. Triggers include show me, generate art, what does this look like, image of, visual for this scene, character portrait, kingdom map style. Maintains visual consistency across PCs, companions, and locations.
+description: Build consistent image-generation prompts from live campaign state, visual canon, and companion references. v5.3.0 production. Triggers include show me, generate art, what does this look like, image of, visual for this scene, character portrait, kingdom map style. Maintains visual consistency across PCs, companions, and locations.
 ---
 
 # D&D Visual Weaver

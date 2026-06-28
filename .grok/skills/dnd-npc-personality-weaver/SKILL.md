@@ -1,6 +1,6 @@
 ---
 name: dnd-npc-personality-weaver
-description: Create and persist memorable NPCs with personality, speech patterns, secrets, motivations, and relationship scores. v3.2.0 production. Triggers include create NPC, who is [name], NPC personality, update NPC attitude, relationship with [NPC], what does [NPC] know. Makes recurring characters consistent across sessions. Works with any campaign.
+description: Create and persist memorable NPCs with personality, speech patterns, secrets, motivations, and relationship scores. v5.3.0 production. Triggers include create NPC, who is [name], NPC personality, update NPC attitude, relationship with [NPC], what does [NPC] know. Makes recurring characters consistent across sessions. Works with any campaign.
 ---
 
 # D&D NPC Personality Weaver

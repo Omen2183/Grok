@@ -1,6 +1,6 @@
 ---
 name: dnd-quest-tracker
-description: Track active quests, session hooks, and completion state for persistent D&D campaigns. v3.2.0 production. Triggers include add quest, complete quest, complete objective, what quests are active, new hook, quest list, sync quests from recap. Integrates with session-scribe `sync-quests` and persistent-dm playbooks.
+description: Track active quests, session hooks, and completion state for persistent D&D campaigns. v5.3.0 production. Triggers include add quest, complete quest, complete objective, what quests are active, new hook, quest list, sync quests from recap. Integrates with session-scribe `sync-quests` and persistent-dm playbooks.
 ---
 
 # D&D Quest Tracker
@@ -55,7 +55,7 @@ python .grok/skills/dnd-quest-tracker/scripts/quest_tracker.py complete "My Camp
 |-------|------|
 | Registry | `quest_list`, `add_quest` intents → this skill |
 | Orchestrator | `plan` may surface hooks after session-end |
-| Playbooks | `session-end` lists quests; run `sync-quests` before `list` when recap has new hooks |
+| Playbooks | `session-end` runs `sync-quests` then `list` automatically |
 | Voice (iOS) | Short quest titles; one quest per spoken beat |
 
 ## Integration
