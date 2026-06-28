@@ -40,6 +40,7 @@ python .grok/skills/dnd-skills-manager/scripts/skills_manager.py status
 python .grok/skills/dnd-skills-manager/scripts/skills_manager.py inventory
 python .grok/skills/dnd-skills-manager/scripts/skills_manager.py validate
 python .grok/skills/dnd-skills-manager/scripts/skills_manager.py score
+python .grok/skills/dnd-skills-manager/scripts/skills_manager.py score --json
 python .grok/skills/dnd-skills-manager/scripts/skills_manager.py smoke
 python .grok/skills/dnd-skills-manager/scripts/skills_manager.py sync-all
 python .grok/skills/dnd-skills-manager/scripts/skills_manager.py sync-check --against ./export/skills

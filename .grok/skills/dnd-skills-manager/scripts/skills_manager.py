@@ -137,15 +137,16 @@ def cmd_validate(_args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_score(_args: argparse.Namespace) -> int:
+def cmd_score(args: argparse.Namespace) -> int:
     score_script = SCRIPTS_DIR / "suite_score.py"
     if not score_script.exists():
         print("suite_score.py not found — run from full repo clone.")
         return 1
-    print("=== Suite Score (10-point) ===\n")
+    if not getattr(args, "json", False):
+        print("=== Suite Score (10-point) ===\n")
     res = run_cmd([sys.executable, str(score_script)], timeout=300)
     if res["stdout"]:
-        print(res["stdout"])
+        print(res["stdout"].strip())
     if res["stderr"]:
         print(res["stderr"], file=sys.stderr)
     return res["returncode"]
@@ -304,7 +305,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status").set_defaults(func=cmd_status)
     sub.add_parser("inventory").set_defaults(func=cmd_inventory)
     sub.add_parser("validate").set_defaults(func=cmd_validate)
-    sub.add_parser("score", help="10-point production grade with evidence").set_defaults(func=cmd_score)
+    score_p = sub.add_parser("score", help="10-point production grade with evidence")
+    score_p.add_argument("--json", action="store_true", help="Emit raw JSON only (machine-readable)")
+    score_p.set_defaults(func=cmd_score)
     sub.add_parser("smoke").set_defaults(func=cmd_smoke)
 
     git_p = sub.add_parser("git")
