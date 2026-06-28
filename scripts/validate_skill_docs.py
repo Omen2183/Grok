@@ -23,8 +23,10 @@ REQUIRED_SECTIONS = (
 UTILS_LIBRARY_ONLY = {
     "bootstrap.py", "paths.py", "errors.py", "event_system.py", "kingdom_sim.py",
     "narration_helpers.py", "sqlite_layer.py", "sync_bridge.py", "xp_tables.py",
-    "campaign_dashboard.py", "campaign_analytics.py",
+    "campaign_dashboard.py", "campaign_analytics.py", "event_helpers.py",
 }
+
+RULES_LIBRARY_ONLY = {"rules_data.py", "srd_data.py", "rules_homebrew.py"}
 
 # dice_roller registers check/attack/save via loop variable
 EXTRA_COMMANDS: dict[str, set[str]] = {
@@ -41,7 +43,10 @@ def _cli_commands(skill_dir: Path) -> dict[str, list[str]]:
     if not scripts.exists():
         return out
     for script in sorted(scripts.glob("*.py")):
-        if script.name in UTILS_LIBRARY_ONLY:
+        library_only = UTILS_LIBRARY_ONLY if skill_dir.name == "dnd-utils" else set()
+        if skill_dir.name == "dnd-rules-reference":
+            library_only = RULES_LIBRARY_ONLY
+        if script.name in library_only:
             continue
         text = script.read_text(encoding="utf-8")
         if "if __name__" not in text:

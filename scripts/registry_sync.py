@@ -17,6 +17,9 @@ sys.path.insert(0, str(UTILS_SCRIPTS))
 
 from skill_registry import SKILLS, list_all_skills  # noqa: E402
 
+# Meta / maintenance skills — installed but not in play orchestration registry
+META_ONLY_SKILLS = frozenset({"dnd-skills-manager", "local-ct-briefing"})
+
 SCRIPT_FOR_SKILL: Dict[str, str] = {
     "dnd-content-forge": "dnd-content-forge/scripts/content_forge.py",
     "dnd-utils": "dnd-utils/scripts/dnd_state_utils.py",
@@ -83,7 +86,7 @@ def validate_registry() -> Dict[str, Any]:
     installed = set(discovered.keys())
 
     issues: List[str] = []
-    missing_registry = sorted(installed - registered)
+    missing_registry = sorted(installed - registered - META_ONLY_SKILLS)
     missing_install = sorted(registered - installed)
 
     if missing_registry:
@@ -175,7 +178,7 @@ def main() -> int:
     if args.suggest:
         discovered = set(discover_skills().keys())
         registered = set(list_all_skills())
-        missing = sorted(discovered - registered)
+        missing = sorted(discovered - registered - META_ONLY_SKILLS)
         extra = sorted(registered - discovered)
         print(json.dumps({
             "missing_from_registry": missing,
@@ -191,7 +194,7 @@ def main() -> int:
 
     # Default: full report with stubs for missing skills
     stubs = []
-    for skill in sorted(set(discover_skills().keys()) - set(list_all_skills())):
+    for skill in sorted(set(discover_skills().keys()) - set(list_all_skills()) - META_ONLY_SKILLS):
         stubs.append(generate_registry_stub(skill))
     report["suggested_stubs"] = stubs
     print(json.dumps(report, indent=2))

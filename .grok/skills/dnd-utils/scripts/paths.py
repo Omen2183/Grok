@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
-PATHS_VERSION = "5.1.0"
+PATHS_VERSION = "5.3.0"
 
 # Grok iOS cloud sandbox (agent workdir)
 GROK_CLOUD_WORKDIR = Path("/home/workdir")

@@ -23,7 +23,7 @@ from skill_registry import (  # noqa: E402
     script_path,
 )
 
-ORCHESTRATOR_VERSION = "5.1.1"
+ORCHESTRATOR_VERSION = "5.3.0"
 
 
 def enrich_route(campaign: str, route: Dict[str, Any]) -> Dict[str, Any]:

@@ -22,7 +22,7 @@ from dnd_state_utils import (  # noqa: E402
 )
 from event_system import record_event, search_events  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
-from xp_tables import DOMAIN_XP_MILESTONES, check_level_up, level_from_xp, suggest_domain_xp, xp_to_next_level  # noqa: E402
+from xp_tables import check_level_up, level_from_xp, suggest_domain_xp, xp_to_next_level  # noqa: E402
 
 
 def _append_session_log(campaign_name: str, text: str) -> None:

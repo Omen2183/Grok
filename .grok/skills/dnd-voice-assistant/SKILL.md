@@ -41,6 +41,8 @@ python .grok/skills/dnd-voice-assistant/scripts/voice_utils.py plan "My Campaign
 python .grok/skills/dnd-voice-assistant/scripts/voice_utils.py execute "My Campaign" "Goblin takes 8 damage"
 python .grok/skills/dnd-voice-assistant/scripts/voice_utils.py format-spoken "Your blade finds its mark." --mechanical "Goblin 7 to 0 HP"
 python .grok/skills/dnd-voice-assistant/scripts/voice_utils.py confirm-check end-session --text "yes"
+python .grok/skills/dnd-voice-assistant/scripts/voice_utils.py parse-compound "goblin takes 5 damage then next turn"
+python .grok/skills/dnd-voice-assistant/scripts/voice_utils.py voice-phrases --mode combat
 ```
 
 Downstream CLIs (invoked after `plan` / `execute`):

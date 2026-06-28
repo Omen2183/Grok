@@ -32,8 +32,8 @@ description: Accurate 5e rules clarification including homebrew considerations a
 | Official PHB page references | ❌ Platform | Summarize in chat; no page links |
 
 ## Tools & Scripts
-Primary script: `rules_cheatsheet.py` — commands: `list`, `topics`, `lookup`, `search`, `condition`, `homebrew`, `spell`, `feat`, `search-spells`, `search-feats`  
-Supporting: `rules_data.py` (cheatsheet topics), `srd_data.py` (SRD spell/feat index)
+Primary script: `rules_cheatsheet.py` — commands: `list`, `topics`, `lookup`, `search`, `condition`, `homebrew`, `homebrew-add`, `homebrew-list`, `spell`, `feat`, `search-spells`, `search-feats`  
+Supporting: `rules_data.py` (cheatsheet topics), `srd_data.py` (SRD spell/feat index), `rules_homebrew.py` (per-campaign rulings store)
 
 ```bash
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py list
@@ -42,6 +42,8 @@ python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py lookup conce
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py search grapple
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py condition prone
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py homebrew "My Campaign" custom-rest-rules
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py homebrew-add "My Campaign" flanking --ruling "Advantage when two allies flank"
+python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py homebrew-list "My Campaign"
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py spell "fireball"
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py feat "alert"
 python .grok/skills/dnd-rules-reference/scripts/rules_cheatsheet.py search-spells heal --limit 5

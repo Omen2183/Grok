@@ -32,14 +32,16 @@ description: Combat encounter tracker for initiative, HP, healing, conditions, c
 | End combat + XP hook | ✅ Implemented | Clears combat file, records outcome |
 | Mass combat resolver | ✅ Implemented | Abstract kingdom-scale battles |
 | Grid tactical combat | ✅ Implemented | `grid_combat.py` — positions, movement, AoE, cover |
-| Auto-roll monster initiative | ⚠️ Partial | Manual `--initiative` required on add |
+| Auto-roll monster initiative | ✅ Implemented | `--auto-initiative` on `add`; `seed-from-party` for PCs |
 | Visual battle maps | ✅ Implemented | Grid state + visual-weaver `weave-map` prompts |
 
 ## Tools & Scripts
 ```bash
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py init "My Campaign" --encounter "Goblin Ambush"
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py add "My Campaign" --name "Aria" --hp 32 --initiative 18 --player
-python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py add "My Campaign" --name "Goblin 1" --hp 7 --initiative 12 --group-size 3
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py add "My Campaign" --name "Goblin 1" --hp 7 --auto-initiative --cr 0.25 --group-size 3
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py seed-from-party "My Campaign"
+python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py summary "My Campaign" --dm-screen
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py damage "My Campaign" --target "Goblin 1" --amount 9
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py heal "My Campaign" --target "Aria" --amount 8
 python .grok/skills/dnd-combat-assistant/scripts/combat_tracker.py next-turn "My Campaign"
@@ -63,7 +65,7 @@ python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py add-obstacle "My
 python .grok/skills/dnd-combat-assistant/scripts/grid_combat.py summary "My Campaign"
 ```
 
-Primary scripts: `combat_tracker.py` (initiative/HP/conditions), `grid_combat.py` (tactical grid).
+Primary scripts: `combat_tracker.py` (`init`, `add`, `seed-from-party`, `damage`, `heal`, `summary`, `--dm-screen`), `grid_combat.py` (tactical grid).
 
 ## Behavior
 - Lead with whose turn it is and target HP after each change.

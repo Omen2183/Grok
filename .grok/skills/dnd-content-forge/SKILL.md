@@ -39,11 +39,12 @@ python .grok/skills/dnd-content-forge/scripts/content_forge.py quest "My Campaig
 python .grok/skills/dnd-content-forge/scripts/content_forge.py faction "My Campaign" --name "Merchant Guild"
 python .grok/skills/dnd-content-forge/scripts/content_forge.py magic-item "My Campaign" --theme "storm-forged blade"
 python .grok/skills/dnd-content-forge/scripts/content_forge.py domain-event "My Campaign" --seed drought
+python .grok/skills/dnd-content-forge/scripts/encounter_builder.py difficulty-report "My Campaign" --cr 2 --count 4 --party-size 4
 python .grok/skills/dnd-content-forge/scripts/encounter_builder.py list
 python .grok/skills/dnd-content-forge/scripts/generate_monster.py "My Campaign" --theme "Ash wraith" --cr 4 --save --content
 ```
 
-Scripts: `generate_monster.py` (positional CLI), `encounter_builder.py` (`build`, `list`), `content_forge.py` (`quest`, `faction`, `magic-item`, `domain-event`)
+Scripts: `generate_monster.py` (positional CLI), `encounter_builder.py` (`build`, `difficulty-report`, `list`), `content_forge.py` (`quest`, `faction`, `magic-item`, `domain-event`)
 
 ## Behavior
 - Pull party level from campaign state when available.

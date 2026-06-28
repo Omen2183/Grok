@@ -137,6 +137,20 @@ def cmd_validate(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_score(_args: argparse.Namespace) -> int:
+    score_script = SCRIPTS_DIR / "suite_score.py"
+    if not score_script.exists():
+        print("suite_score.py not found — run from full repo clone.")
+        return 1
+    print("=== Suite Score (10-point) ===\n")
+    res = run_cmd([sys.executable, str(score_script)], timeout=300)
+    if res["stdout"]:
+        print(res["stdout"])
+    if res["stderr"]:
+        print(res["stderr"], file=sys.stderr)
+    return res["returncode"]
+
+
 def cmd_smoke(_args: argparse.Namespace) -> int:
     smoke = SCRIPTS_DIR / "smoke_test.py"
     if not smoke.exists():
@@ -233,6 +247,7 @@ def cmd_sync_all(_args: argparse.Namespace) -> int:
     steps = [
         ("registry_sync", [sys.executable, str(SCRIPTS_DIR / "registry_sync.py"), "--check"]),
         ("validate", None),
+        ("score", None),
         ("smoke", None),
         ("pytest", [sys.executable, "-m", "pytest", str(WORKSPACE_ROOT / ".grok" / "skills"), "-q", "--tb=no"]),
     ]
@@ -240,6 +255,8 @@ def cmd_sync_all(_args: argparse.Namespace) -> int:
     for name, cmd in steps:
         if name == "validate":
             code = cmd_validate(argparse.Namespace())
+        elif name == "score":
+            code = cmd_score(argparse.Namespace())
         elif name == "smoke":
             code = cmd_smoke(argparse.Namespace())
         elif cmd:
@@ -287,6 +304,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status").set_defaults(func=cmd_status)
     sub.add_parser("inventory").set_defaults(func=cmd_inventory)
     sub.add_parser("validate").set_defaults(func=cmd_validate)
+    sub.add_parser("score", help="10-point production grade with evidence").set_defaults(func=cmd_score)
     sub.add_parser("smoke").set_defaults(func=cmd_smoke)
 
     git_p = sub.add_parser("git")

@@ -40,6 +40,10 @@ description: Shared Python backend for all D&D skills — campaign init, state, 
 | Multiclass / spell slots | ✅ Implemented | `class_progression.py` — prereqs, slot tables, restore |
 | Faction simulation engine | ✅ Implemented | `faction_engine.py` — goals, influence, diplomacy graph |
 | Grok iOS / PC path resolution | ✅ Implemented | `paths.py` — skills, workspace, campaigns; `runtime-context` CLI |
+| Campaign health & quick status | ✅ Implemented | `campaign-health`, `quick-status` via `narration_cli.py` |
+| Kingdom mobile summary | ✅ Implemented | `kingdom-mobile` — short voice-friendly domain snapshot |
+| Event undo helper | ✅ Implemented | `undo-last` pops last logged event |
+| Shared inventory ledger | ✅ Implemented | `inventory_ledger.py` — `add`, `remove`, `list` |
 
 ## Tools & Scripts
 ```bash
@@ -78,11 +82,18 @@ python .grok/skills/dnd-utils/scripts/dnd_state_utils.py analytics "My Campaign"
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py analytics "My Campaign" --report sync-sqlite
 python .grok/skills/dnd-utils/scripts/dnd_state_utils.py archive-events "My Campaign" --keep 500
 python .grok/skills/dnd-utils/scripts/narration_cli.py dashboard "My Campaign"
+python .grok/skills/dnd-utils/scripts/narration_cli.py campaign-health "My Campaign"
+python .grok/skills/dnd-utils/scripts/narration_cli.py quick-status "My Campaign"
+python .grok/skills/dnd-utils/scripts/narration_cli.py kingdom-mobile "My Campaign"
+python .grok/skills/dnd-utils/scripts/narration_cli.py undo-last "My Campaign"
+python .grok/skills/dnd-utils/scripts/inventory_ledger.py add "My Campaign" --name "Healing potion" --qty 2
+python .grok/skills/dnd-utils/scripts/inventory_ledger.py remove "My Campaign" --name "Healing potion" --qty 1
+python .grok/skills/dnd-utils/scripts/inventory_ledger.py list "My Campaign"
 ```
 
 Supporting modules (import-only): `paths.py`, `event_system.py`, `narration_helpers.py`, `bootstrap.py`, `sqlite_layer.py`, `kingdom_sim.py`, `sync_bridge.py`, `lore_index.py`, `class_progression.py`, `faction_engine.py`, `xp_tables.py`, `errors.py`.
 
-Playbooks (v5.1.0): `new-campaign`, `start-combat`, `grid-combat`, `end-combat`, `session-end`, `kingdom-turn`, `vtt-export`, `downtime`, `chaos-campaign`, `random-session`, `party-generator`
+Playbooks (v5.3.0): `new-campaign`, `quick-session`, `pre-session`, `start-combat`, `party-to-combat`, `grid-combat`, `end-combat`, `session-end`, `kingdom-turn`, `vtt-export`, `downtime`, `chaos-campaign`, `random-session`, `party-generator`
 
 ## Behavior
 - Resolve campaign root via `paths.py` (`DND_CAMPAIGNS_ROOT` → `~/.grok/artifacts/dnd-campaigns/`).

@@ -26,7 +26,8 @@ description: Session recaps, XP awards, end-of-session cleanup, and log manageme
 | Append session log | ✅ Implemented | `logs/session_log.md` |
 | Event recording | ✅ Implemented | Via dnd-utils `record_event` |
 | Auto-generate recap from events | ✅ Implemented | `auto-recap`; `end-session --auto` |
-| Kingdom domain XP formulas | ⚠️ Partial | Same `award-xp`; amounts are DM judgment |
+| Kingdom domain XP formulas | ✅ Implemented | `award-domain-xp` milestone suggestions via `xp_tables` |
+| Quest hook sync from recap | ✅ Implemented | `sync-quests` imports hooks into quest tracker |
 
 ## Tools & Scripts
 ```bash
@@ -35,9 +36,12 @@ python .grok/skills/dnd-session-scribe/scripts/session_scribe.py recap "My Campa
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py auto-recap "My Campaign" --save
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "auto" --auto --xp 450 --reason "Session 12" --hook "Corruption spreads north"
 python .grok/skills/dnd-session-scribe/scripts/session_scribe.py append-log "My Campaign" "Party negotiated with the baron"
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py award-domain-xp "My Campaign" "reclaimed_mine"
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py sync-quests "My Campaign"
+python .grok/skills/dnd-session-scribe/scripts/session_scribe.py end-session "My Campaign" "auto" --auto --xp 450 --sync-quests
 ```
 
-Primary script: `session_scribe.py` — commands: `award-xp`, `recap`, `auto-recap`, `end-session`, `append-log`
+Primary script: `session_scribe.py` — commands: `award-xp`, `award-domain-xp`, `recap`, `auto-recap`, `end-session`, `append-log`, `sync-quests`
 
 ## Behavior
 - Confirm XP: *"XP 2,700 → 3,150 (+450)."*

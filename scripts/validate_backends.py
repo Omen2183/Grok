@@ -123,6 +123,7 @@ UTILS_LIBRARY_ONLY = {
     "lore_index.py",
     "class_progression.py",
     "faction_engine.py",
+    "event_helpers.py",
 }
 
 RANDOMIZER_LIBRARY_ONLY = {
@@ -133,7 +134,7 @@ RANDOMIZER_LIBRARY_ONLY = {
     "dungeon_generator.py",
 }
 
-RULES_LIBRARY_ONLY = {"rules_data.py", "srd_data.py"}
+RULES_LIBRARY_ONLY = {"rules_data.py", "srd_data.py", "rules_homebrew.py"}
 
 SCRIPT_FOR_SKILL: dict[str, str] = {
     "dnd-content-forge": "dnd-content-forge/scripts/content_forge.py",

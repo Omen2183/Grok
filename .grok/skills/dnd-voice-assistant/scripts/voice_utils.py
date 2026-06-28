@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-VOICE_BACKEND_VERSION = "5.2.0"
+VOICE_BACKEND_VERSION = "5.3.0"
 
 VOICE_TRIGGERS = (
     "voice mode",
