@@ -478,6 +478,11 @@ def get_kingdom_summary(campaign_name: str) -> str:
     ]
     for project in active[:5]:
         lines.append(f"- {project.get('name')} ({project.get('turns_remaining')} turns left)")
+    try:
+        from narration_helpers import format_kingdom_mobile  # noqa: E402
+        lines.append(f"\n**Voice:** {format_kingdom_mobile(campaign_name)}")
+    except Exception:
+        pass
     return "\n".join(lines)
 
 

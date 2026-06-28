@@ -22,7 +22,7 @@ from dnd_state_utils import (  # noqa: E402
 )
 from event_system import record_event, search_events  # noqa: E402
 from paths import get_campaign_path  # noqa: E402
-from xp_tables import check_level_up, level_from_xp, xp_to_next_level  # noqa: E402
+from xp_tables import DOMAIN_XP_MILESTONES, check_level_up, level_from_xp, suggest_domain_xp, xp_to_next_level  # noqa: E402
 
 
 def _append_session_log(campaign_name: str, text: str) -> None:
@@ -186,6 +186,71 @@ def generate_auto_recap(
     }
 
 
+def extract_quest_hooks(text: str) -> List[str]:
+    """Pull quest-hook candidates from recap or log text."""
+    import re
+
+    hooks: List[str] = []
+    for line in text.splitlines():
+        stripped = line.strip().lstrip("-*•").strip()
+        if not stripped or len(stripped) < 12:
+            continue
+        lower = stripped.lower()
+        if any(k in lower for k in ("quest", "hook", "leads to", "clue", "mystery", "investigate", "rumor")):
+            hooks.append(stripped[:200])
+    if not hooks:
+        for match in re.finditer(r"(?:must|need to|should)\s+([^.!?]{10,80})", text, re.I):
+            hooks.append(match.group(0).strip()[:200])
+    return hooks[:5]
+
+
+def sync_quest_hooks(
+    campaign_name: str,
+    *,
+    dry_run: bool = False,
+    source: str = "auto",
+) -> Dict[str, Any]:
+    """Import quest hooks from latest recap or auto-recap into quest tracker."""
+    if str(Path(__file__).parent.parent.parent / "dnd-quest-tracker" / "scripts") not in sys.path:
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent / "dnd-quest-tracker" / "scripts"))
+    from quest_tracker import add_hook, add_quest  # noqa: E402
+
+    if source == "auto":
+        auto = generate_auto_recap(campaign_name)
+        text = auto.get("summary", "")
+        candidates = extract_quest_hooks(text) + list(auto.get("hooks", []))
+    else:
+        candidates = extract_quest_hooks(source)
+
+    seen = set()
+    added: List[Dict[str, Any]] = []
+    for hook in candidates:
+        key = hook.lower()[:80]
+        if key in seen:
+            continue
+        seen.add(key)
+        if dry_run:
+            added.append({"hook": hook, "dry_run": True})
+            continue
+        if hook.lower().startswith("quest:"):
+            title = hook.split(":", 1)[-1].strip()
+            added.append({"type": "quest", "result": add_quest(campaign_name, title, summary=hook)})
+        else:
+            added.append({"type": "hook", "result": add_hook(campaign_name, hook)})
+    return {"campaign": campaign_name, "candidates": len(candidates), "added": added, "dry_run": dry_run}
+
+
+def award_domain_xp(campaign_name: str, milestone: str, *, apply: bool = True) -> Dict[str, Any]:
+    """Suggest and optionally award kingdom milestone XP."""
+    suggestion = suggest_domain_xp(milestone)
+    amount = suggestion.get("suggested_xp")
+    if amount is None:
+        return {"awarded": False, **suggestion}
+    if not apply:
+        return {"awarded": False, "would_award": amount, **suggestion}
+    return {"awarded": True, "xp": award_xp(campaign_name, amount, reason=f"Domain: {milestone}"), **suggestion}
+
+
 def end_session(
     campaign_name: str,
     summary: str,
@@ -238,6 +303,16 @@ def main() -> None:
     p_end.add_argument("--hook", action="append", default=[])
     p_end.add_argument("--skip-audit", action="store_true")
     p_end.add_argument("--auto", action="store_true", help="Generate summary from events if summary empty")
+    p_end.add_argument("--sync-quests", action="store_true", help="Import hooks from recap into quest tracker")
+
+    p_sync = sub.add_parser("sync-quests")
+    p_sync.add_argument("campaign")
+    p_sync.add_argument("--dry-run", action="store_true")
+
+    p_domain = sub.add_parser("award-domain-xp")
+    p_domain.add_argument("campaign")
+    p_domain.add_argument("milestone")
+    p_domain.add_argument("--dry-run", action="store_true")
 
     p_log = sub.add_parser("append-log")
     p_log.add_argument("campaign")
@@ -253,6 +328,10 @@ def main() -> None:
             result["saved"] = save_recap(args.campaign, result["summary"], hooks=result.get("hooks"))
     elif args.cmd == "recap":
         result = save_recap(args.campaign, args.summary, hooks=args.hook)
+    elif args.cmd == "sync-quests":
+        result = sync_quest_hooks(args.campaign, dry_run=args.dry_run)
+    elif args.cmd == "award-domain-xp":
+        result = award_domain_xp(args.campaign, args.milestone, apply=not args.dry_run)
     elif args.cmd == "append-log":
         _append_session_log(args.campaign, f"\n{args.text}\n")
         result = {"status": "appended", "campaign": args.campaign}
@@ -268,9 +347,11 @@ def main() -> None:
             summary,
             xp=args.xp,
             xp_reason=args.reason,
-            hooks=args.hook,
+            hooks=hooks,
             run_audit=not args.skip_audit,
         )
+        if args.sync_quests:
+            result["quest_sync"] = sync_quest_hooks(args.campaign)
     else:
         result = {"error": "Unknown command"}
 

@@ -71,6 +71,14 @@ def resume_campaign(campaign_name: str) -> Dict[str, Any]:
             result["next_skill"] = "dnd-combat-assistant"
         except Exception:
             pass
+    try:
+        from campaign_dashboard import build_campaign_health  # noqa: E402
+        health = build_campaign_health(campaign_name)
+        result["campaign_health"] = health.get("voice_summary", "")
+        result["last_recap_snippet"] = health.get("last_recap_snippet", "")
+        result["previously_on"] = health.get("last_recap_snippet", "")
+    except Exception:
+        pass
     return result
 
 
@@ -218,7 +226,11 @@ def main() -> None:
         else:
             result = {"skills": list_all_skills(), "playbooks": list(PLAYBOOKS.keys())}
     elif args.cmd == "health":
-        result = enhanced_audit_campaign(args.campaign) if args.enhanced else audit_campaign(args.campaign)
+        if args.enhanced:
+            result = enhanced_audit_campaign(args.campaign)
+        else:
+            from campaign_dashboard import build_campaign_health  # noqa: E402
+            result = build_campaign_health(args.campaign)
     else:
         result = {"error": "Unknown command"}
 

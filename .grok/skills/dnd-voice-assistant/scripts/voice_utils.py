@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-VOICE_BACKEND_VERSION = "5.0.0"
+VOICE_BACKEND_VERSION = "5.2.0"
 
 VOICE_TRIGGERS = (
     "voice mode",
@@ -43,6 +43,9 @@ AMBIGUOUS_PATTERNS = (
     (re.compile(r"\b(random party|roll up a party|generate (a )?party)\b", re.I), "random_party"),
     (re.compile(r"\b(random dungeon|dungeon floor|procedural dungeon)\b", re.I), "random_dungeon"),
     (re.compile(r"\b(wild magic surge|wild magic table|arcane surge)\b", re.I), "wild_magic"),
+    (re.compile(r"\b(undo|take that back|revert last)\b", re.I), "undo"),
+    (re.compile(r"\b(what can i say|voice help|phrase list)\b", re.I), "voice_help"),
+    (re.compile(r"\b(campaign health|how'?s my campaign)\b", re.I), "campaign_health"),
 )
 
 
@@ -89,6 +92,42 @@ def parse_damage_phrase(text: str) -> Optional[Tuple[str, int]]:
     if not match:
         return None
     return match.group("target").strip(), int(match.group("amount"))
+
+
+def parse_compound_phrases(text: str) -> List[Dict[str, Any]]:
+    """Split compound utterances like 'goblin takes 5 damage and next turn'."""
+    parts = re.split(r"\s+and\s+", text, flags=re.I)
+    actions: List[Dict[str, Any]] = []
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        damage = parse_damage_phrase(part)
+        healing = parse_healing_phrase(part)
+        intent = detect_intent(part)
+        if damage:
+            actions.append({"type": "damage", "target": damage[0], "amount": damage[1]})
+        elif healing:
+            actions.append({"type": "healing", "target": healing[0], "amount": healing[1]})
+        elif intent:
+            actions.append({"type": "intent", "intent": intent, "text": part})
+    return actions
+
+
+def voice_phrase_suggestions(*, mode: str = "tabletop") -> List[str]:
+    base = [
+        "Roll stealth with advantage",
+        "Goblin takes 8 damage",
+        "Next turn",
+        "We take a long rest",
+        "What quests are active?",
+        "End session",
+    ]
+    if mode == "combat":
+        base.extend(["Combat status", "Apply condition grappled to goblin", "Undo last change"])
+    if mode == "kingdom":
+        base.extend(["Kingdom turn", "Faction move", "Queue project"])
+    return base
 
 
 def parse_healing_phrase(text: str) -> Optional[Tuple[str, int]]:
@@ -153,7 +192,15 @@ def route_voice_request(text: str, *, campaign: Optional[str] = None) -> Dict[st
         "random_party": "dnd-randomizer",
         "random_dungeon": "dnd-randomizer",
         "wild_magic": "dnd-randomizer",
+        "undo": "dnd-utils",
+        "voice_help": "dnd-voice-assistant",
+        "campaign_health": "dnd-persistent-dm",
     }
+
+    compound = parse_compound_phrases(text)
+    if len(compound) > 1:
+        route["compound_actions"] = compound
+        route["intent"] = "compound"
 
     if damage:
         route.update({"primary_skill": "dnd-combat-assistant", "damage": damage, "intent": "damage"})
@@ -283,6 +330,12 @@ def main() -> None:
     p_confirm = sub.add_parser("confirm-check")
     p_confirm.add_argument("text")
 
+    p_compound = sub.add_parser("parse-compound")
+    p_compound.add_argument("text")
+
+    p_phrases = sub.add_parser("voice-phrases")
+    p_phrases.add_argument("--mode", default="tabletop", choices=["tabletop", "combat", "kingdom"])
+
     args = parser.parse_args()
 
     if args.cmd == "route":
@@ -314,6 +367,10 @@ def main() -> None:
             "prompt": voice_confirm_prompt(intent or "action") if needs_confirmation(intent, args.text) else None,
             "version": VOICE_BACKEND_VERSION,
         }
+    elif args.cmd == "parse-compound":
+        result = {"actions": parse_compound_phrases(args.text), "version": VOICE_BACKEND_VERSION}
+    elif args.cmd == "voice-phrases":
+        result = {"phrases": voice_phrase_suggestions(mode=args.mode), "version": VOICE_BACKEND_VERSION}
     else:
         result = {"error": "Unknown command"}
 

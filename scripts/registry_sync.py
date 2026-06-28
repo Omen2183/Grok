@@ -160,6 +160,7 @@ def main() -> int:
     parser.add_argument("--fix-scripts", action="store_true", help="Apply script path fixes")
     parser.add_argument("--dry-run", action="store_true", default=True)
     parser.add_argument("--apply", action="store_true", help="Actually write fixes")
+    parser.add_argument("--suggest", action="store_true", help="List skills missing from registry")
     args = parser.parse_args()
 
     if args.discover:
@@ -169,6 +170,18 @@ def main() -> int:
     if args.fix_scripts:
         result = fix_registry_scripts(dry_run=not args.apply)
         print(json.dumps(result, indent=2))
+        return 0
+
+    if args.suggest:
+        discovered = set(discover_skills().keys())
+        registered = set(list_all_skills())
+        missing = sorted(discovered - registered)
+        extra = sorted(registered - discovered)
+        print(json.dumps({
+            "missing_from_registry": missing,
+            "registry_without_folder": extra,
+            "suggested_stubs": [generate_registry_stub(s) for s in missing],
+        }, indent=2))
         return 0
 
     report = validate_registry()

@@ -132,3 +132,39 @@ def _format_mobile_summary(
         lines.append(f"**Quests:** {quests['active']} active")
     lines.append("**What do you do?**")
     return "\n".join(lines)
+
+
+def build_campaign_health(campaign_name: str) -> Dict[str, Any]:
+    """Consolidated pre-session health check for voice and text."""
+    dash = build_campaign_dashboard(campaign_name)
+    last_recap = ""
+    recaps_dir = get_campaign_path(campaign_name) / "recaps"
+    if recaps_dir.exists():
+        files = sorted(recaps_dir.glob("session_*.md"), reverse=True)
+        if files:
+            text = files[0].read_text(encoding="utf-8")
+            for line in text.splitlines():
+                if line.strip() and not line.startswith("#"):
+                    last_recap = line.strip()[:120]
+                    break
+
+    voice_lines = [
+        f"{dash['character']['name']}, level {dash['character']['level']}, "
+        f"HP {dash['character']['hp']}.",
+        f"At {dash['location']}.",
+    ]
+    if dash["combat"]["active"]:
+        voice_lines.append(f"In combat: {dash['combat'].get('encounter', 'active')}.")
+    if dash["quests"]["active_titles"]:
+        voice_lines.append(f"Quests: {', '.join(dash['quests']['active_titles'][:2])}.")
+    if last_recap:
+        voice_lines.append(f"Last time: {last_recap}")
+
+    return {
+        "campaign": campaign_name,
+        "health": "ok",
+        "dashboard": dash,
+        "last_recap_snippet": last_recap,
+        "voice_summary": " ".join(voice_lines),
+        "text_summary": dash.get("mobile_summary", ""),
+    }

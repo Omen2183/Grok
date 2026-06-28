@@ -379,6 +379,34 @@ PLAYBOOKS: Dict[str, List[Dict[str, Any]]] = {
         {"skill": "dnd-rumor-event-generator", "command": "rumors", "args": ["--count", "2"]},
         {"skill": "dnd-quest-tracker", "command": "list"},
     ],
+    "quick-session": [
+        {"skill": "dnd-randomizer", "command": "random-party", "args": ["--size", "4", "--level", "3"], "pass_campaign": False},
+        {"skill": "dnd-combat-assistant", "command": "init", "args": ["--encounter", "Quick Fight"]},
+        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"], "pass_campaign": False},
+        {"skill": "dnd-combat-assistant", "command": "end-combat"},
+        {"skill": "dnd-session-scribe", "command": "auto-recap", "args": ["--save"]},
+        {"skill": "dnd-session-scribe", "command": "end-session", "args": ["auto", "--auto", "--xp", "50"]},
+    ],
+    "pre-session": [
+        {"skill": "dnd-utils", "command": "campaign-health", "notes": "narration_cli.py"},
+        {"skill": "dnd-persistent-dm", "command": "resume"},
+        {"skill": "dnd-quest-tracker", "command": "list"},
+        {"skill": "dnd-lore-archivist", "command": "list-recaps", "args": ["--limit", "1"]},
+    ],
+    "visual-scene": [
+        {"skill": "dnd-persistent-dm", "command": "whats-happening"},
+        {"skill": "dnd-visual-weaver", "command": "weave-prompt", "args": ["current scene"], "notes": "Grok offers image after prompt"},
+    ],
+    "party-to-combat": [
+        {"skill": "dnd-randomizer", "command": "random-party", "args": ["--size", "4", "--level", "3"], "pass_campaign": False},
+        {"skill": "dnd-combat-assistant", "command": "init", "args": ["--encounter", "Party Trial"]},
+        {"skill": "dnd-combat-assistant", "command": "seed-from-party", "notes": "combat_tracker.py"},
+        {"skill": "dnd-randomizer", "command": "random-encounter", "args": ["--party-level", "3"], "pass_campaign": False},
+        {"skill": "dnd-combat-assistant", "command": "summary"},
+    ],
+    "campaign-health": [
+        {"skill": "dnd-utils", "command": "campaign-health", "notes": "narration_cli.py"},
+    ],
 }
 
 

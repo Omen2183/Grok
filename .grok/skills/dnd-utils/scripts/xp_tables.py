@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401 — Dict used by DOMAIN_XP_MILESTONES
 
 # Cumulative XP required to reach each level (index 0 = level 1)
 XP_BY_LEVEL: List[int] = [
@@ -31,6 +31,27 @@ XP_BY_LEVEL: List[int] = [
 PROFICIENCY_BY_LEVEL: List[int] = [
     2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6,
 ]
+
+# Suggested domain milestone XP awards (kingdom mode — DM may override)
+DOMAIN_XP_MILESTONES: Dict[str, int] = {
+    "project_complete": 150,
+    "trade_route": 100,
+    "faction_alliance": 120,
+    "territory_expansion": 200,
+    "crisis_resolved": 175,
+    "festival": 50,
+}
+
+
+def suggest_domain_xp(milestone: str) -> Dict[str, Any]:
+    key = milestone.lower().replace(" ", "_").replace("-", "_")
+    amount = DOMAIN_XP_MILESTONES.get(key)
+    return {
+        "milestone": milestone,
+        "suggested_xp": amount,
+        "known_milestones": sorted(DOMAIN_XP_MILESTONES.keys()),
+        "note": "Award via session-scribe award-xp or end-session --xp",
+    }
 
 
 def level_from_xp(xp: int) -> int:

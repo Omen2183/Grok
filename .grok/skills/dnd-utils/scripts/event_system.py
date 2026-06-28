@@ -106,3 +106,23 @@ def search_events(
         levels = {level.strip().lower() for level in importance.split(",") if level.strip()}
         events = [e for e in events if e.get("importance", "normal").lower() in levels]
     return events[-limit:]
+
+
+def pop_last_event(campaign_name: str, *, tag: Optional[str] = None) -> Dict[str, Any]:
+    """Remove and return the most recent event (optionally filtered by tag). Used for undo."""
+    events = _load_events(campaign_name)
+    if not events:
+        return {"undone": False, "reason": "no_events"}
+    idx = len(events) - 1
+    if tag:
+        tags = {t.strip().lower() for t in tag.split(",") if t.strip()}
+        while idx >= 0:
+            event_tags = {t.lower() for t in events[idx].get("tags", [])}
+            if tags.intersection(event_tags):
+                break
+            idx -= 1
+        if idx < 0:
+            return {"undone": False, "reason": "no_matching_event", "tag": tag}
+    removed = events.pop(idx)
+    _save_events(campaign_name, events)
+    return {"undone": True, "event": removed, "remaining": len(events)}

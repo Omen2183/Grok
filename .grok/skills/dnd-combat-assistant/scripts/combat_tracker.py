@@ -148,6 +148,49 @@ def add_combatant(campaign_name: str, name: str, hp: int, initiative: int, is_pl
     return combat
 
 
+def roll_auto_initiative(*, dex_mod: int = 0, cr: Optional[float] = None) -> int:
+    """Roll 1d20 initiative; monsters use CR-based mod when dex_mod omitted."""
+    import random
+    mod = dex_mod
+    if cr is not None and dex_mod == 0:
+        mod = max(0, min(8, int(cr) + 1))
+    return random.randint(1, 20) + mod
+
+
+def seed_from_party(campaign_name: str) -> Dict[str, Any]:
+    """Add player character and companions from campaign state to active combat."""
+    from dnd_state_utils import get_player_character, load_json  # noqa: WPS433
+
+    player = get_player_character(campaign_name)
+    added: List[Dict[str, Any]] = []
+    hp = player.get("hit_points", {})
+    pc_init = roll_auto_initiative(dex_mod=int(player.get("dexterity_mod", player.get("initiative_bonus", 2))))
+    added.append(
+        add_combatant(
+            campaign_name,
+            player.get("name", "Player"),
+            int(hp.get("current", hp.get("max", 10))),
+            pc_init,
+            is_player=True,
+        )
+    )
+    companions_path = get_campaign_path(campaign_name) / "state" / "companions.json"
+    companions = load_json(companions_path, {})
+    for name, data in companions.items():
+        chp = data.get("hp", {})
+        c_init = roll_auto_initiative(dex_mod=int(data.get("dex_mod", 1)))
+        added.append(
+            add_combatant(
+                campaign_name,
+                name,
+                int(chp.get("current", chp.get("max", 10))),
+                c_init,
+                is_companion=True,
+            )
+        )
+    return {"seeded": len(added), "combatants": added}
+
+
 def add_combatant_group(campaign_name: str, name: str, hp_per: int, initiative: int, quantity: int, is_player: bool = False) -> Dict[str, Any]:
     """Convenience function to add a group of identical combatants as one tracked entry."""
     return add_combatant(
@@ -355,7 +398,7 @@ def get_status(campaign_name: str) -> Dict[str, Any]:
     return load_combat(campaign_name)
 
 
-def get_combat_summary(campaign_name: str) -> str:
+def get_combat_summary(campaign_name: str, *, dm_screen: bool = False) -> str:
     """
     Returns a human-readable summary, with special handling for groups in large fights.
     Dynamically shows current group size as creatures die.
@@ -373,7 +416,21 @@ def get_combat_summary(campaign_name: str) -> str:
         elif c.get("is_group") and current_group == 1:
             group_info = " [last one]"
 
-        status = f"{c['name']}{group_info} ({c['hp_current']}/{c['hp_max']} HP)"
+        if dm_screen and not c.get("is_player") and not c.get("is_companion"):
+            pct = 0
+            if c.get("hp_max"):
+                pct = int(100 * c["hp_current"] / c["hp_max"])
+            if pct > 75:
+                hp_label = "healthy"
+            elif pct > 40:
+                hp_label = "wounded"
+            elif pct > 0:
+                hp_label = "bloodied"
+            else:
+                hp_label = "down"
+            status = f"{c['name']}{group_info} [{hp_label}]"
+        else:
+            status = f"{c['name']}{group_info} ({c['hp_current']}/{c['hp_max']} HP)"
         cond_text = _format_conditions(c.get("conditions", []))
         if cond_text:
             status += f" | {cond_text}"
@@ -652,7 +709,10 @@ def main():
     p_add.add_argument("campaign")
     p_add.add_argument("--name", required=True)
     p_add.add_argument("--hp", type=int, required=True)
-    p_add.add_argument("--initiative", type=int, required=True)
+    p_add.add_argument("--initiative", type=int)
+    p_add.add_argument("--auto-initiative", action="store_true")
+    p_add.add_argument("--dex-mod", type=int, default=0)
+    p_add.add_argument("--cr", type=float, help="Monster CR for auto initiative")
     p_add.add_argument("--player", action="store_true")
     p_add.add_argument("--companion", action="store_true")
     p_add.add_argument("--group-size", type=int, default=1)
@@ -675,6 +735,10 @@ def main():
 
     p_summary = sub.add_parser("summary", help="Human-readable combat summary for mobile/voice")
     p_summary.add_argument("campaign")
+    p_summary.add_argument("--dm-screen", action="store_true", help="Hide exact monster HP")
+
+    p_seed = sub.add_parser("seed-from-party", help="Add PC and companions to combat with auto initiative")
+    p_seed.add_argument("campaign")
     
     p_temp = sub.add_parser("apply-temp-hp")
     p_temp.add_argument("campaign")
@@ -725,10 +789,15 @@ def main():
     if args.cmd == "init":
         print(json.dumps(init_combat(args.campaign, args.encounter), indent=2))
     elif args.cmd == "add":
+        init = args.initiative
+        if init is None or args.auto_initiative:
+            init = roll_auto_initiative(dex_mod=args.dex_mod, cr=args.cr)
         print(json.dumps(add_combatant(
-            args.campaign, args.name, args.hp, args.initiative,
+            args.campaign, args.name, args.hp, init,
             args.player, args.companion, group_size=args.group_size,
         ), indent=2))
+    elif args.cmd == "seed-from-party":
+        print(json.dumps(seed_from_party(args.campaign), indent=2))
     elif args.cmd == "damage":
         print(json.dumps(apply_damage(args.campaign, args.target, args.amount), indent=2))
     elif args.cmd == "heal":
@@ -738,7 +807,7 @@ def main():
     elif args.cmd == "status":
         print(json.dumps(get_status(args.campaign), indent=2))
     elif args.cmd == "summary":
-        print(get_combat_summary(args.campaign))
+        print(get_combat_summary(args.campaign, dm_screen=args.dm_screen))
     elif args.cmd == "apply-temp-hp":
         print(json.dumps(apply_temp_hp(args.campaign, args.target, args.amount), indent=2))
     elif args.cmd == "remove":

@@ -41,9 +41,27 @@ def enrich_route(campaign: str, route: Dict[str, Any]) -> Dict[str, Any]:
     return enriched
 
 
+_COMMAND_SCRIPT_OVERRIDES = {
+    ("dnd-utils", "campaign-health"): "dnd-utils/scripts/narration_cli.py",
+    ("dnd-utils", "quick-status"): "dnd-utils/scripts/narration_cli.py",
+    ("dnd-utils", "kingdom-mobile"): "dnd-utils/scripts/narration_cli.py",
+    ("dnd-combat-assistant", "seed-from-party"): "dnd-combat-assistant/scripts/combat_tracker.py",
+    ("dnd-combat-assistant", "init-grid"): "dnd-combat-assistant/scripts/grid_combat.py",
+    ("dnd-combat-assistant", "grid-summary"): "dnd-combat-assistant/scripts/grid_combat.py",
+    ("dnd-character-manager", "foundry"): "dnd-character-manager/scripts/vtt_export.py",
+    ("dnd-character-manager", "roll20"): "dnd-character-manager/scripts/vtt_export.py",
+    ("dnd-character-manager", "combat-foundry"): "dnd-character-manager/scripts/vtt_export.py",
+    ("dnd-visual-weaver", "weave-prompt"): "dnd-visual-weaver/scripts/visual_prompt_library.py",
+    ("dnd-visual-weaver", "weave-map"): "dnd-visual-weaver/scripts/visual_prompt_library.py",
+    ("dnd-lore-archivist", "list-recaps"): "dnd-lore-archivist/scripts/lore_archivist.py",
+    ("dnd-session-scribe", "sync-quests"): "dnd-session-scribe/scripts/session_scribe.py",
+}
+
+
 def _script_for_skill(skill_id: str, command: str) -> Optional[str]:
-    if skill_id == "dnd-character-manager" and command in ("foundry", "roll20", "combat-foundry"):
-        return "dnd-character-manager/scripts/vtt_export.py"
+    override = _COMMAND_SCRIPT_OVERRIDES.get((skill_id, command))
+    if override:
+        return override
     return SKILLS.get(skill_id, {}).get("script")
 
 

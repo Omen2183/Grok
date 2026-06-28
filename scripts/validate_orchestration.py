@@ -13,6 +13,9 @@ sys.path.insert(0, str(SKILLS_DIR / "dnd-utils" / "scripts"))
 
 from skill_registry import PLAYBOOKS, SKILLS as SKILL_META, list_all_skills  # noqa: E402
 
+# Meta / personal skills — not part of in-game orchestration registry
+META_ONLY_SKILLS = frozenset({"dnd-skills-manager", "local-ct-briefing"})
+
 
 def main() -> int:
     issues: list[str] = []
@@ -23,7 +26,7 @@ def main() -> int:
     }
     registered = set(list_all_skills())
 
-    missing_registry = installed - registered
+    missing_registry = installed - registered - META_ONLY_SKILLS
     missing_install = registered - installed
     if missing_registry:
         issues.append(f"Skills missing from registry: {sorted(missing_registry)}")

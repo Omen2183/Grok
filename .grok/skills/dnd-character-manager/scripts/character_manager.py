@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "dnd-util
 try:
     from bootstrap import ensure_utils_importable
     ensure_utils_importable()
-    from dnd_state_utils import get_campaign_path, load_world_state, update_world_state
+    from dnd_state_utils import get_campaign_path, get_player_character, load_json, load_world_state, update_world_state
     from class_progression import (
         build_multiclass_plan,
         calculate_spell_slots,
@@ -712,6 +712,9 @@ def run_cli() -> None:
     p_summary = sub.add_parser("summary")
     p_summary.add_argument("campaign")
 
+    p_party = sub.add_parser("list-party", help="PC, companions, and optional party members")
+    p_party.add_argument("campaign")
+
     p_level = sub.add_parser("level-up")
     p_level.add_argument("campaign")
     p_level.add_argument("--levels", type=int, default=1)
@@ -758,6 +761,8 @@ def run_cli() -> None:
 
     if args.cmd == "summary":
         print(get_character_summary(args.campaign))
+    elif args.cmd == "list-party":
+        print(json.dumps(list_party(args.campaign), indent=2))
     elif args.cmd == "level-up":
         result = level_up(args.campaign, levels=args.levels, class_name=args.class_name)
         print(json.dumps(result, indent=2))
@@ -916,6 +921,28 @@ def suggest_level_up_options(campaign_name: str) -> Dict[str, Any]:
         suggestions["notes"] = "No ASI this level. Good opportunity for a strong feat or subclass feature."
 
     return suggestions
+
+
+def list_party(campaign_name: str) -> Dict[str, Any]:
+    """List PC plus companions and optional multi-PC party file."""
+    pc = get_player_character(campaign_name)
+    base = get_campaign_path(campaign_name) / "state"
+    companions = load_json(base / "companions.json", {})
+    party_file = load_json(base / "party_members.json", {"members": []})
+    members = [
+        {
+            "name": pc.get("name", "PC"),
+            "role": "player",
+            "level": pc.get("level", 1),
+            "hp": pc.get("hit_points", {}),
+        }
+    ]
+    for name, data in companions.items():
+        members.append({"name": name, "role": "companion", "hp": data.get("hp", {})})
+    for extra in party_file.get("members", []):
+        if extra.get("name") != pc.get("name"):
+            members.append(extra)
+    return {"campaign": campaign_name, "count": len(members), "members": members}
 
 
 def add_companion(campaign_name: str, companion_data: Dict[str, Any]) -> Dict[str, Any]:

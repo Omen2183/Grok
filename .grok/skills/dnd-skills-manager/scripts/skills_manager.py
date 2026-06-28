@@ -228,6 +228,36 @@ def _compare_roots(local: Path, other: Path, *, dnd_only: bool = True) -> dict[s
     return report
 
 
+def cmd_sync_all(_args: argparse.Namespace) -> int:
+    """Run registry check, full validate, smoke, and pytest."""
+    steps = [
+        ("registry_sync", [sys.executable, str(SCRIPTS_DIR / "registry_sync.py"), "--check"]),
+        ("validate", None),
+        ("smoke", None),
+        ("pytest", [sys.executable, "-m", "pytest", str(WORKSPACE_ROOT / ".grok" / "skills"), "-q", "--tb=no"]),
+    ]
+    failed: list[str] = []
+    for name, cmd in steps:
+        if name == "validate":
+            code = cmd_validate(argparse.Namespace())
+        elif name == "smoke":
+            code = cmd_smoke(argparse.Namespace())
+        elif cmd:
+            res = run_cmd(cmd)
+            code = 0 if res["success"] else 1
+            if not res["success"] and res["stderr"]:
+                print(res["stderr"], file=sys.stderr)
+        else:
+            code = 1
+        if code != 0:
+            failed.append(name)
+    if failed:
+        print(f"sync-all failed: {', '.join(failed)}")
+        return 1
+    print("sync-all passed.")
+    return 0
+
+
 def cmd_sync_check(args: argparse.Namespace) -> int:
     other = Path(args.against).expanduser().resolve()
     if not other.is_dir():
@@ -268,6 +298,7 @@ def build_parser() -> argparse.ArgumentParser:
     pull_p.set_defaults(func=cmd_pull)
 
     sub.add_parser("drift").set_defaults(func=cmd_drift)
+    sub.add_parser("sync-all", help="registry_sync + validate + smoke + pytest").set_defaults(func=cmd_sync_all)
 
     sync_p = sub.add_parser("sync-check", help="Compare local skills to another skills root")
     sync_p.add_argument("--against", required=True, help="Path to other .grok/skills or export skills/ folder")

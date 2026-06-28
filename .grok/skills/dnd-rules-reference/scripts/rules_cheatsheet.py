@@ -29,7 +29,13 @@ def list_topics(*, tag: Optional[str] = None) -> List[str]:
     return sorted(k for k, v in CHEATSHEET.items() if tag.lower() in v.get("tags", []))
 
 
-def lookup_rule(topic: str) -> Dict[str, Any]:
+def lookup_rule(topic: str, *, campaign_name: Optional[str] = None) -> Dict[str, Any]:
+    if campaign_name:
+        from rules_homebrew import lookup_homebrew_first  # noqa: E402
+
+        homebrew = lookup_homebrew_first(campaign_name, topic)
+        if homebrew:
+            return homebrew
     key = topic.lower().replace(" ", "_").replace("-", "_")
     key = CONDITION_ALIASES.get(key, TOPIC_ALIASES.get(key, key))
     if key not in CHEATSHEET:
@@ -90,6 +96,7 @@ def main() -> None:
 
     p_lookup = sub.add_parser("lookup")
     p_lookup.add_argument("topic")
+    p_lookup.add_argument("--campaign", default=None)
 
     p_search = sub.add_parser("search")
     p_search.add_argument("query")
@@ -100,6 +107,15 @@ def main() -> None:
 
     p_home = sub.add_parser("homebrew")
     p_home.add_argument("campaign")
+
+    p_hb_add = sub.add_parser("homebrew-add")
+    p_hb_add.add_argument("campaign")
+    p_hb_add.add_argument("topic")
+    p_hb_add.add_argument("ruling")
+
+    p_hb_list = sub.add_parser("homebrew-list")
+    p_hb_list.add_argument("campaign")
+    p_hb_list.add_argument("--topic", default=None)
 
     p_spell = sub.add_parser("spell", help="Lookup SRD spell")
     p_spell.add_argument("name")
@@ -121,7 +137,13 @@ def main() -> None:
     elif args.cmd == "topics":
         result = {"topics": list_topics(tag=args.tag), "tag": args.tag}
     elif args.cmd == "lookup":
-        result = lookup_rule(args.topic)
+        result = lookup_rule(args.topic, campaign_name=args.campaign)
+    elif args.cmd == "homebrew-add":
+        from rules_homebrew import add_rule  # noqa: E402
+        result = add_rule(args.campaign, args.topic, args.ruling)
+    elif args.cmd == "homebrew-list":
+        from rules_homebrew import list_rules  # noqa: E402
+        result = list_rules(args.campaign, topic=args.topic)
     elif args.cmd == "search":
         result = search_rules(args.query, limit=args.limit)
     elif args.cmd == "condition":

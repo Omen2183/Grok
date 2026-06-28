@@ -477,13 +477,23 @@ def wild_magic_surge(
         use_ledger=bool(campaign_name),
     )
     effect = surge["results"][0]["name"] if surge.get("results") else "Uncontrolled arcane feedback"
-    return {
+    result = {
         "trigger": "spell_cast",
         "surge": effect,
         "roll": surge,
         "dm_note": "Apply immediately for Wild Magic Surge or optional sorcerer table.",
+        "concentration_check": "DC 10 CON save or lose concentration on active spell",
         "version": RANDOMIZER_VERSION,
     }
+    if campaign_name:
+        record_event(
+            campaign_name,
+            f"Wild magic surge: {effect}",
+            tags=["wild_magic", "combat"],
+            importance="major",
+            metadata={"effect": effect},
+        )
+    return result
 
 
 def random_everything(
@@ -509,7 +519,22 @@ def random_everything(
     return package
 
 
-def apply_character(campaign_name: str, *, seed: Optional[int] = None, level: int = 1) -> Dict[str, Any]:
+def preview_apply_character(campaign_name: str, *, seed: Optional[int] = None, level: int = 1) -> Dict[str, Any]:
+    gen = random_character(level=level, multiclass=level > 1, seed=seed)
+    char = gen["character"]
+    return {
+        "dry_run": True,
+        "would_write": str(get_campaign_path(campaign_name) / "state" / "player_character.json"),
+        "character_name": char.get("name"),
+        "level": char.get("level"),
+        "class": char.get("class"),
+        "summary": f"Replace PC with {char.get('name')} ({char.get('class')} {char.get('level')})",
+    }
+
+
+def apply_character(campaign_name: str, *, seed: Optional[int] = None, level: int = 1, dry_run: bool = False) -> Dict[str, Any]:
+    if dry_run:
+        return preview_apply_character(campaign_name, seed=seed, level=level)
     gen = random_character(level=level, multiclass=level > 1, seed=seed)
     char = gen["character"]
     path = get_campaign_path(campaign_name) / "state" / "player_character.json"
@@ -518,8 +543,14 @@ def apply_character(campaign_name: str, *, seed: Optional[int] = None, level: in
     return {"applied": str(path), "character": char, "version": RANDOMIZER_VERSION}
 
 
-def apply_world(campaign_name: str, *, seed: Optional[int] = None) -> Dict[str, Any]:
+def apply_world(campaign_name: str, *, seed: Optional[int] = None, dry_run: bool = False) -> Dict[str, Any]:
     gen = random_world(campaign_name=campaign_name, seed=seed)
+    if dry_run:
+        return {
+            "dry_run": True,
+            "domain": gen["world"].get("domain_name"),
+            "summary": f"Would apply world {gen['world'].get('domain_name')}",
+        }
     update_world_state(campaign_name, gen["world"])
     update_kingdom_state(campaign_name, gen["kingdom"])
     record_event(campaign_name, f"Random world applied: {gen['world']['domain_name']}", tags=["randomizer", "world"])
@@ -715,10 +746,12 @@ def main() -> None:
     p_apply_c.add_argument("campaign")
     p_apply_c.add_argument("--level", type=int, default=1)
     p_apply_c.add_argument("--seed", type=int)
+    p_apply_c.add_argument("--dry-run", action="store_true")
 
     p_apply_w = sub.add_parser("apply-world")
     p_apply_w.add_argument("campaign")
     p_apply_w.add_argument("--seed", type=int)
+    p_apply_w.add_argument("--dry-run", action="store_true")
 
     p_ledger = sub.add_parser("ledger")
     p_ledger.add_argument("campaign")
@@ -827,9 +860,9 @@ def main() -> None:
     elif args.cmd == "random-everything":
         result = random_everything(args.campaign, level=args.level, seed=args.seed)
     elif args.cmd == "apply-character":
-        result = apply_character(args.campaign, seed=args.seed, level=args.level)
+        result = apply_character(args.campaign, seed=args.seed, level=args.level, dry_run=args.dry_run)
     elif args.cmd == "apply-world":
-        result = apply_world(args.campaign, seed=args.seed)
+        result = apply_world(args.campaign, seed=args.seed, dry_run=args.dry_run)
     elif args.cmd == "ledger":
         result = ledger_summary(args.campaign, limit=args.limit)
     elif args.cmd == "add-table-entry":

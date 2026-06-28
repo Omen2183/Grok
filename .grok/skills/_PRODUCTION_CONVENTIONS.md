@@ -62,6 +62,11 @@ Every skill must delegate through the canonical registry — never improvise cro
 | `chaos-campaign` | apply-world → apply-character → encounter → quest → NPC → rumors |
 | `random-session` | travel-day → dungeon → encounter → item → quest |
 | `party-generator` | random-party → mobile-summary → encounter |
+| `quick-session` | random-party → combat → encounter → end-combat → session-end |
+| `pre-session` | campaign-health → resume → quest list → last recap |
+| `visual-scene` | whats-happening → weave-prompt (offer image) |
+| `party-to-combat` | random-party → combat init → seed-from-party → encounter |
+| `campaign-health` | narration_cli campaign-health |
 
 ```bash
 python .grok/skills/dnd-persistent-dm/scripts/persistent_dm.py playbook "My Campaign" session-end

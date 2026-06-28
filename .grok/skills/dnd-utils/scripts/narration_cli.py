@@ -12,10 +12,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from narration_helpers import (  # noqa: E402
     format_combat_change,
+    format_kingdom_mobile,
     format_mobile_status,
+    format_quick_status,
     proactive_opening,
     suggest_next_actions,
 )
+from event_system import pop_last_event  # noqa: E402
 
 
 def main() -> None:
@@ -41,12 +44,34 @@ def main() -> None:
     p_dash = sub.add_parser("dashboard", help="Full campaign snapshot (mobile)")
     p_dash.add_argument("campaign")
 
+    p_quick = sub.add_parser("quick-status", help="One-line status for quick-session play")
+    p_quick.add_argument("campaign")
+
+    p_health = sub.add_parser("campaign-health", help="Pre-session health check")
+    p_health.add_argument("campaign")
+
+    p_kingdom = sub.add_parser("kingdom-mobile", help="Short kingdom summary for voice")
+    p_kingdom.add_argument("campaign")
+
+    p_undo = sub.add_parser("undo-last", help="Pop last logged event (undo helper)")
+    p_undo.add_argument("campaign")
+    p_undo.add_argument("--tag")
+
     args = parser.parse_args()
 
     if args.cmd == "dashboard":
         from campaign_dashboard import build_campaign_dashboard
         dash = build_campaign_dashboard(args.campaign)
         result = {"dashboard": dash, "mobile_summary": dash.get("mobile_summary", "")}
+    elif args.cmd == "quick-status":
+        result = {"status": format_quick_status(args.campaign)}
+    elif args.cmd == "campaign-health":
+        from campaign_dashboard import build_campaign_health
+        result = build_campaign_health(args.campaign)
+    elif args.cmd == "kingdom-mobile":
+        result = {"summary": format_kingdom_mobile(args.campaign)}
+    elif args.cmd == "undo-last":
+        result = pop_last_event(args.campaign, tag=args.tag)
     elif args.cmd == "mobile-status":
         result = {"status": format_mobile_status(args.campaign)}
     elif args.cmd == "opening":

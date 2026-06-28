@@ -167,6 +167,44 @@ def save_encounter_plan(campaign_name: str, plan: Dict[str, Any], *, name: Optio
     return {"saved": str(path), "name": slug}
 
 
+def difficulty_report(
+    campaign_name: str,
+    *,
+    party_level: Optional[int] = None,
+    party_size: int = 4,
+    enemy_cr: float = 1.0,
+    enemy_count: int = 4,
+) -> Dict[str, Any]:
+    """Compare party level/HP band to a proposed encounter."""
+    level = party_level or get_party_level(campaign_name)
+    pc = get_player_character(campaign_name)
+    hp = pc.get("hit_points", {})
+    budget = calculate_budget(level, "Medium", party_size)
+    xp_each = CR_XP.get(enemy_cr, CR_XP.get(int(enemy_cr), 200))
+    total_xp = int(xp_each * enemy_count)
+    ratio = total_xp / max(budget, 1)
+    if ratio < 0.5:
+        band = "trivial"
+    elif ratio < 0.85:
+        band = "easy"
+    elif ratio < 1.15:
+        band = "medium"
+    elif ratio < 1.5:
+        band = "hard"
+    else:
+        band = "deadly"
+    return {
+        "party_level": level,
+        "party_hp": f"{hp.get('current', '?')}/{hp.get('max', '?')}",
+        "medium_budget": budget,
+        "enemy_cr": enemy_cr,
+        "enemy_count": enemy_count,
+        "encounter_xp": total_xp,
+        "difficulty_band": band,
+        "advice": f"Encounter looks **{band}** for level {level} party of {party_size}.",
+    }
+
+
 def list_encounters(campaign_name: str) -> List[Dict[str, Any]]:
     folder = get_campaign_path(campaign_name) / "encounters"
     if not folder.exists():
@@ -195,6 +233,12 @@ def main() -> None:
     p_list = sub.add_parser("list")
     p_list.add_argument("campaign")
 
+    p_diff = sub.add_parser("difficulty-report")
+    p_diff.add_argument("campaign")
+    p_diff.add_argument("--cr", type=float, default=1.0)
+    p_diff.add_argument("--count", type=int, default=4)
+    p_diff.add_argument("--party-size", type=int, default=4)
+
     args = parser.parse_args()
 
     if args.cmd == "build":
@@ -208,6 +252,13 @@ def main() -> None:
             result["save"] = save_encounter_plan(args.campaign, result, name=args.theme)
     elif args.cmd == "list":
         result = {"encounters": list_encounters(args.campaign)}
+    elif args.cmd == "difficulty-report":
+        result = difficulty_report(
+            args.campaign,
+            party_size=args.party_size,
+            enemy_cr=args.cr,
+            enemy_count=args.count,
+        )
     else:
         result = {"error": "Unknown command"}
 

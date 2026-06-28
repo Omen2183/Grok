@@ -51,6 +51,33 @@ def suggest_next_actions(campaign_name: str, *, mode: Optional[str] = None) -> L
     ]
 
 
+def format_quick_status(campaign_name: str) -> str:
+    """Ultra-short status for one-shot / quick-session play."""
+    world = get_world_state(campaign_name)
+    player = get_player_character(campaign_name)
+    hp = player.get("hit_points", {})
+    return (
+        f"{player.get('name', 'Hero')} Lv{player.get('level', 1)}, "
+        f"HP {hp.get('current', '?')}/{hp.get('max', '?')} — "
+        f"{world.get('current_location', 'unknown')}. What do you do?"
+    )
+
+
+def format_kingdom_mobile(campaign_name: str) -> str:
+    """Three-bullet kingdom turn summary for voice."""
+    from dnd_state_utils import get_kingdom_state  # noqa: WPS433
+
+    kingdom = get_kingdom_state(campaign_name)
+    active = [p for p in kingdom.get("projects", []) if p.get("status") == "queued"]
+    res = kingdom.get("resources", {})
+    gold = res.get("gold", res.get("treasury", "?"))
+    proj = active[0]["name"] if active else "none queued"
+    return (
+        f"Domain {kingdom.get('domain_name', 'lands')}. "
+        f"Treasury {gold}. Top project: {proj}."
+    )
+
+
 def proactive_opening(campaign_name: str) -> Dict[str, Any]:
     summary = generate_session_start_summary(campaign_name)
     return {

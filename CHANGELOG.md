@@ -1,5 +1,24 @@
 # Changelog
 
+## 5.2.0 — Suite depth: quick play, health checks, voice compounds, homebrew rules
+
+### Added
+- Playbooks: `quick-session`, `pre-session`, `visual-scene`, `party-to-combat`, `campaign-health`
+- Combat: `--auto-initiative`, `seed-from-party`, `--dm-screen` summary
+- Session: `sync-quests`, `award-domain-xp`, quest hook extraction from recaps
+- Utils: `event_helpers.py`, `inventory_ledger.py`, `campaign-health` / `quick-status` / `undo-last` CLIs
+- Rules: per-campaign `homebrew-add` / `homebrew-list`; lookup checks homebrew first
+- Randomizer: `--dry-run` on apply-character/world; wild magic logs to events + concentration note
+- Voice: compound phrase parse, `voice-phrases`, undo/campaign-health intents
+- Content-forge: `difficulty-report` for encounter tuning
+- Character: `list-party` (PC + companions + party_members.json)
+- Skills manager: `sync-all`; registry_sync `--suggest`
+- Tests: lore-archivist, rumor-generator, v5.2 feature regressions
+
+### Changed
+- `persistent_dm resume` includes campaign health + previously-on snippet
+- Kingdom summary includes voice-friendly mobile line
+
 ## 5.1.2 — Skills manager upstreamed from iOS export
 
 ### Added
